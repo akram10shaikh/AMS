@@ -45,6 +45,8 @@ pandas==2.2.3
 pillow==11.3.0
 platformdirs==4.3.8
 propcache==0.3.2
+psycopg==3.2.9
+psycopg2-binary==2.9.10
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==2.22
@@ -62,7 +64,6 @@ service-identity==24.2.0
 setuptools==80.9.0
 six==1.17.0
 sqlparse==0.5.3
-stripe==12.1.0
 twilio==9.6.5
 Twisted==25.5.0
 txaio==25.6.1
