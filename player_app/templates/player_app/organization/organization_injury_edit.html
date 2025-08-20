@@ -1,0 +1,196 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+{% block extra_head %}
+<style>
+:root {
+  --primary: #7232fa;
+  --primary-dark: #3a1577;
+  --soft-bg: #f5f7fa;
+  --surface: #fff;
+  --radius-lg: 26px;
+  --shadow-card: 0 8px 32px #814cb41a, 0 1px 8px #baa2e533;
+  --shadow-hover: 0 16px 44px #8e6cff55;
+}
+body { background: var(--soft-bg); }
+.main-container {
+  margin-left: 80px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 66px 0 78px 0;
+}
+.edit-card-glass {
+  width: 100%;
+  max-width: 610px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 36px 38px 34px 38px;
+  margin: 0 auto;
+  position: relative;
+  animation: fadeInCard 0.4s cubic-bezier(.22,1,.36,1);
+  transition:box-shadow .25s;
+}
+@keyframes fadeInCard { from { opacity:0; transform:translateY(32px);} to { opacity:1; } }
+.edit-card-glass:hover { box-shadow: var(--shadow-hover); }
+.edit-card-glass h2 {
+  color: var(--primary-dark); font-weight: 800; letter-spacing:.01em;
+  font-size: 2.1em; text-align: center; margin-bottom: 30px;
+}
+/* Form fields */
+.edit-card-glass form { width:100%; }
+.form-row.two-col {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 24px 32px; margin-bottom: 16px;
+}
+@media(max-width:800px){ .form-row.two-col{ grid-template-columns:1fr; } }
+.form-group {
+  display: flex; flex-direction:column; margin-bottom: 13px;
+}
+.form-group label { color: #5733bb; margin-bottom: 7px; font-weight: 500; }
+.form-group input, .form-group select, .form-group textarea {
+  padding: 9px 11px; border: 1.5px solid #eadffc;
+  border-radius: 7.5px; background: #f6f4fa;
+  font-size: 1.08em; outline:none; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  border-color: var(--primary); box-shadow: 0 2px 12px #b1b0f44a;
+}
+.edit-card-glass .alert-danger {
+  background: #fff5f4; border-radius:8px; font-size:.98em;
+  border: 1px solid #fdeded; color: #d9445d; margin-bottom:19px; padding:12px 20px;
+}
+.submit-btn {
+  margin: 20px 0 0 0;
+  padding: 13px 47px;
+  background: linear-gradient(89deg, #7232fa 90%, #6ed0fc 160%);
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.13em;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow .18s;
+  box-shadow: 0 3px 24px #8157fa11;
+}
+.submit-btn:hover {
+  background: #6235ff;
+}
+
+.btn-light {
+  background: #efeffd; color: #653be0;
+  border-radius: 7px; font-weight: 600;
+  padding: 10px 30px;
+  text-decoration: none !important; display:inline-block;
+  margin-top: 16px; margin-left: 0;
+  border: none;
+  transition: background 0.17s;
+}
+.btn-light:hover { background: #e4e8fa; }
+@media(max-width:650px){
+  .edit-card-glass { padding:16px 3vw 18px 3vw;}
+  .edit-card-glass h2{ font-size:1.31em;}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-container">
+  <div class="edit-card-glass">
+    <h2>Edit Injury</h2>
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {% if form.errors %}
+        <div class="alert alert-danger">
+          <ul>
+            {% for field in form %}
+              {% for error in field.errors %}
+                <li><b>{{ field.label }}:</b> {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <!-- -------- Begin your actual form fields layout -------- -->
+      <div class="form-row two-col">
+        <div class="form-group">
+          <label for="{{ form.player.id_for_label }}">Player Name</label>
+          {{ form.player }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.reported_by.id_for_label }}">Reported By (Physio)</label>
+          {{ form.reported_by }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.injury_date.id_for_label }}">Injury Date</label>
+          {{ form.injury_date }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.name.id_for_label }}">Title</label>
+          {{ form.name }}
+        </div>
+      </div>
+
+      <div class="form-row two-col">
+        <div class="form-group">
+          <label for="{{ form.severity.id_for_label }}">Severity</label>
+          {{ form.severity }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.venue.id_for_label }}">Venue</label>
+          {{ form.venue }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.team.id_for_label }}">Team</label>
+          {{ form.team }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.injury_type.id_for_label }}">Type of injury</label>
+          {{ form.injury_type }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.type_of_activity.id_for_label }}">Type of activity at time of injury</label>
+          {{ form.type_of_activity }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.cause_of_injury.id_for_label }}">Cause of injury</label>
+          {{ form.cause_of_injury }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.nature_of_injury.id_for_label }}">Nature of injury</label>
+          {{ form.nature_of_injury }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.notes.id_for_label }}">Notes</label>
+          {{ form.notes }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.expected_date_of_return.id_for_label }}">Expected Date of Return</label>
+          {{ form.expected_date_of_return }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.body_segment.id_for_label }}">Body segment</label>
+          {{ form.body_segment }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.affected_body_part.id_for_label }}">Body region injured *</label>
+          {{ form.affected_body_part }}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.status.id_for_label }}">Status</label>
+          {{ form.status }}
+        </div>
+      </div>
+      <!-- -------- End form fields -------- -->
+
+      <button type="submit" class="submit-btn">Save Changes</button>
+    </form>
+    <a href="{% url 'organization_injury_list' %}" class="btn btn-light">Back to List</a>
+  </div>
+</div>
+{% endblock %}

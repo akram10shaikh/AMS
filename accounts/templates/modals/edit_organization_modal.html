@@ -1,0 +1,39 @@
+<div class="modal-header">
+    <h5 class="modal-title" id="editModalLabel">Edit Organization</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body">
+    <form method="post" id="edit-organization-form" action="{% url 'edit_organization' organization.pk %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Update</button>
+    </form>
+</div>
+
+<script>
+    $('#edit-organization-form').on('submit', function(event) {
+        event.preventDefault();
+        var form = $(this);
+        var url = form.attr('action');
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: form.serialize(),
+            success: function(data) {
+                if (data.success) {
+                    alert(data.message);
+                    $('#editModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                    console.log(data.errors); // Show errors in console for debugging
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX error:', error);
+                alert('An error occurred while updating the organization.');
+            }
+        });
+    });
+</script>

@@ -1,0 +1,37 @@
+<div class="modal-header">
+    <h5 class="modal-title" id="deleteModalLabel">Delete Organization</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body">
+    <p>Are you sure you want to delete the organization "{{ organization.name }}"?</p>
+    <form method="post" id="delete-organization-form" action="{% url 'delete_organization' organization.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, delete</button>
+    </form>
+</div>
+
+<script>
+$('#delete-organization-form').on('submit', function(event) {
+    event.preventDefault();
+    var form = $(this);
+    var url = form.attr('action');
+
+    $.ajax({
+        type: "POST",
+        url: url,
+        data: form.serialize(),
+        success: function(response) {
+            if (response.success) {
+                alert(response.message);
+                $('#deleteModal').modal('hide');
+                location.reload();  // Reload the page to show updated data
+            } else {
+                alert('Delete failed. Please try again.');
+            }
+        },
+        error: function() {
+            alert('An error occurred. Please try again.');
+        }
+    });
+});
+</script>

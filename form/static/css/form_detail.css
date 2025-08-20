@@ -1,0 +1,85 @@
+html,body {
+    height: 100%;
+}
+
+body {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   flex-direction: column;
+   background-color: #F3F4F8 !important;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+}
+
+
+.container {
+    background-color: #FAFAFA;
+    width: 70% !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+   flex-direction: column;
+    box-shadow: 1px 1px 10px 2px #00000025 !important;
+    padding: 25px;
+    margin-top:25%;
+    border-radius: 10px;
+}
+
+.container .inner-container {
+    width: 95%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+   flex-direction: column;
+}
+
+.container h1 {
+    font-size: 2.2rem;
+    margin-bottom: 30px;
+    align-self: center
+}
+
+.container h2 {
+    font-size: 1.7rem;
+    margin-bottom: 20px;
+    align-self: center;
+    text-decoration: underline;
+}
+
+.container h3 {
+    font-size: 1.5rem;
+    margin-top: 30px;
+
+}
+
+ .line {
+    background-color: #DADBDD;
+    height: 1.5px;
+    width: 100%;  
+ }
+
+.container ul {
+    margin: 20px 0;
+}
+
+.container a {
+    background-color: #0D81FE;
+    border-radius: 3px;
+    padding: 6px 10px;
+    border: none;
+    color: #fff;
+    margin-top: 20px;
+    align-self: center;
+    text-decoration: none; 
+}
+
+ .container a:hover {
+    background-color: #0874E9;
+ }
+.delete-btn{
+    background-color: #EC504E;
+    width:200px;
+}

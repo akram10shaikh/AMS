@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Recommend Treatment{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style>
+    body {
+        background-color: #000;
+        color: #fff;
+        font-size: 0.8em;
+    }
+
+    h2, h3 {
+        color: #fff;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .form-container, .table-container {
+        background: #222;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(255, 255, 255, 0.2);
+        margin-bottom: 20px;
+    }
+
+    table {
+        width: 100%;
+        font-size: 0.8em;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 5px;
+        text-align: left;
+        border-bottom: 1px solid #444;
+    }
+
+    th {
+        background: #333;
+        color: #fff;
+    }
+
+    .btn {
+        font-size: 0.75em;
+        padding: 3px 6px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    select, input[type="text"], textarea {
+        font-size: 0.75em;
+        padding: 3px;
+        background: #333;
+        color: #fff;
+        border: 1px solid #555;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="form-container">
+            <h2>Recommend Treatment for Player</h2>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_player">Player</label>
+                    <select name="player" id="id_player" class="form-control" required>
+                        {% for player in form.player.field.queryset %}
+                            <option value="{{ player.id }}" {% if player.id == form.player.value %}selected{% endif %}>{{ player }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="id_recovery_time_weeks">Recovery Time (Weeks)</label>
+                    {{ form.recovery_time_weeks }}
+                </div>
+                <div class="form-group">
+                    <label for="id_treatment">Treatment</label>
+                    {{ form.treatment }}
+                </div>
+                <div class="form-group">
+                    <label for="id_recommendation_notes">Recommendation Notes</label>
+                    {{ form.recommendation_notes }}
+                </div>
+                {% if user.is_superuser %}
+                    <div class="form-group">
+                        <label for="id_physio">Select Physio</label>
+                        <select name="physio" id="id_physio" class="form-control" required>
+                            <option value="" disabled selected>Select a Physio</option>
+                            {% for physio in physios %}
+                                <option value="{{ physio.id }}">{{ physio.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+                <button type="submit" class="btn btn-primary">Submit Recommendation</button>
+            </form>
+        </div>
+        
+        <div class="table-container">
+            <h3>Previous Treatment Recommendations</h3>
+            <p><strong>Injury:</strong> {{ injury }}</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Treatment</th>
+                        <th>Recommendation Notes</th>
+                        <th>Physio</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if treatment_recommendations %}
+                        {% for recommendation in treatment_recommendations %}
+                            <tr>
+                                <td>{{ recommendation.injury.player.name }}</td>
+                                <td>{{ recommendation.treatment }}</td>
+                                <td>{{ recommendation.recommendation_notes }}</td>
+                                <td>{{ recommendation.physio.name }}</td>
+                                <td>{{ recommendation.created_at }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5">No treatment recommendations yet for this injury.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

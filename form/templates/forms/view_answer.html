@@ -1,0 +1,54 @@
+{% extends 'main.html' %}
+{% load static %}
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/view_answer.css' %}">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.12.0/css/jquery.dataTables.min.css">
+{% endblock %}
+{% block content %}
+    <div class="container">
+	<h2>Response to Form "{{ form.title }}" </h2>
+        {% if responselist is not None %}
+        <table class="table-striped" id="example">
+            <thead>
+                <tr>
+                    <th>Sno</th>
+                    {% for ques in questionlist %}
+                        <th>{{ques.question_text}}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody> 
+                {% for response_ins in responselist %} 
+                    <tr> <td>{{ forloop.counter }}</td> 
+                        {% for answer in response_ins.answers %} 
+                            <td>{{ answer }}</td> 
+                        {% endfor %} 
+                        <td><a href="{% url 'form:delete_response' response_ins.response.id %}">Delete</a></td>
+                    </tr>
+                {% endfor %} 
+            </tbody>
+        </table>
+        <a class="btn btn-light" href="{% url 'form:excel_data_input' form.id %}">Download form input excel</a>
+        {% endif %}
+	</div>
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+    <script>
+        new DataTable('#example', {
+            columnDefs: [
+                {
+                    targets: [0],
+                    orderData: [0, 1]
+                },
+                {
+                    targets: [1],
+                    orderData: [1, 0]
+                },
+                {
+                    targets: [4],
+                    orderData: [4, 0]
+                }
+            ]
+        });
+    </script>
+{% endblock %}

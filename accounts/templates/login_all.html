@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role-Based Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-container {
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 40px 60px;
+            border-radius: 10px;
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
+            z-index: 2;
+        }
+
+        h2 {
+            margin-bottom: 30px;
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .login-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 30px; /* Increased gap between buttons */
+            margin-top: 20px;
+        }
+
+        .login-button {
+            background-color: #3498db;
+            padding: 20px; /* Increased padding */
+            color: white;
+            font-size: 1rem; /* Reduced font size */
+            border: none;
+            border-radius: 50%; /* Round shape */
+            cursor: pointer;
+            width: 100px;  /* Increased size of buttons */
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-button:hover {
+            transform: scale(1.1);
+            background-color: #2980b9;
+        }
+
+        .login-button:active {
+            transform: scale(0.9);
+        }
+
+        .login-button:focus {
+            outline: none;
+        }
+
+        /* Animation for falling balls */
+        .cricket-ball {
+            width: 30px;
+            height: 30px;
+            background-color: #ff5722;
+            border-radius: 50%;
+            position: absolute;
+            top: -30px; /* Starts above the viewport */
+            animation: fall 5s linear infinite;
+            opacity: 0.8;
+        }
+
+        /* Keyframes for random falling animation */
+        @keyframes fall {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh); /* Ball falls to bottom */
+                opacity: 0;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>Welcome to Athlete Management System , Please Choose Your Role to login</h2>
+        <div class="login-buttons">
+            <button class="login-button" id="super-admin-btn">Super Admin</button>
+            <button class="login-button" id="organization-btn">Organization</button>
+            <button class="login-button" id="staff-btn">Staff</button>
+            <button class="login-button" id="player-btn">Player</button>
+        </div>
+    </div>
+
+    <!-- Falling cricket balls -->
+    <div id="falling-balls"></div>
+
+    <script>
+        // Number of falling balls
+        const numberOfBalls = 100; // Adjust number of falling balls here
+
+        const fallingBallsContainer = document.getElementById('falling-balls');
+
+        // Create the falling balls and add them to the container
+        for (let i = 0; i < numberOfBalls; i++) {
+            const ball = document.createElement('div');
+            ball.classList.add('cricket-ball');
+            
+            // Randomly position each ball on the x-axis (left and right variation)
+            ball.style.left = `${Math.random() * 100}vw`; // Random horizontal position
+
+            // Add a random animation delay to make it more like rain
+            const randomDelay = Math.random() * 5; // Delay for the ball
+            ball.style.animationDelay = `${randomDelay}s`; // Apply the delay to the animation
+
+            // Randomize animation duration to simulate different falling speeds
+            const randomDuration = 3 + Math.random() * 3; // Duration between 3s and 6s
+            ball.style.animationDuration = `${randomDuration}s`;
+
+            // Add the ball to the container
+            fallingBallsContainer.appendChild(ball);
+        }
+
+        // Button functionality
+        document.getElementById('super-admin-btn').addEventListener('click', () => {
+            window.location.href = "{% url 'super_admin_login' %}";
+        });
+
+        document.getElementById('organization-btn').addEventListener('click', () => {
+            window.location.href = "{% url 'organization_login' %}";
+        });
+
+        document.getElementById('staff-btn').addEventListener('click', () => {
+            window.location.href = "{% url 'staff_login' %}";
+        });
+
+        document.getElementById('player-btn').addEventListener('click', () => {
+            window.location.href = "{% url 'player_login' %}";
+        });
+    </script>
+
+</body>
+</html>

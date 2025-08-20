@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Camp/Tournament{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style>
+    body {
+        background-color: #000;
+        color: #fff;
+        font-size: 0.9em;
+    }
+
+    h1 {
+        color: #fff;
+    }
+
+    .form-control {
+        background-color: #555;
+        color: #fff;
+        border: 1px solid #666;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    .form-group label {
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Create Camp/Tournament</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="name">Camp/Tournament Name:</label>
+            <input type="text" name="name" id="name" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="camp_type">Type:</label>
+            <select name="camp_type" id="camp_type" class="form-control">
+                <option value="camp">Camp</option>
+                <option value="tournament">Tournament</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="start_date">Start Date:</label>
+            <input type="date" name="start_date" id="start_date" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="end_date">End Date:</label>
+            <input type="date" name="end_date" id="end_date" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label for="venue">Venue:</label>
+            <input type="text" name="venue" id="venue" class="form-control">
+        </div>
+
+        <!-- Super Admin: Select Organization -->
+        {% if request.user.is_superuser %}
+            <div class="form-group">
+                <label for="organization">Select Organization:</label>
+                <select name="organization" id="organization" class="form-control">
+                    <option value="">-- Select Organization --</option>
+                    {% for org in organizations %}
+                        <option value="{{ org.id }}">{{ org.name }}</option>
+                    {% empty %}
+                        <option disabled>No organizations available</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% else %}
+            <!-- Organization Admin: Auto-set organization -->
+            <input type="hidden" name="organization" id="organization" value="{{ request.user.organization.id }}">
+        {% endif %}
+
+        <div class="form-group">
+            <label for="participants">Select Participants:</label>
+            <select name="participants" id="participants" class="form-control" multiple>
+                {% for player in players %}
+                    {% if player.organization.id == request.user.organization.id or request.user.is_superuser %}
+                        <option value="{{ player.id }}" data-org-id="{{ player.organization.id }}">
+                            {{ player.name }}
+                        </option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <small class="form-text text-muted">Hold "Ctrl" (Windows) or "Cmd" (Mac) to select multiple participants.</small>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3">Create</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const organizationSelect = document.getElementById("organization");
+        const participantsSelect = document.getElementById("participants");
+
+        if (organizationSelect) {
+            organizationSelect.addEventListener("change", function () {
+                let selectedOrg = this.value;
+                let allPlayers = document.querySelectorAll("#participants option");
+
+                allPlayers.forEach(option => {
+                    if (option.getAttribute("data-org-id") === selectedOrg || selectedOrg === "") {
+                        option.style.display = "block";
+                    } else {
+                        option.style.display = "none";
+                        option.selected = false;
+                    }
+                });
+            });
+
+            // If the user is not a super admin, auto-filter the participants based on their organization
+            if (!{{ request.user.is_superuser|lower }}) {
+                let selectedOrg = organizationSelect.value;
+                let allPlayers = document.querySelectorAll("#participants option");
+
+                allPlayers.forEach(option => {
+                    if (option.getAttribute("data-org-id") !== selectedOrg) {
+                        option.style.display = "none";
+                        option.selected = false;
+                    }
+                });
+            }
+        }
+    });
+</script>
+{% endblock %}

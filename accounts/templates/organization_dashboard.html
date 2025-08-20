@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organization Dashboard</title>
+    <style>
+        /* General page styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        /* Sidebar Navigation styling */
+        .sidebar {
+            background-color: #333;
+            width: 250px;
+            height: 100vh;
+            padding: 20px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .sidebar h2 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .sidebar ul li {
+            margin-bottom: 20px;
+        }
+
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            display: block;
+            padding: 10px 0;
+            text-align: center;
+            background-color: #444;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .sidebar ul li a:hover {
+            background-color: #48c6ef;
+        }
+
+        /* Main Content styling */
+        .main-content {
+            margin-left: 270px; /* Adjusting for sidebar width */
+            padding: 20px;
+            flex-grow: 1; /* Allowing it to take up remaining space */
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* Organization Name styling */
+        .org-name {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center; /* Centered organization name */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <h2> Organization Dashboard</h2>
+        <ul>
+
+            <li><a href="{% url 'organization_player_list' %}">Manage/Add Player</a></li>
+            <li><a href="{% url 'form:list_forms' %}">Create/assign Forms</a></li>
+            <li><a href="{% url 'staff_register_org' %}">manage/Add Staff</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="org-name">
+            <h1> Welcome  {{ organization.name }} to your dashboard</h1>  <!-- Displaying the organization name -->
+        </div>
+        <div style="position: fixed; top: 10px; right: 10px; z-index: 1000; background-color: #f1f1f1; padding: 10px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+            {% if user.is_authenticated %}
+                <span><strong>{{ user.username }}</strong> - {{ user.role }}</span>
+                <form method="POST" action="{% url 'logout' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="background-color: #d9534f; color: white; border: none; padding: 5px 10px; margin-left: 10px; cursor: pointer;">Logout</button>
+                </form>
+            {% else %}
+                <span>Not logged in</span>
+            {% endif %}
+        </div>
+
+        <p>Use the navigation menu to manage your organization.</p>
+        <!-- Additional content for the dashboard can go here -->
+    </div>
+
+</body>
+</html>

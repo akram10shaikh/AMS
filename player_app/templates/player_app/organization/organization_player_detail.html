@@ -1,0 +1,318 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* Banner and headline */
+.profile-banner {
+  display: flex;
+  align-items: center;
+  gap:30px;
+  background:#f3f3fa;
+  padding:30px 34px 18px 42px;
+  border-radius:18px;
+  box-shadow:0 2px 18px #abaadd25;
+  margin-bottom:18px;
+}
+.profile-image {
+  width: 118px; height: 118px;
+  border-radius:16px;
+  object-fit: cover;
+  border:4px solid #efeaee;
+  background:#fff;
+}
+.profile-summary h2 {
+  font-weight:800;
+  font-size:2em;
+  margin:0 0 9px 0;
+}
+.status-row { margin-top:8px; }
+.status-indicator {
+  display:inline-block;
+  border-radius:9px;
+  padding:6px 20px;
+  font-weight:700;
+  margin-right:16px;
+  font-size:1.11em;
+  background: #f3f4fa;
+  color:#523acd;
+}
+.injury-status.injured { background: #ffe0df; color: #d13418; border:1.3px solid #f26c4f;}
+.injury-status.fit { background: #e3fbea; color: #28a745; border:1.3px solid #1abe60;}
+.participation-status b { color: #2c2694; }
+
+/* Player full details card */
+.player-details-full {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 7px #816cf311;
+  padding: 27px 24px 20px 28px;
+  margin-bottom: 27px;
+}
+.player-details-full h4 {
+  color: #694fd8;
+  font-weight: 800;
+  font-size: 1.31em;
+  letter-spacing: .01em;
+  margin-bottom: 15px;
+}
+.detail-fields-wrap { width:100%; font-size:1.06em; }
+.fields-columns {
+  display: flex;
+  gap: 36px;
+  flex-wrap: wrap;
+}
+.fields-columns > div {
+  flex: 1 1 300px;
+  min-width: 200px;
+}
+.label {
+  color: #a593ef;
+  font-size: 0.96em;
+  font-weight: 600;
+  margin: 2.5px 0 0 0;
+  letter-spacing: 0.009em;
+}
+.value {
+  color: #302d4b;
+  font-size: 1.08em;
+  font-weight: 500;
+  background: #f9faff;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  margin-top: 1px;
+  padding: 7px 10px 6px 9px;
+  box-shadow: 0 1px 2px #e1dcff20;
+  word-break: break-word;
+}
+.section-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px #aaa3ef16;
+  padding:22px 27px 18px 27px;
+  margin-bottom:22px;
+}
+.injury-list-table, .docs-table {
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0 5px;
+  margin-bottom:0;
+}
+.injury-list-table th, .docs-table th {
+  background: #f6e5e2; color: #ac4000;
+  padding:12px 8px; font-size:.98em; font-weight:700;
+  border-bottom:2.5px solid #f7d2cf;
+}
+.injury-list-table td, .docs-table td {
+  background: #fff; padding:10px 8px; font-size:1.01em;
+}
+.injury-link { color:#963e00; font-weight:600; }
+.section-card h4 { color: #c24400; font-weight:800; letter-spacing:.01em;}
+.upload-doc-card{
+  background:#fafaff;
+  border-radius:14px;
+  padding:24px 19px 8px 23px;
+  margin-bottom:13px;
+}
+.btn-primary {
+  background:#7232fa; color:#fff; border:none;
+  border-radius:5px; font-weight:700;
+  padding:11px 36px; margin-top:11px;
+}
+.form-row { display:flex; gap:24px; }
+.form-group{flex:1;}
+
+@media (max-width:1000px) {
+  .fields-columns{ flex-direction:column; gap:0;}
+  .player-details-full{ padding:16px 3vw 10px 3vw;}
+}
+@media (max-width:840px) {
+  .profile-banner{flex-direction:column; gap:18px; padding:19px 6vw 11px 5vw;}
+  .profile-summary h2{font-size:1.2em;}
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="main-container">
+
+  <!-- Profile Banner and Status -->
+  <div class="profile-banner">
+    <img class="profile-image" src="{% if player.image %}{{ player.image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}">
+    <div class="profile-summary">
+      <h2>{{ player.name }}</h2>
+      <div class="status-row">
+        <span class="status-indicator injury-status {% if injury_status == 'Injured' %}injured{% else %}fit{% endif %}">
+          Injury Status: {{ injury_status }}
+        </span>
+        
+      </div>
+      <div style="margin-top:15px;">
+        <b>Role:</b> {{ player.role }} |
+        <b>Team:</b> {{ player.team }} |
+        <b>Age:</b> {% if player.age %}{{ player.age }} yrs{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Modern Player Details Section -->
+  <div class="player-details-full">
+    <h4>Player Details</h4>
+    <div class="detail-fields-wrap">
+      <div class="fields-columns">
+        <div>
+          <div class="label">Name</div>
+          <div class="value">{{ player.name }}</div>
+          <div class="label">Gender</div>
+          <div class="value">{{ player.get_gender_display }}</div>
+          <div class="label">Date of Birth</div>
+          <div class="value">{{ player.date_of_birth }}</div>
+          <div class="label">Age</div>
+          <div class="value">{% if player.age %}{{ player.age }} yrs{% endif %}</div>
+          <div class="label">Email</div>
+          <div class="value">{{ player.email }}</div>
+          <div class="label">Primary Contact</div>
+          <div class="value">{{ player.primary_contact_number }}</div>
+          <div class="label">Secondary Contact</div>
+          <div class="value">{{ player.secondary_contact_number }}</div>
+          <div class="label">State</div>
+          <div class="value">{{ player.state }}</div>
+          <div class="label">Age Category</div>
+          <div class="value">{{ player.get_age_category_display }}</div>
+          <div class="label">Team</div>
+          <div class="value">{{ player.team }}</div>
+          <div class="label">Role</div>
+          <div class="value">{{ player.role }}</div>
+        </div>
+        <div>
+          <div class="label">Handedness</div>
+          <div class="value">{{ player.get_handedness_display }}</div>
+          <div class="label">Batting Style</div>
+          <div class="value">{{ player.batting_style }}</div>
+          <div class="label">Bowling Style</div>
+          <div class="value">{{ player.bowling_style }}</div>
+          <div class="label">District Assoc. ID</div>
+          <div class="value">{{ player.district_cricket_association_id }}</div>
+          <div class="label">Guardian Name</div>
+          <div class="value">{{ player.guardian_name }}</div>
+          <div class="label">Relation</div>
+          <div class="value">{{ player.get_relation_display }}</div>
+          <div class="label">Guardian Contact</div>
+          <div class="value">{{ player.guardian_mobile_number }}</div>
+          <div class="label">Username</div>
+          <div class="value">{{ player.user.username }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Injuries Table -->
+  <div class="section-card">
+    <h4>Injuries</h4>
+    <table class="injury-list-table">
+      <thead>
+        <tr>
+          <th>Date</th><th>Title</th><th>Status</th><th>Severity</th><th>Reported By</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for injury in injuries %}
+        <tr>
+          <td>{{ injury.injury_date }}</td>
+          <td><a href="{% url 'organization_injury_detail' injury.id %}" class="injury-link">{{ injury.name }}</a></td>
+          <td>{{ injury.get_status_display }}</td>
+          <td>{{ injury.get_severity_display }}</td>
+          <td>{% if injury.reported_by %}{{ injury.reported_by.name }}{% endif %}</td>
+          <td><a href="{% url 'organization_injury_detail' injury.id %}" title="View Details"><i class="fa fa-eye"></i></a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-muted">No injuries recorded.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Medical Documents Table --> 
+  <div class="section-card">
+    <h4>Medical Documents</h4>
+    <table class="docs-table">
+      <thead>
+        <tr><th>Date</th><th>Title</th><th>Notes</th><th>For</th><th>File</th></tr>
+      </thead>
+      <tbody>
+      {% for doc in documents %}
+        <tr>
+          <td>{{ doc.date }}</td>
+          <td>{{ doc.title }}</td>
+          <td>{{ doc.notes|default:"—"|truncatechars:60 }}</td>
+          <td>
+            {% if doc.view_option == "profile" %}Only Profile
+            {% elif doc.view_option == "injury_profile" %}
+              Injury: <a href="{% url 'organization_injury_detail' doc.injury_id %}">{{ doc.injury.name }}</a>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <a href="{{ doc.document.url }}" target="_blank"><i class="fa fa-file-pdf"></i></a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="text-muted">No documents visible for this profile.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Medical Document Upload -->
+  <div class="upload-doc-card mt-4">
+    <h5>Upload New Medical Document</h5>
+    <form method="post" enctype="multipart/form-data" id="docUploadForm">
+      {% csrf_token %}
+      {% if doc_form.errors %}
+        <div class="alert alert-danger">
+          <ul>
+            {% for field in doc_form %}
+              {% for error in field.errors %}
+                <li><b>{{ field.label }}</b>: {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+            {% for error in doc_form.non_field_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+      <div class="form-row">
+        <div class="form-group"><label>Date</label>{{ doc_form.date }}</div>
+        <div class="form-group"><label>Title</label>{{ doc_form.title }}</div>
+        <div class="form-group"><label>Notes</label>{{ doc_form.notes }}</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>File</label>{{ doc_form.document }}</div>
+        <div class="form-group">
+          <label>View Option</label>
+          {{ doc_form.view_option }}
+        </div>
+        <div class="form-group" id="injurySelectGroup" style="display: none;">
+          <label>Related Injury</label>
+          {{ doc_form.injury }}
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">Upload</button>
+    </form>
+  </div>
+  <script>
+    function showHideInjuryField() {
+      var select = document.getElementById("id_view_option");
+      var group = document.getElementById("injurySelectGroup");
+      if (!select || !group) return;
+      var v = select.value;
+      group.style.display = (v === "injury_profile" || v === "injury_only") ? "" : "none";
+    }
+    document.addEventListener("DOMContentLoaded", function() { showHideInjuryField();
+      var el = document.getElementById("id_view_option");
+      if (el) el.addEventListener("change", showHideInjuryField);
+    });
+  </script>
+</div>
+{% endblock %}

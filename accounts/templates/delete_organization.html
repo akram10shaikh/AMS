@@ -1,0 +1,18 @@
+<p>Are you sure you want to delete the organization "{{ organization.name }}"?</p>
+<form method="post" id="delete-organization-form">
+    {% csrf_token %}
+    <button type="submit">Yes, delete</button>
+</form>
+
+<script>
+    $('#delete-organization-form').on('submit', function(event) {
+        event.preventDefault();
+        var url = $(this).attr('action');
+        $.post(url, $(this).serialize(), function(data) {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            }
+        });
+    });
+</script>

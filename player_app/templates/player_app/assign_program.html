@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assign Program</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #000; /* Black background */
+            color: #fff; /* White text color */
+            font-size: 0.9em;
+        }
+
+        h1 {
+            color: #fff;
+        }
+
+        .form-container {
+            background-color: #333; /* Dark background for the form */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+            max-width: 600px;
+            margin: 40px auto;
+        }
+
+        .form-container label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+        }
+
+        .form-control {
+            background-color: #555;
+            color: #fff;
+            border: 1px solid #666;
+        }
+
+        .form-control:focus {
+            background-color: #444;
+            color: #fff;
+            border-color: #007bff;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            margin-top: 15px;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<body>
+    <div class="form-container">
+        <h1 class="text-center">Assign Program</h1>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="player_id">Select Player:</label>
+                <select name="player_id" id="player_id" class="form-control" required>
+                    {% for player in players %}
+                        <option value="{{ player.id }}">{{ player.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="program_id">Select Program:</label>
+                <select name="program_id" id="program_id" class="form-control" required>
+                    <option value="">-- Select a Program --</option> <!-- Default option -->
+                    {% for program in programs %}
+                        <option value="{{ program.program_id }}">{{ program.name }} ({{ program.get_program_type_display }})</option>
+                    {% endfor %}
+                </select>
+
+
+            </div>
+
+            <div class="form-group">
+                <label for="injury_id">Injury ID (if applicable):</label>
+                <input type="text" name="injury_id" id="injury_id" class="form-control" placeholder="Only for rehab programs">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Assign Program</button>
+        </form>
+    </div>
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</body>
+</html>

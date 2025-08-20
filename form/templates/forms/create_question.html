@@ -1,0 +1,88 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Create Question</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/add_question.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Create New Question</h1>
+        <div id="popup_overlay" class="overlay_container">
+            <form class="form-container" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <label class="form-label" for="question_text">Question Text:</label>
+                <input class="form-input" type="text" id="question_text" name="question_text" required>
+                <label class="form-label" for="question_image">Question Image:</label>
+                <input type="file" id="question_image" name="question_image">
+                <label class="form-label" for="question_type">Question Type:</label>
+                <select id="question_type" name="question_type" required>
+                    <option value="short_answer">Short Answer</option>
+                    <option value="paragraph">Paragraph</option>
+                    <option value="multiple_choice">Multiple Choice</option>
+                    <option value="multiple_choice_grid">Multiple Choice Grid</option>
+                    <option value="checkbox">Check Boxes</option>
+                    <option value="dropdown">Dropdowns</option>
+                    <option value="file_upload">File Upload</option>
+                    <option value="date">Date</option>
+                    <option value="time">Time</option>
+                </select>
+                <div id="player_lists" style="display:none;">
+                    <label for="player_lists">Add Players:</label>
+                    <select id="player_lists" name="player_lists" multiple>
+                        {% for player in player_list %}
+                        <option value="{{player.id}}">{{player.name}}</option>
+                        {% endfor %}
+                </div>
+                <div id="input_add" style="display:none;">
+                    <label for="input_add_player">Allow Add Player:</label>
+                    <input type="checkbox" id="input_add_player" name="input_add_player">
+                </div>
+                <br>
+                <div id="choices_div" style="display: none;">
+                    <label for="options">Choices (Comma-separated):</label>
+                    <input type="text" id="options" name="options">
+                </div>
+                <button class="btn-submit" type="submit">Add Question</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.getElementById('question_type').addEventListener('change', function () {
+            var type = this.value;
+            var choicesDiv = document.getElementById('choices_div');
+            if (type === 'multiple_choice' || type === 'checkbox' || type === 'dropdown' || type === 'multiple_choice_grid') {
+                choicesDiv.style.display = 'block';
+            } else {
+                choicesDiv.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('question_type').addEventListener('change', function () {
+            var type = this.value;
+            var choicesDiv = document.getElementById('input_add');
+            if (type === 'multiple_choice_grid') {
+                input_add.style.display = 'block';
+            } else {
+                input_add.style.display = 'none';
+            }
+        });
+        document.getElementById('question_type').addEventListener('change', function () {
+            var type = this.value;
+            var player_lists = document.getElementById('player_lists');
+            if (type === 'multiple_choice_grid') {
+                player_lists.style.display = 'block';
+            } else {
+                player_lists.style.display = 'none';
+            }
+        })
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-zJ3+PoYG2hIe7w6FIp40/xzWq58jz3IMtkJqjRn5YqUo2+0D98IjOBhp0+P8DrMo"
+        crossorigin="anonymous"></script>
+</body>
+</html>

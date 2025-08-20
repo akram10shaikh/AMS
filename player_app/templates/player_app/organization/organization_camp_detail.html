@@ -1,0 +1,199 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style>
+    /* Paste the improved CSS here (or keep it in your CSS file) */
+
+
+    h1, h3 {
+        color: #040404ff;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .btn-primary {
+        background-color: #3a8dff;
+        border-color: #3a8dff;
+        color: #fff;
+        font-weight: 600;
+        transition: background-color 0.25s ease;
+    }
+    .btn-primary:hover,
+    .btn-primary:focus {
+        background-color: #256dcc;
+        border-color: #256dcc;
+        color: #fff;
+    }
+
+    .btn-danger {
+        background-color: #e74c3c;
+        border-color: #e74c3c;
+        color: #fff;
+        font-weight: 600;
+    }
+    .btn-danger:hover,
+    .btn-danger:focus {
+        background-color: #b8362a;
+        border-color: #b8362a;
+        color: #fff;
+    }
+
+    .btn-success {
+        background-color: #27ae60;
+        border-color: #27ae60;
+        color: #fff;
+        font-weight: 600;
+    }
+    .btn-success:hover,
+    .btn-success:focus {
+        background-color: #1e8449;
+        border-color: #1e8449;
+        color: #fff;
+    }
+
+    p, ul, li {
+        color: #0a0909ff;
+        line-height: 1.5;
+    }
+
+    ul {
+        padding-left: 1.3rem;
+        margin-bottom: 2rem;
+    }
+
+    ul li {
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .timeline {
+        background-color: #1e1e1e;
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 0 8px rgba(58, 141, 255, 0.25);
+        margin-bottom: 2.5rem;
+    }
+
+    .timeline-item {
+        border-left: 3px solid #3a8dff;
+        padding-left: 12px;
+        margin-bottom: 1.25rem;
+    }
+
+    .timeline-item p {
+        margin: 0.3rem 0;
+        color: #e0e0e0;
+    }
+
+    .timeline-item p strong {
+        color: #3a8dff;
+    }
+
+    .timeline-item small {
+        color: #aaaaaa;
+    }
+
+    .modal-content {
+        background-color: #222;
+        color: #eee;
+    }
+
+    .form-control {
+        background-color: #333;
+        color: #eee;
+        border: 1px solid #555;
+    }
+
+    .form-control:focus {
+        background-color: #3a8dff;
+        border-color: #3a8dff;
+        color: #fff;
+        box-shadow: 0 0 6px rgba(58, 141, 255, 0.8);
+        outline: none;
+    }
+
+    .add-camp-btn {
+        margin-top: 1rem;
+        background-color: #444;
+        color: #eee;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .add-camp-btn:hover,
+    .add-camp-btn:focus {
+        background-color: #3a8dff;
+        color: #fff;
+    }
+
+    form[style*="inline"] {
+        display: inline-block;
+        margin-left: 0.5rem;
+    }
+
+    @media (max-width: 600px) {
+        .container {
+            margin: 1rem;
+            padding: 0 0.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ camp.name }}</h1>
+    <p><strong>Type:</strong> {{ camp.get_camp_type_display }}</p>
+    <p><strong>Start Date:</strong> {{ camp.start_date }}</p>
+    <p><strong>End Date:</strong> {{ camp.end_date|default:"N/A" }}</p>
+    <p><strong>Venue:</strong> {{ camp.venue|default:"N/A" }}</p>
+
+    <h3>Participants</h3>
+    <ul>
+        {% for participant in camp.participants.all %}
+        <li>{{ participant.name }}</li>
+        {% empty %}
+        <li>No participants added yet.</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'organization_edit_camp' camp.id %}" class="btn btn-primary">Edit</a>
+    <form method="post" action="{% url 'delete_camp' camp.id %}" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this camp?');">Delete</button>
+    </form>
+
+    <br><br>
+
+    <h3>Activity History</h3>
+    <div class="timeline" aria-live="polite" aria-atomic="true">
+        {% if camp.activities.exists %}
+            {% for activity in camp.activities.all %}
+            <div class="timeline-item">
+                <p><strong>{{ activity.action }}</strong> - {{ activity.details }}</p>
+                <p>
+                    <small>
+                        By:
+                        {% if activity.performed_by %}{{ activity.performed_by.username }}{% else %}System{% endif %}
+                        | {{ activity.timestamp|date:"d M Y, H:i" }}
+                    </small>
+                </p>
+            </div>
+            {% endfor %}
+            <a href="{% url 'download_activity_history' camp.id %}" class="btn btn-success">Download Activity History</a>
+        {% else %}
+            <p>No activity recorded for this camp/tournament.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

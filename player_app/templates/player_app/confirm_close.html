@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Upload Medical Document</title>
+</head>
+<body>
+    <h1>Upload Medical Document for {{ injury.player.name }}</h1>
+    <form method="POST" enctype="multipart/form-data" action="{% url 'confirm_close' injury.id %}">
+        {% csrf_token %}
+        <label for="medical_documents">Upload Medical Document:</label>
+        <input type="file" name="medical_documents" required>
+        <br><br>
+        <button type="submit">Submit & Close Injury</button>
+    </form>
+    <br>
+    <a href="{% url 'injury_list' %}">Cancel</a>
+</body>
+</html>

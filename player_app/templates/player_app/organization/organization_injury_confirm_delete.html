@@ -1,0 +1,121 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+{% block extra_head %}
+<style>
+:root {
+  --primary: #7232fa;
+  --primary-dark: #3a1577;
+  --soft-bg: #f6f7fa;
+  --surface: #fff;
+  --radius-lg: 26px;
+  --warn-red: #e34639;
+  --gray-txt: #44445a;
+}
+body { background: var(--soft-bg);}
+.main-container {
+  margin-left: 80px;
+  min-height: 100vh;
+  padding: 65px 0 60px 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.confirm-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px #814cb41a, 0 1px 8px #baa2e533;
+  padding: 38px 38px 31px 38px;
+  margin: 0 auto;
+  text-align: center;
+  animation: fadeInCard 0.44s cubic-bezier(.22,1,.36,1);
+  position: relative;
+}
+@keyframes fadeInCard { from { opacity:0; transform:translateY(32px);} to { opacity:1; } }
+.confirm-card h2 {
+  color: var(--primary-dark);
+  font-weight: 900;
+  font-size: 2em;
+  margin-bottom: 22px;
+  letter-spacing: 0.01em;
+}
+.confirm-detail {
+  background: #f9f8fd;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px #905cfc13;
+  padding: 18px 18px 13px 18px;
+  margin-bottom: 28px;
+  font-size: 1.15em;
+  color: var(--gray-txt);
+  display: flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.confirm-detail .person {
+  font-weight: 800;
+  color: #be6600;
+}
+.confirm-detail .injury {
+  font-weight: 700;
+  color: #6c47d3;
+}
+.confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 26px;
+  margin-top: 26px;
+}
+.btn-danger {
+  background: linear-gradient(89deg, #e34639 78%, #f78b7b 140%);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 12px 37px;
+  font-weight: 700;
+  font-size: 1.13em;
+  box-shadow: 0 3px 24px #e3463911;
+  transition: background .16s, box-shadow .17s;
+  text-decoration: none;
+  outline: none;
+}
+.btn-danger:hover {
+  background: #b51f13;
+  color: #fff;
+}
+.btn-secondary {
+  background: #eae8f5;
+  color: #7a6fbe;
+  border-radius: 7px;
+  padding: 12px 31px;
+  font-weight: 600;
+  font-size: 1.12em;
+  border: none;
+  box-shadow: 0 2px 7px #7e6efe1a;
+  text-decoration: none !important;
+  transition: background .12s;
+}
+.btn-secondary:hover { background: #dbd8ee;}
+@media(max-width:700px){
+  .main-container{padding:14px;}
+  .confirm-card{ padding:15px 7vw 16px 7vw;}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-container">
+  <div class="confirm-card">
+    <h2><i class="fa fa-triangle-exclamation" style="color:#e34639;margin-right:8px;"></i> Confirm Delete</h2>
+    <div class="confirm-detail">
+      Are you sure you want to <b style="color:#e34639;">delete this injury record</b><br>
+      for <span class="person">{{ injury.player.name }}</span>
+      <br>
+      <span class="injury">({{ injury.name }})</span>?
+    </div>
+    <form method="post" class="confirm-actions">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Yes, Delete</button>
+      <a href="{% url 'organization_injury_detail' injury.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

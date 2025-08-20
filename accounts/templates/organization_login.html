@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organization Login</title>
+    <style>
+        /* General page styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #6f86d6, #48c6ef);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 350px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .login-form-container {
+            margin-bottom: 20px;
+        }
+
+        /* Styling form inputs */
+        input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input[type="email"]:focus, input[type="password"]:focus {
+            border-color: #48c6ef;
+            outline: none;
+            box-shadow: 0 0 8px rgba(72, 198, 239, 0.4);
+        }
+
+        /* Styling the login button */
+        .login-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #48c6ef;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-button:hover {
+            background-color: #48a2d1;
+        }
+
+        /* Footer section */
+        .login-footer {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .login-footer a {
+            color: #48c6ef;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <header class="login-header">
+            <h1>Organization Login</h1>
+        </header>
+        <div class="login-form-container">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="login-button">Login</button>
+            </form>
+        </div>
+        <div class="login-footer">
+
+        </div>
+    </div>
+</body>
+</html>

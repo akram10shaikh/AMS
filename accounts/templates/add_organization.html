@@ -1,0 +1,149 @@
+
+Here’s how you can create a full Django setup for adding organizations, handling their login, and redirecting them to the organization's dashboard after a successful login. This will include:
+
+Models for the organization and user association.
+Views for registration, login, and dashboard.
+URLs to route to the appropriate views.
+Templates for the organization registration, login, and the dashboards.
+1. Models
+We'll associate the Organization with the User model using a OneToOneField to handle authentication.
+
+python
+Copy code
+# models.py
+
+from django.conf import settings
+from django.db import models
+
+class Organization(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=15, blank=True)
+    address = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
+2. Forms
+You'll need forms for registration and login.
+
+python
+Copy code
+# forms.py
+
+from django import forms
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import get_user_model
+from .models import Organization
+
+User = get_user_model()
+
+class OrganizationRegistrationForm(forms.ModelForm):
+    email = forms.EmailField(required=True)
+    password = forms.CharField(widget=forms.PasswordInput)
+
+    class Meta:
+        model = Organization
+        fields = ['name', 'phone_number', 'address']
+
+    def save(self, commit=True):
+        user = User.objects.create_user(
+            username=self.cleaned_data['email'],
+            email=self.cleaned_data['email'],
+            password=self.cleaned_data['password']
+        )
+        organization = super().save(commit=False)
+        organization.user = user
+        if commit:
+            organization.save()
+        return organization
+
+class OrganizationLoginForm(AuthenticationForm):
+    username = forms.EmailField(label="Email")
+3. Views
+These views handle organization registration, login, and dashboard.
+
+python
+Copy code
+# views.py
+
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, authenticate, logout
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .forms import OrganizationRegistrationForm, OrganizationLoginForm
+from .models import Organization
+
+def organization_register(request):
+    if request.method == 'POST':
+        form = OrganizationRegistrationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Organization registered successfully. Please log in.')
+            return redirect('organization_login')
+    else:
+        form = OrganizationRegistrationForm()
+    return render(request, 'organization_register.html', {'form': form})
+
+def organization_login(request):
+    if request.method == 'POST':
+        form = OrganizationLoginForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('organization_dashboard')
+            else:
+                messages.error(request, 'Invalid credentials')
+        else:
+            messages.error(request, 'Invalid form submission')
+    else:
+        form = OrganizationLoginForm()
+    return render(request, 'organization_login.html', {'form': form})
+
+@login_required
+def organization_dashboard(request):
+    return render(request, 'organization_dashboard.html')
+
+def super_admin_dashboard(request):
+    return render(request, 'super_admin_dashboard.html')
+4. URLs
+Add the URL patterns for registration, login, and dashboard.
+
+python
+Copy code
+# urls.py
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('organization/add/', views.organization_register, name='add_organization'),
+    path('organization/login/', views.organization_login, name='organization_login'),
+    path('organization/dashboard/', views.organization_dashboard, name='organization_dashboard'),
+    path('dashboard/', views.super_admin_dashboard, name='super_admin_dashboard'),
+]
+5. Templates
+organization_register.html
+html
+Copy code
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Organization</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <h1>Register Organization</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Register</button>
+    </form>
+    <a href="{% url 'organization_login' %}">Already have an account? Log in here.</a>
+</body>
+</html>

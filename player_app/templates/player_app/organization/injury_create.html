@@ -1,0 +1,265 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+{% block extra_head %}
+    <style>
+        /* Your existing styling here */
+      
+        .form-section { margin-top: 30px; background: #fff; padding: 36px 36px 24px 36px;
+            border-radius: 12px; box-shadow: 0 2px 14px rgba(34,34,34,0.06);}
+        .form-section h2 { color: #28304f; margin-bottom: 20px; }
+        form { width: 100%; }
+        .form-row.two-col { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px 36px; margin-bottom: 28px; }
+        .player-details-grid { display: flex; gap: 35px; margin-bottom: 22px; }
+        .player-details table { font-size: 1em; color: #222f44; line-height: 1.7; }
+        .player-details td { padding: 3px 18px 3px 0; }
+        .player-photo img { border-radius: 10px; width: 110px; height: 115px; object-fit: cover;
+            border: 3px solid #e2e8f0;}
+        .form-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px 22px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; margin-bottom: 10px; }
+        .form-group label { color: #596080; margin-bottom: 8px; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { padding: 8px 10px; border: 1px solid #e1e5ec;
+            border-radius: 7px; background: #f5f6fa; font-size: 1em; outline: none; }
+        .form-group .body-diagram { width: 100%; max-width: 130px; margin: 4px 0; display: block; }
+        .submit-btn { display: block; margin: 24px 0 0 0; padding: 13px 47px; background: #6c47d3;
+            color: #fff; font-weight: bold; border: none; border-radius: 7px; font-size: 1.2em; cursor: pointer;
+            transition: background 0.2s; }
+        .submit-btn:hover { background: #563ab7; }
+        .body-container {
+            position: relative;
+            display: inline-block;
+            }
+            #body-diagram {
+            width: 300px;
+            height: auto;
+            display: block;
+            }
+            .marker {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background-color: red;
+            border-radius: 50%;
+            pointer-events: none;
+            border: 2px solid white;
+            box-shadow: 0 0 4px #000;
+            z-index: 2;
+            transform: translate(-50%, -50%);
+            }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <div class="form-section">
+        <h2>Create injury</h2>
+        <form method="POST" novalidate>
+            {% csrf_token %}
+            
+            <div class="form-row two-col">
+                <div class="form-group">
+                    <label for="{{ form.player.id_for_label }}">Player Name</label>
+                    {{ form.player }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.reported_by.id_for_label }}">Reported By (Physio)</label>
+                    {{ form.reported_by }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.injury_date.id_for_label }}">Injury Date</label>
+                    {{ form.injury_date }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}">Title</label>
+                    {{ form.name }}
+                </div>
+            </div>
+
+            <!-- Player info section initially hidden -->
+            <div class="player-details-grid" id="player-details-section" style="display:none;">
+                <div class="player-details">
+                    <table>
+                        <tr><td>Name</td><td id="p-name"></td></tr>
+                        <tr><td>Gender</td><td id="p-gender"></td></tr>
+                        <tr><td>Age</td><td id="p-age"></td></tr>
+                        <tr><td>Email Address</td><td id="p-email"></td></tr>
+                        <tr><td>Role</td><td id="p-role"></td></tr>
+                        <tr><td>Bowling style</td><td id="p-bowling_style"></td></tr>
+                    </table>
+                </div>
+                <div class="player-details">
+                    <table>
+                        <tr><td>Player id</td><td id="p-id"></td></tr>
+                        <tr><td>Date of Birth</td><td id="p-dob"></td></tr>
+                        <tr><td>Contact number</td><td id="p-contact"></td></tr>
+                        <tr><td>Handedness</td><td id="p-handedness"></td></tr>
+                        <tr><td>Batting style</td><td id="p-batting_style"></td></tr>
+                        <tr><td>District cricket association id</td><td id="p-district"></td></tr>
+                    </table>
+                </div>
+                <div class="player-photo">
+                    <img id="p-photo" src="" alt="player photo">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.severity.id_for_label }}">Severity</label>
+                    {{ form.severity }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.venue.id_for_label }}">Venue</label>
+                    {{ form.venue }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.team.id_for_label }}">Team</label>
+                    {{ form.team }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.injury_type.id_for_label }}">Type of injury</label>
+                    {{ form.injury_type }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.type_of_activity.id_for_label }}">Type of activity at time of injury</label>
+                    {{ form.type_of_activity }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.cause_of_injury.id_for_label }}">Cause of injury</label>
+                    {{ form.cause_of_injury }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.nature_of_injury.id_for_label }}">Nature of injury</label>
+                    {{ form.nature_of_injury }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.notes.id_for_label }}">Notes</label>
+                    {{ form.notes }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.expected_date_of_return.id_for_label }}">Expected Date of Return</label>
+                    {{ form.expected_date_of_return }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.body_segment.id_for_label }}">Body segment</label>
+                    {{ form.body_segment }}
+                </div>
+                 <div class="form-group">
+                     <label for="part-select">Body part effected</label><br>
+                        <select id="part-select" multiple size="12" name="affected_body_part" class="form-control">
+                            <option value="head">Head</option>
+                            <option value="neck">Neck</option>
+                            <option value="chest">Chest</option>
+                            <option value="back">Back</option>
+                            <option value="abdomen">Abdomen</option>
+                            <option value="left-arm">Left Arm</option>
+                            <option value="right-arm">Right Arm</option>
+                            <option value="left-hand">Left Hand</option>
+                            <option value="right-hand">Right Hand</option>
+                            <option value="left-leg">Left Leg</option>
+                            <option value="right-leg">Right Leg</option>
+                            <option value="left-foot">Left Foot</option>
+                            <option value="right-foot">Right Foot</option>
+                        </select>
+                    <div class="body-container">
+                        <img id="body-diagram" src="{% static 'image.jpg' %}" alt="Body Diagram">
+                        <!-- Markers dynamically inserted here -->
+
+                    </div>
+
+            <button type="submit" class="submit-btn">Submit</button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const playerSelect = document.getElementById('id_player');
+    const detailsSection = document.getElementById('player-details-section');
+
+    playerSelect.addEventListener('change', function () {
+        const playerId = this.value;
+
+        if (!playerId) {
+            detailsSection.style.display = 'none';
+            return;
+        }
+
+        // Adjust this fetch URL if your ajax url has a prefix (e.g., '/player_app/ajax/get_player_info/')
+        fetch('/player_app/ajax/get_player_info/' + playerId + '/')
+        .then(resp => {
+            if (!resp.ok) throw new Error('Network response was not ok');
+            return resp.json();
+        })
+        .then(data => {
+            if (data.success) {
+                document.getElementById('p-name').textContent = data.player.name || '';
+                document.getElementById('p-gender').textContent = data.player.gender || '';
+                document.getElementById('p-age').textContent = data.player.age || '';
+                document.getElementById('p-email').textContent = data.player.email || '';
+                document.getElementById('p-role').textContent = data.player.role || '';
+                document.getElementById('p-bowling_style').textContent = data.player.bowling_style || '';
+                document.getElementById('p-id').textContent = data.player.player_id || '';
+                document.getElementById('p-dob').textContent = data.player.date_of_birth || '';
+                document.getElementById('p-contact').textContent = data.player.contact_number || '';
+                document.getElementById('p-handedness').textContent = data.player.handedness || '';
+                document.getElementById('p-batting_style').textContent = data.player.batting_style || '';
+                document.getElementById('p-district').textContent = data.player.district_cricket_association_id || '';
+                document.getElementById('p-photo').src = data.player.photo_url;
+                detailsSection.style.display = '';  // Show section
+            } else {
+                detailsSection.style.display = 'none';
+            }
+        })
+        .catch(err => {
+            console.error('Failed to fetch player info:', err);
+            detailsSection.style.display = 'none';
+        });
+    });
+
+    // Trigger update on page load if a player is already selected
+    if (playerSelect.value) {
+        playerSelect.dispatchEvent(new Event('change'));
+    }
+});
+</script>
+  <script>
+    const bodyParts = {
+      "head":      {x: 75,  y: 35},
+      "neck":      {x: 75,  y: 55},
+      "chest":     {x: 75,  y: 85},
+      "back":      {x: 225, y: 85},
+      "abdomen":   {x: 75,  y: 130},
+      "left-arm":  {x: 35,  y: 85},
+      "right-arm": {x: 115, y: 85},
+      "left-hand": {x: 15,  y: 145},
+      "right-hand":{x: 135, y: 145},
+      "left-leg":  {x: 60,  y: 215},
+      "right-leg": {x: 90,  y: 215},
+      "left-foot": {x: 58,  y: 260},
+      "right-foot":{x: 92,  y: 260}
+    };
+
+    const partSelect = document.getElementById('part-select');
+    const bodyContainer = document.querySelector('.body-container');
+
+    function updateMarkers() {
+      // Remove previous markers
+      const oldMarkers = document.querySelectorAll('.marker');
+      oldMarkers.forEach(marker => marker.remove());
+
+      // Get all selected options
+      const selected = Array.from(partSelect.selectedOptions).map(opt => opt.value);
+      selected.forEach(part => {
+        if (bodyParts[part]) {
+          const mk = document.createElement('div');
+          mk.className = 'marker';
+          mk.style.left = bodyParts[part].x + 'px';
+          mk.style.top = bodyParts[part].y + 'px';
+          bodyContainer.appendChild(mk);
+        }
+      });
+    }
+
+    partSelect.addEventListener('change', updateMarkers);
+  </script>
+
+{% endblock %}

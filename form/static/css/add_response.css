@@ -1,0 +1,128 @@
+html,body {
+    height: 100%;
+}
+
+body {
+   display: flex;
+   justify-content: flex-start;
+   flex-direction: column;
+   background-color: #F3F4F8 !important;
+   overflow: auto;
+}
+
+ul {
+    padding-left: 0 !important;
+    margin: 0 !important;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+}
+
+.container {
+    background-color: #FAFAFA;
+    width: 50% !important;
+    display: flex;
+   align-items: center;
+   justify-content: center;
+   flex-direction: column;
+    box-shadow: 1px 1px 10px 2px #00000025 !important;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 70px !important;
+    margin-bottom: 50px !important;
+}
+
+.container h1 {
+    font-size: 2.2rem;
+    margin-bottom: 30px;
+}
+
+.container form {
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+form label {
+    font-size: 1rem;
+    color: #555562
+}
+
+.container form input {
+    width: 100%;
+}
+
+form button {
+    background-color: #0D81FE;
+    border-radius: 3px;
+    padding: 6px 10px;
+    border: none;
+    color: #fff;
+    margin-top: 20px;
+}
+
+form button:hover {
+    background-color: #0874E9;
+}
+
+.container h2 {
+    margin-top: 40px;
+    font-size: 1.5rem;
+    align-self: flex-start;
+}
+
+.container .inner-container {
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+}
+
+.line {
+    background-color: #DADBDD;
+    height: 1.5px;
+    width: 100%;  
+ }
+
+ .container .response-container {
+    margin: 20px 0;
+ }
+
+ .response-container h3 {
+    font-size: 1.2rem;
+    text-decoration: underline;
+ }
+
+ .response-container li {
+    list-style: none;
+    margin-bottom: 5px;
+ }
+
+ .response-container .view-btn {
+    border-radius: 5px;
+    padding: 4px 8px;
+    text-decoration: none;
+    color: #fff;
+    background: #239E4E;
+    margin-top: 10px !important;
+ }
+
+ .response-container .view-btn:hover {
+    background: #1A7D3C;
+ }
+
+ .inner-container .below-link {
+    background-color: #6C757E;
+    border-radius: 3px;
+    padding: 6px 10px;
+    border: none;
+    color: #fff;
+    margin-top: 20px;
+    align-self: center;
+    text-decoration: none;
+ }
+
+ .inner-container .below-link:hover {
+    background-color: #53595F;
+ }

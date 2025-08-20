@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .navbar {
+            width: 100%;
+            background-color: var(--navbar-bg-color, #343a40);
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar .navbar-left a, .navbar .navbar-right a {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 15px;
+            display: inline-block;
+        }
+        .navbar .navbar-right a:not(:last-child) {
+            border-right: 1px solid #fff;
+        }
+        .navbar a:hover {
+            background-color: #007bff;
+        }
+        .color-boxes {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+        }
+        .color-box {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            border: 1px solid #fff;
+        }
+        .content-wrapper {
+            display: flex;
+            flex-grow: 1;
+            margin-top: 50px; /* Height of header or nav */
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 60px;
+            background-color: var(--sidebar-bg-color, #343a40);
+            height: calc(100vh - 50px);
+            padding-top: 20px;
+            position: fixed;
+            top: 50px;
+            left: 0;
+            overflow: hidden;
+            transition: width 0.3s;
+            z-index: 990;
+        }
+        .sidebar:hover {
+            width: 250px;
+        }
+        .sidebar .logo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+        .sidebar a {
+            padding: 10px 15px;
+            text-decoration: none;
+            font-size: 1rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        .sidebar a i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        .sidebar a:hover {
+            background-color: #007bff;
+        }
+        .sidebar .text {
+            display: none;
+        }
+        .sidebar:hover .text {
+            display: inline;
+        }
+        .main-content {
+            margin-left: 60px;
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+            height: calc(100vh - 50px);
+            transition: margin-left 0.3s;
+        }
+        .sidebar:hover ~ .main-content {
+            /* This won't work as is, JS needed for sidebar open effect */
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-top: 0;
+            padding-left: 100px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #e6f249;
+        }
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .user-title {
+            font-weight: 600;
+        }
+        .search-bar {
+            width: 370px;
+            padding: 10px 15px;
+            background: #fff;
+            border: 1px solid #d4d7e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #232733;
+        }
+        h1 {
+            font-size: 2.2rem;
+            margin: 0;
+            font-weight: 700;
+            color: #232733;
+        }
+        .subtitle {
+            color: #8890a1;
+            font-size: 1rem;
+            margin: 0 0 16px 0;
+            font-weight: 400;
+        }
+        .player-table-card {
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 24px 0 #0001;
+            padding: 36px 26px 30px 26px;
+            max-width: 98vw;
+            position: relative;
+        }
+        .player-table thead th {
+            font-weight: bold;
+            color: #6200ee;
+            background: #f1f0fe;
+            border-bottom: 2.5px solid #e9e7fd;
+        }
+        .player-table td, .player-table th {
+            vertical-align: middle;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .table-striped tbody tr:nth-of-type(odd) {
+            background: #fcfbfe;
+        }
+        .small-head {
+            font-size: 0.96em;
+        }
+        .table-actions a {
+            margin-right: 7px;
+            font-size: 1.12em;
+            color: #4547b7;
+        }
+        .table-actions a:hover {
+            color: #ef3942;
+        }
+        .badge-role {
+            font-size: 0.95em;
+            background: #f1edfc;
+            color: #5736ca;
+        }
+        @media (max-width:1000px) {
+            .player-table-card { padding: 15px 2px;}
+            .player-table th, .player-table td { font-size: 0.91em; }
+            .select-filter {min-width: 100px;}
+        }
+        @media (max-width:700px) {
+            .player-table-card{min-width: 96vw; padding: 4px 1vw;}
+        }
+        .filter-bar {
+            margin-bottom: 18px;
+            padding: 12px 16px 8px;
+            background: #f6f6fa;
+            border-radius: 7px;
+            box-shadow:0 1px 4px #0001;
+        }
+        .filter-dropdown-btn { margin-right:20px; }
+        .filter-popover {
+            display: none;
+            position: absolute; z-index: 99;
+            min-width: 320px;
+            padding: 22px 18px 14px 18px;
+            background: #fafafd; border-radius: 11px; box-shadow: 0 2px 22px #0002;
+            top: 50px; left: 0; right: auto;
+            max-width: 95vw;
+        }
+        .filter-popover .form-group {margin-bottom: 1rem;}
+        .btn-close-filter { float:right; color:#a22; background: none; border:none; }
+        .show-filters { display: block !important; }
+        .filter-active-badge {
+            background: #e4eaff;
+            color: #4b4d6c;
+            border-radius: 14px;
+            font-size: 0.97em;
+            padding: 2px 13px;
+            margin-right: 4px;
+        }
+        .filter-remove-x { color: #c13a3a; margin-left:7px; cursor:pointer; }
+        .sort-link { color:#6b4eda; text-decoration:none; font-weight:600;}
+        .sort-link.active { color:#ef3942; text-decoration:underline;}
+        @media(max-width:700px){
+            .filter-popover {min-width: 90vw; left:10px;}
+        }
+        .scheme1 {
+            --navbar-bg-color: #4CAF50;
+            --sidebar-bg-color: #388E3C;
+        }
+        .scheme2 {
+            --navbar-bg-color: #2196F3;
+            --sidebar-bg-color: #1976D2;
+        }
+        .scheme3 {
+            --navbar-bg-color: #FF9800;
+            --sidebar-bg-color: #F57C00;
+        }
+        .scheme4 {
+            --navbar-bg-color: #9C27B0;
+            --sidebar-bg-color: #7B1FA2;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    <header>
+        <div>
+            <h1>Hello {{ request.user.username }},</h1>
+            <div class="subtitle">Welcome to the AMS.</div>
+        </div>
+       
+        <div class="user-info">
+            <div>
+                <div class="user-title">{{ request.user.username }}</div>
+                <div style="color: #adb5c7; font-size: 0.93em;">{{ request.user.role }}</div>
+            </div>
+            <div class="user-avatar">
+                <img src="{% if request.user.image %}{{ request.user.image.url }}{% else %}https://randomuser.me/api/portraits/women/68.jpg{% endif %}" alt="User avatar" />
+            </div>
+        </div>
+    </header>
+    <div class="content-wrapper">
+        <div class="sidebar">
+            <a href="{% url 'organization_dashboard_org' %}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span class="text">Dashboard</span>
+            </a>
+            {% if user.staff.player_management %}
+            <a href="{% url 'organization_player_list' %}">
+                <i class="fas fa-list"></i>
+                <span class="text">Player List</span>
+            </a>
+
+            <a href="{% url 'organization_player_add' %}">
+                <i class="fas fa-plus"></i>
+                <span class="text">Add Player</span>
+            </a>
+            {% endif %}
+            {% if user.staff.injury_tracking%}
+            <a href="{% url 'organization_injury_list' %}">
+                <i class="fas fa-list"></i>
+                <span class="text">Injury List</span>
+            </a>            
+            <a href="{% url 'organization_create_injury' %}">
+                <i class="fas fa-users"></i>
+                <span class="text">Create Injury</span>
+            </a>
+            {% endif %}
+            {% if user.staff.view_activity_logs %}
+            <a href="{% url 'activity_log_combined_view' %}">
+                <i class="fas fa-history"></i>
+                <span class="text">Activity Logs</span> 
+            </a>
+            {% endif %}
+            {% if user.staff.create_camps_tournaments %}
+            <a href="{% url 'organization_camps_tournaments' %}">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="text">Camps & Tournaments</span>
+            </a>
+            {% endif %}
+            <a href="{% url 'test_dashboard' %}">
+                <i class="fas fa-tasks"></i>
+                <span class="text">Test Dashboard</span>
+            </a>
+            <a href="{% url 'logout' %}">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="text">Logout</span>
+            </a>
+            <div class="color-boxes">
+                <div class="color-box" style="background-color: #4CAF50;" data-scheme="scheme1"></div>
+                <div class="color-box" style="background-color: #2196F3;" data-scheme="scheme2"></div>
+                <div class="color-box" style="background-color: #FF9800;" data-scheme="scheme3"></div>
+                <div class="color-box" style="background-color: #9C27B0;" data-scheme="scheme4"></div>
+            </div>
+        </div>
+        <div class="main-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Only remove previous scheme classes, not all classes
+        document.addEventListener('DOMContentLoaded', function() {
+            const colorBoxes = document.querySelectorAll('.color-box');
+            colorBoxes.forEach(box => {
+                box.addEventListener('click', function() {
+                    document.body.classList.remove('scheme1', 'scheme2', 'scheme3', 'scheme4');
+                    const selectedScheme = box.getAttribute('data-scheme');
+                    if (selectedScheme !== 'default') {
+                        document.body.classList.add(selectedScheme);
+                    }
+                });
+            });
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

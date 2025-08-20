@@ -1,0 +1,54 @@
+.container {
+    background-color: var(--custom-bg-color);
+    width: 90% !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    box-shadow:  var(--custom-bg-color);
+    padding: 2px;
+    border-radius: 10px;
+    margin-top:-10%;
+}
+.container h2{
+    margin-top:0%;
+    text-align:center;
+} 
+.container table {
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top:3%;
+}
+.container table td{
+    text-align:center;
+}
+
+.container table, th, td {
+    border: var(--custom-bg-color);
+    padding: 4px;
+}
+
+.container table thead {
+    background-color: var(--custom-header-bg);
+    color: var(--custom-text-color);
+    text-align: center;
+    font-weight: 400 !important;
+    font-size: 1.1rem
+}
+
+thead tr th {
+    font-weight: 600;
+}
+
+tbody tr td:last-child {
+    text-align: center;
+}
+
+table a {
+    text-decoration: none;
+    color: #fff;
+    padding: 5px 7px;
+    border-radius: 5px;
+    margin: 4px;
+}

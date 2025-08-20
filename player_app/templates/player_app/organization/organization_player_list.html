@@ -1,0 +1,339 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+{% load player_extras %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.player-table-card {
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 24px 0 #0001;
+    padding: 36px 26px 30px 26px;
+    max-width: 98vw;
+}
+.player-table thead th {
+    font-weight: bold;
+    color: #6200ee;
+    background: #f1f0fe;
+    border-bottom: 2.5px solid #e9e7fd;
+}
+.player-table td, .player-table th { vertical-align: middle; }
+.table-responsive { overflow-x: auto;}
+.table-striped tbody tr:nth-of-type(odd) { background: #fcfbfe;}
+.filter-dropdown-btn {margin-right:16px;}
+.filter-popover {
+    display: none;
+    position: absolute; z-index: 99;
+    min-width: 320px;
+    padding: 22px 18px 14px 18px;
+    background: #fafafd; border-radius: 11px; box-shadow: 0 2px 22px #0002;
+    top: 50px; left: 0; right: auto;
+    max-width:95vw;
+}
+.show-filters { display: block !important; }
+@media(max-width:700px){ .filter-popover{min-width: 90vw; left:10px;} }
+.btn-close-filter { float:right; color:#a22; background:none; border:none; }
+.table-actions a { margin-right: 7px; font-size:1.12em; color: #4547b7;}
+.table-actions a:hover { color: #ef3942; }
+.filter-active-badge { background:#e4eaff; color:#4b4d6c; border-radius:14px; font-size:0.97em; padding:2px 13px; margin-right:4px;}
+.filter-remove-x { color:#c13a3a; margin-left:7px; cursor:pointer; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="player-table-card position-relative">
+    <h3 class="mb-3 text-center" style="color:#6200ee; font-weight:600;">Player List</h3>
+
+<div class="d-flex align-items-center flex-wrap mb-2" style="position:relative;">
+    <button type="button" class="btn btn-primary btn-sm filter-dropdown-btn" id="filterBtn">
+        <i class="fa fa-filter"></i> Filter
+        {% if filters_count %}<span class="badge badge-warning ml-1">{{ filters_count }}</span>{% endif %}
+    </button>
+    <button type="button" class="btn btn-success btn-sm" id="downloadExcelBtn" style="margin-left:8px;">
+        <i class="fa fa-file-excel"></i> Export
+    </button>
+    <button type="button" class="btn btn-secondary btn-sm" id="columnSelectBtn" style="margin-left:8px;">
+        <i class="fa fa-columns"></i> Columns
+    </button>
+    {% if filters_count %}
+        <a class="btn btn-light btn-sm ml-2" href="{% url 'organization_player_list' %}">Clear All</a>
+    {% endif %}
+</div>
+
+    <!-- Filter Popover Menu -->
+    <div class="filter-popover" id="filterPopover">
+        <form method="get" class="w-100" id="filterFormPopover" autocomplete="off">
+            <button class="btn-close-filter" type="button" id="closeFilterBtn">&times;</button>
+            <div class="form-group">
+                <label for="id_age_category"><b>Age Category</b></label>
+                <select multiple name="age_category" class="form-control form-control-sm" id="id_age_category">
+                    {% for val, label in AGE_CHOICES %}
+                        <option value="{{ val }}" {% if val in active_filters.age_category %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="id_handedness"><b>Handedness</b></label>
+                <select multiple name="handedness" class="form-control form-control-sm" id="id_handedness">
+                    {% for val, label in HAND_CHOICES %}
+                        <option value="{{ val }}" {% if val in active_filters.handedness %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="id_role"><b>Role</b></label>
+                <select multiple name="role" class="form-control form-control-sm" id="id_role">
+                    {% for val in ROLE_CHOICES %}
+                        {% if val %}
+                            <option value="{{ val }}" {% if val in active_filters.role %}selected{% endif %}>{{ val }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="text-right mt-3">
+                <button class="btn btn-primary btn-sm" type="submit">Apply</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Column Selection Popover -->
+    <div class="filter-popover" style="min-width:240px;" id="columnPopover">
+        <button class="btn-close-filter" type="button" id="closeColumnBtn">&times;</button>
+        <form id="columnFormPopover" class="w-100 px-2 py-1" autocomplete="off">
+            <label class="mb-2"><b>Select additional columns (choose up to 4)</b></label>
+            <div style="max-height:350px;overflow:auto;">
+                <label><input type="checkbox" checked disabled> S.No (fixed)</label><br>
+                <label><input type="checkbox" checked disabled> Player ID (fixed)</label><br>
+                <label><input type="checkbox" checked disabled> Name (fixed)</label><br>
+                <!-- Actions always visible; no checkbox -->
+                <label><input type="checkbox" class="col-toggle" value="col-email"> Email</label><br>
+                <label><input type="checkbox" class="col-toggle" value="col-dob"> D.O.B</label><br>
+                <label><input type="checkbox" class="col-toggle" value="col-contact"> Primary Contact</label><br>
+                <label><input type="checkbox" class="col-toggle" value="col-contact2"> Secondary Contact</label><br>
+                <label><input type="checkbox" class="col-toggle" value="col-gender"> Gender</label><br>
+                <label><input type="checkbox" class="col-toggle" value="col-state"> State</label><br>
+                <label><input type="checkbox" class="col-toggle" value="col-role"> Role</label><br>
+                <label><input type="checkbox" class="col-toggle" value="col-batting"> Batting Style</label><br>
+                <label><input type="checkbox" class="col-toggle" value="col-bowling"> Bowling Style</label><br>
+                <label><input type="checkbox" class="col-toggle" value="col-handedness"> Handedness</label><br>
+                <label><input type="checkbox" class="col-toggle" value="col-age"> Age Category</label><br>
+                <label><input type="checkbox" class="col-toggle" value="col-guardian"> Guardian Name</label><br>
+                <label><input type="checkbox" class="col-toggle" value="col-relation"> Relation</label><br>
+                <label><input type="checkbox" class="col-toggle" value="col-guardian-mob"> Guardian Mobile</label>
+            </div>
+            <div class="text-right mt-2">
+                <button type="button" class="btn btn-primary btn-sm" id="applyColumnsBtn">Apply</button>
+            </div>
+        </form>
+    </div>
+
+    {% if filters_count %}
+    <div class="mb-2 d-flex align-items-center flex-wrap">
+        {% for val in active_filters.age_category %}
+            <span class="filter-active-badge">
+                Age: {{ AGE_CHOICES|get_label_from_choice:val }}
+                <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}
+                    {% if k != 'age_category' or v != val %}
+                        {{ k }}={{ v|urlencode }}&
+                    {% endif %}
+                {% endfor %}{% endfor %}" class="filter-remove-x" title="Remove">&#10005;</a>
+            </span>
+        {% endfor %}
+        {% for val in active_filters.handedness %}
+            <span class="filter-active-badge">
+                Handedness: {{ HAND_CHOICES|get_label_from_choice:val }}
+                <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}
+                    {% if k != 'handedness' or v != val %}
+                        {{ k }}={{ v|urlencode }}&
+                    {% endif %}
+                {% endfor %}{% endfor %}" class="filter-remove-x" title="Remove">&#10005;</a>
+            </span>
+        {% endfor %}
+        {% for val in active_filters.role %}
+            <span class="filter-active-badge">
+                Role: {{ val }}
+                <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}
+                    {% if k != 'role' or v != val %}{{ k }}={{ v|urlencode }}&{% endif %}
+                {% endfor %}{% endfor %}" class="filter-remove-x" title="Remove">&#10005;</a>
+            </span>
+        {% endfor %}
+        <span class="text-info ml-2">Filters applied: {{ filters_count }}</span>
+    </div>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-striped player-table align-middle">
+            <thead>
+                <tr>
+                    <th class="col-serial">S.No</th>
+                    <th class="col-id">Player ID</th>
+                    <th class="col-name">Name</th>
+                    <th class="col-email">Email</th>
+                    <th class="col-dob">D.O.B</th>
+                    <th class="col-contact">Primary Contact</th>
+                    <th class="col-contact2">Secondary Contact</th>
+                    <th class="col-gender">Gender</th>
+                    <th class="col-state">State</th>
+                    <th class="col-role">Role</th>
+                    <th class="col-batting">Batting Style</th>
+                    <th class="col-bowling">Bowling Style</th>
+                    <th class="col-handedness">Handedness</th>
+                    <th class="col-age">Age Category</th>
+                    <th class="col-guardian">Guardian Name</th>
+                    <th class="col-relation">Relation</th>
+                    <th class="col-guardian-mob">Guardian Mobile</th>
+                    <th class="col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in players %}
+                <tr>
+                    <td class="col-serial">{{ forloop.counter }}</td>
+                    <td class="col-id">{{ player.id }}</td>
+                    <td class="col-name" style="font-weight:600; color:#222f5a;">{{ player.name }}</td>
+                    <td class="col-email">{{ player.email }}</td>
+                    <td class="col-dob">{% if player.date_of_birth %}{{ player.date_of_birth|date:"d M Y" }}{% endif %}</td>
+                    <td class="col-contact">{{ player.primary_contact_number }}</td>
+                    <td class="col-contact2">{{ player.secondary_contact_number }}</td>
+                    <td class="col-gender">{{ player.get_gender_display }}</td>
+                    <td class="col-state">{{ player.state }}</td>
+                    <td class="col-role">{{ player.role }}</td>
+                    <td class="col-batting">{{ player.batting_style }}</td>
+                    <td class="col-bowling">{{ player.bowling_style }}</td>
+                    <td class="col-handedness">{{ player.get_handedness_display }}</td>
+                    <td class="col-age">{% if player.age_category %}{{ player.get_age_category_display }}{% endif %}</td>
+                    <td class="col-guardian">{{ player.guardian_name }}</td>
+                    <td class="col-relation">{{ player.relation }}</td>
+                    <td class="col-guardian-mob">{{ player.guardian_mobile_number }}</td>
+                    <td class="col-actions table-actions">
+                        <a href="{% url 'organization_player_detail' player.id %}" title="Details"><i class="fa fa-eye"></i></a>
+                        <a href="{% url 'organization_player_edit' player.id %}" title="Edit"><i class="fa fa-pen"></i></a>
+                        <a href="{% url 'organization_player_delete' player.id %}" title="Delete" onclick="return confirm('Delete player {{ player.name }}?')"><i class="fa fa-trash"></i></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="18" class="text-center text-muted">No players found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// Filter popover logic
+const filterBtn = document.getElementById("filterBtn");
+const filterPopover = document.getElementById("filterPopover");
+const closeFilterBtn = document.getElementById("closeFilterBtn");
+
+document.addEventListener('click', function(e) {
+    if (filterBtn && filterPopover) {
+        if (filterBtn.contains(e.target)) {
+            filterPopover.classList.toggle("show-filters");
+            filterPopover.style.left = (filterBtn.offsetLeft) + "px";
+            filterPopover.style.top = (filterBtn.offsetTop + filterBtn.offsetHeight + 6) + "px";
+        } else if (!filterPopover.contains(e.target)) {
+            filterPopover.classList.remove("show-filters");
+        }
+    }
+});
+if (closeFilterBtn && filterPopover) {
+    closeFilterBtn.onclick = function() {
+        filterPopover.classList.remove('show-filters');
+    };
+}
+
+// Column selection popover logic
+const columnBtn = document.getElementById("columnSelectBtn");
+const columnPopover = document.getElementById("columnPopover");
+const closeColumnBtn = document.getElementById("closeColumnBtn");
+const colCheckboxes = document.querySelectorAll(".col-toggle");
+const applyColumnsBtn = document.getElementById("applyColumnsBtn");
+
+const FIXED_COLS = ["col-serial", "col-id", "col-name", "col-actions"];
+const ALL_SWAP_COLS = [
+    "col-email", "col-dob", "col-contact", "col-contact2", "col-gender", "col-state", "col-role",
+    "col-batting", "col-bowling", "col-handedness", "col-age",
+    "col-guardian", "col-relation", "col-guardian-mob"
+];
+const MAX_SELECTABLE = 4; // only 4 additional user-chosen
+
+function getSelectedCols() {
+    return Array.from(colCheckboxes)
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+}
+function setTableColumns(selectedCols) {
+    [...FIXED_COLS, ...ALL_SWAP_COLS].forEach(col => {
+        document.querySelectorAll('.' + col).forEach(cell => {
+            if (FIXED_COLS.includes(col)) {
+                cell.style.display = "";
+            } else {
+                cell.style.display = selectedCols.includes(col) ? "" : "none";
+            }
+        });
+    });
+}
+function saveSelectedCols(cols) {
+    localStorage.setItem("player_table_columns", JSON.stringify(cols));
+}
+function loadSelectedCols() {
+    let val = localStorage.getItem("player_table_columns");
+    try {
+        return val ? JSON.parse(val) : null;
+    } catch {
+        return null;
+    }
+}
+function enforceMaxSelectable(e) {
+    const checked = getSelectedCols();
+    if (checked.length > MAX_SELECTABLE) {
+        e.target.checked = false;
+        alert("You can select only " + MAX_SELECTABLE + " additional columns.");
+    }
+}
+colCheckboxes.forEach(cb => {
+    cb.addEventListener("change", enforceMaxSelectable);
+});
+
+if (columnBtn && columnPopover) {
+    columnBtn.onclick = function() {
+        columnPopover.classList.toggle("show-filters");
+        columnPopover.style.left = (columnBtn.offsetLeft) + "px";
+        columnPopover.style.top = (columnBtn.offsetTop + columnBtn.offsetHeight + 6) + "px";
+        const stored = loadSelectedCols() || ALL_SWAP_COLS.slice(0, MAX_SELECTABLE);
+        colCheckboxes.forEach(cb => cb.checked = stored.includes(cb.value));
+    };
+}
+if (closeColumnBtn && columnPopover) {
+    closeColumnBtn.onclick = function() {
+        columnPopover.classList.remove('show-filters');
+    };
+}
+if (applyColumnsBtn) {
+    applyColumnsBtn.onclick = function() {
+        const selected = getSelectedCols();
+        if (selected.length === 0) {
+            alert("Select at least one additional column.");
+            return;
+        }
+        setTableColumns(selected);
+        saveSelectedCols(selected);
+        columnPopover.classList.remove('show-filters');
+    };
+}
+document.addEventListener("DOMContentLoaded", function() {
+    const stored = loadSelectedCols();
+    setTableColumns(stored || ALL_SWAP_COLS.slice(0, MAX_SELECTABLE));
+});
+
+document.getElementById("downloadExcelBtn").onclick = function() {
+    // Build URL with current filters
+    let url = "{% url 'organization_player_export' %}";
+    let params = new URLSearchParams(window.location.search);
+    window.location.href = url + (params.toString() ? ("?" + params.toString()) : "");
+};
+</script>
+{% endblock %}

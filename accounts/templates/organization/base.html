@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .navbar {
+            width: 100%;
+            background-color: var(--navbar-bg-color, #343a40);
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar .navbar-left a, .navbar .navbar-right a {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 8px 15px;
+            display: inline-block;
+        }
+        .navbar .navbar-right a:not(:last-child) {
+            border-right: 1px solid #ffffff;
+        }
+        .navbar a:hover {
+            background-color: #007bff;
+        }
+        .color-boxes {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+        }
+        .color-box {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            border: 1px solid #ffffff;
+        }
+        .content-wrapper {
+            display: flex;
+            flex-grow: 1;
+            margin-top: 50px; /* Adjust according to the height of the navbar */
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 60px; /* Collapsed width */
+            background-color: var(--sidebar-bg-color, #343a40);
+            height: calc(100vh - 50px); /* Adjust according to the height of the navbar */
+            padding-top: 20px;
+            position: fixed;
+            top: 50px; /* Adjust according to the height of the navbar */
+            left: 0;
+            overflow: hidden;
+            transition: width 0.3s;
+            z-index: 1002;
+            box-shadow: 0 1px 10px #0002;
+        }
+        .sidebar:hover {
+            width: 250px; /* Expanded width */
+        }
+        .sidebar a {
+            padding: 12px 22px;
+            text-decoration: none;
+            font-size: 1rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .sidebar a i {
+            margin-right: 12px;
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+        .sidebar a:hover {
+            background-color: #007bff;
+        }
+        .sidebar .text {
+            display: none;
+        }
+        .sidebar:hover .text {
+            display: inline;
+        }
+        .main-content {
+            margin-left: 60px; /* Collapsed sidebar width */
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+            height: calc(100vh - 50px); /* Adjust according to the height of the navbar */
+            transition: margin-left 0.3s;
+        }
+        .sidebar:hover ~ .main-content {
+            margin-left: 250px; /* Expanded sidebar width */
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <!-- Navbar Left: Home Logo -->
+        <a href="{% url 'player_list' %}" class="navbar-brand">Home</a>
+    </div>
+    <div style="position: fixed; top: 10px; right: 10px; z-index: 1000; background-color: #df4c4c; padding: 10px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+        {% if user.is_authenticated %}
+            <span><strong>{{ user.username }}</strong> - {{ user.get_role_display }}</span>
+            <form method="POST" action="{% url 'logout' %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" style="background-color: #d9534f; color: white; border: none; padding: 5px 10px; margin-left: 10px; cursor: pointer;">Logout</button>
+            </form>
+        {% else %}
+            <span>Not logged in</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="content-wrapper">
+    <!-- Sidebar start -->
+    <div class="sidebar">
+
+            {% if user.staff.player_management %}
+            <a href="{% url 'organization_dashboard_org' %}">
+                <i class="fas fa-users"></i>
+                <span class="text">Player Management</span>
+            </a>
+            {% endif %}
+
+            {% if user.staff.injury_tracking %}
+            <a href="{% url 'organization_create_injury' %}">
+                <i class="fas fa-notes-medical"></i>
+                <span class="text">Injury Creation</span>
+            </a>
+            <a href="{% url 'organization_injury_list' %}">
+                <i class="fas fa-ambulance"></i>
+                <span class="text">View Injuries</span>
+            </a>
+            {% endif %}
+
+            {% comment %} {% if user.staff.add_form %}
+            <a href="{% url 'form:create_form2' %}">
+                <i class="fas fa-plus-square"></i>
+                <span class="text">Add Form</span>
+            </a>
+            {% endif %}
+
+            {% if user.staff %}
+            <a href="{% url 'form:list_forms' %}">
+                <i class="fas fa-folder-open"></i>
+                <span class="text">Form Dashboard</span>
+            </a>
+            {% endif %}
+
+            {% if user.staff.view_result %}
+            <a href="{% url 'view_result' %}">
+                <i class="fas fa-chart-line"></i>
+                <span class="text">View Results</span>
+            </a>
+            {% endif %} {% endcomment %}
+
+            {% if user.staff.create_camps_tournaments %}
+            <a href="{% url 'organization_create_camp' %}">
+                <i class="fas fa-flag"></i>
+                <span class="text">Create Camp/Tournament</span>
+            </a>
+            {% endif %}
+            {% if user.staff.view_camps_tournaments %}
+            <a href="{% url 'organization_camps_tournaments' %}">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="text">View Camps/Tournaments</span>
+            </a>
+            {% endif %}
+
+            {% comment %} {% if user.staff.create_program %}
+            <a href="{% url 'create_program' %}">
+                <i class="fas fa-book"></i>
+                <span class="text">Create Program</span>
+            </a>
+            {% endif %} {% endcomment %}
+            {% comment %} {% if user.staff.assign_program %}
+            <a href="{% url 'assign_program' %}">
+                <i class="fas fa-user-check"></i>
+                <span class="text">Assign Program</span>
+            </a>
+            {% endif %}
+            {% if user.staff.view_programs %}
+            <a href="{% url 'program_list' %}">
+                <i class="fas fa-list"></i>
+                <span class="text">View Programs</span>
+            </a>
+            {% endif %} {% endcomment %}
+
+            <a href="{% url 'export_players_to_excel' %}">
+                <i class="fas fa-file-excel"></i>
+                <span class="text">Download as Excel</span>
+            </a>
+            <a href="{% url 'logout' %}">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="text">Logout</span>
+            </a>
+        
+        <div class="color-boxes">
+            <div class="color-box" style="background-color: #4CAF50;" data-scheme="scheme1"></div>
+            <div class="color-box" style="background-color: #2196F3;" data-scheme="scheme2"></div>
+            <div class="color-box" style="background-color: #FF9800;" data-scheme="scheme3"></div>
+            <div class="color-box" style="background-color: #9C27B0;" data-scheme="scheme4"></div>
+        </div>
+    </div>
+    <!-- Sidebar end -->
+
+    <div class="main-content">
+        <div class="message-container" style="position: fixed; bottom: 10px; right: 10px; z-index: 1050; max-width: 300px;">
+            {% if messages %}
+                {% for message in messages|slice:":2" %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" 
+                        style="font-size: 0.9rem; padding: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px hsla(0, 91%, 17%, 0.2);">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" 
+                                style="float: right; border: none; background: none; font-size: 1.2rem; line-height: 1; cursor: pointer;">&times;</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const colorBoxes = document.querySelectorAll('.color-box');
+        colorBoxes.forEach(box => {
+            box.addEventListener('click', function() {
+                const selectedScheme = box.getAttribute('data-scheme');
+                document.body.className = '';
+                if (selectedScheme !== 'default') {
+                    document.body.classList.add(selectedScheme);
+                }
+            });
+        });
+    });
+</script>
+<style>
+    /* Color Schemes */
+    .scheme1 {
+        --navbar-bg-color: #4CAF50; /* Green */
+        --sidebar-bg-color: #388E3C; /* Dark Green */
+    }
+    .scheme2 {
+        --navbar-bg-color: #2196F3; /* Blue */
+        --sidebar-bg-color: #1976D2; /* Dark Blue */
+    }
+    .scheme3 {
+        --navbar-bg-color: #FF9800; /* Orange */
+        --sidebar-bg-color: #F57C00; /* Dark Orange */
+    }
+    .scheme4 {
+        --navbar-bg-color: #9C27B0; /* Purple */
+        --sidebar-bg-color: #7B1FA2; /* Dark Purple */
+    }
+</style>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

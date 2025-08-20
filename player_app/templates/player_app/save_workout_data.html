@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Save Workout Data</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #000; /* Black background */
+            color: #fff; /* White text color */
+            font-size: 0.9em;
+        }
+
+        h1, h2, h3 {
+            color: #fff;
+        }
+
+        .form-container {
+            background-color: #333; /* Dark background for the form */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+            max-width: 600px;
+            margin: 40px auto;
+        }
+
+        .form-container label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+        }
+
+        .form-control {
+            background-color: #555;
+            color: #fff;
+            border: 1px solid #666;
+        }
+
+        .form-control:focus {
+            background-color: #444;
+            color: #fff;
+            border-color: #007bff;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            margin-top: 15px;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1 class="text-center">Save Workout Data</h1>
+        <h2>Program: {{ assigned_program.program.name }}</h2>
+        <h3>Assigned to: {{ assigned_program.player.name }}</h3>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="workout_details">Workout Details:</label>
+                <textarea name="workout_details" id="workout_details" class="form-control" rows="5" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Save Workout</button>
+        </form>
+    </div>
+</body>
+</html>

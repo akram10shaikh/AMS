@@ -1,0 +1,212 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Create Camp/Tournament{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style>
+  /* Body and basic text left untouched as per your request */
+
+  /* Form container tweaks */
+  .container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 25px 30px;
+    background-color: #121212; /* dark card background */
+    border-radius: 12px;
+    box-shadow:
+      0 4px 15px rgba(0, 0, 0, 0.9),
+      0 0 6px #0d6efd44; /* subtle glow blue */
+    color: #e0e0e0;
+  }
+
+  h1 {
+    color: #010101ff;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    letter-spacing: 0.03em;
+    text-align: center;
+  }
+
+  /* Label styling */
+  .form-group label {
+    font-weight: 600;
+    color: #000000ff; /* soft periwinkle */
+    display: block;
+    margin-bottom: 0.6rem;
+  }
+
+  /* Input, select styling */
+  .form-control {
+    background-color: #222533;
+    border: 1.8px solid #414770;
+    color: #cfd8ff;
+    font-size: 1rem;
+    padding: 10px 13px;
+    border-radius: 8px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.7);
+    width: 100%;
+  }
+
+  .form-control::placeholder {
+    color: #8890a8;
+  }
+
+  .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow:
+      0 0 8px #0d6efdaa,
+      inset 0 1px 6px rgba(13,110,253,0.7);
+    background-color: #1a1e2b;
+    color: #e7f0ff;
+    outline: none;
+  }
+
+  /* Multiple select adjustments */
+  select[multiple] {
+    min-height: 140px;
+    background-color: #222533;
+    border-color: #414770;
+    color: #cfd8ff;
+    padding: 10px 12px;
+    border-radius: 8px;
+    overflow-y: auto;
+  }
+
+  select[multiple]:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 8px #0d6efdaa;
+    background-color: #1a1e2b;
+    color: #e7f0ff;
+  }
+
+  /* Button styling */
+  .btn-success {
+    background-color: #198754;
+    border-color: #198754;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 12px 0;
+    border-radius: 10px;
+    transition: background-color 0.3s ease;
+    width: 100%;
+  }
+
+  .btn-success:hover,
+  .btn-success:focus {
+    background-color: #157347;
+    border-color: #157347;
+    color: #e2efe3;
+    box-shadow: 0 0 10px #157347cc;
+    outline: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Create Camp/Tournament</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="name">Camp/Tournament Name:</label>
+            <input type="text" name="name" id="name" class="form-control" placeholder="Enter camp/tournament name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="camp_type">Type:</label>
+            <select name="camp_type" id="camp_type" class="form-control" required>
+                <option value="camp">Camp</option>
+                <option value="tournament">Tournament</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="start_date">Start Date:</label>
+            <input type="date" name="start_date" id="start_date" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="end_date">End Date:</label>
+            <input type="date" name="end_date" id="end_date" class="form-control" placeholder="Optional">
+        </div>
+
+        <div class="form-group">
+            <label for="venue">Venue:</label>
+            <input type="text" name="venue" id="venue" class="form-control" placeholder="Enter venue">
+        </div>
+
+        {% if request.user.is_superuser %}
+        <div class="form-group">
+            <label for="organization">Select Organization:</label>
+            <select name="organization" id="organization" class="form-control" required>
+                <option value="">-- Select Organization --</option>
+                {% for org in organizations %}
+                <option value="{{ org.id }}">{{ org.name }}</option>
+                {% empty %}
+                <option disabled>No organizations available</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% else %}
+            <input type="hidden" name="organization" id="organization" value="{{ request.user.organization.id }}">
+        {% endif %}
+
+        <div class="form-group">
+            <label for="participants">Select Participants:</label>
+            <select name="participants" id="participants" class="form-control" multiple>
+                {% for player in players %}
+                    {% if player.organization.id == request.user.organization.id or request.user.is_superuser %}
+                    <option value="{{ player.id }}" data-org-id="{{ player.organization.id }}">
+                        {{ player.name }}
+                    </option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <small class="form-text text-muted">Hold "Ctrl" (Windows) or "Cmd" (Mac) to select multiple participants.</small>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3">Create</button>
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const organizationSelect = document.getElementById("organization");
+    const participantsSelect = document.getElementById("participants");
+
+    if (organizationSelect) {
+        organizationSelect.addEventListener("change", function () {
+            let selectedOrg = this.value;
+            let allPlayers = document.querySelectorAll("#participants option");
+
+            allPlayers.forEach(option => {
+                if (option.getAttribute("data-org-id") === selectedOrg || selectedOrg === "") {
+                    option.style.display = "block";
+                } else {
+                    option.style.display = "none";
+                    option.selected = false;
+                }
+            });
+        });
+
+        // Auto-filter participants if not superuser on page load
+        if (!{{ request.user.is_superuser|lower }}) {
+            let selectedOrg = organizationSelect.value;
+            let allPlayers = document.querySelectorAll("#participants option");
+
+            allPlayers.forEach(option => {
+                if (option.getAttribute("data-org-id") !== selectedOrg) {
+                    option.style.display = "none";
+                    option.selected = false;
+                }
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

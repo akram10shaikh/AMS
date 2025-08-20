@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}Injury List{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style>
+    body {
+        background-color: #000;
+        color: #fff;
+        font-size: 1.0em;
+    }
+
+    h1, h2 {
+        color: #fff;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .table-container {
+        background: #222;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(255, 255, 255, 0.2);
+        margin-bottom: 20px;
+    }
+
+    table {
+        width: 100%;
+        font-size: 0.8em;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 5px;
+        text-align: left;
+        border-bottom: 1px solid #444;
+    }
+
+    th {
+        background: #333;
+        color: #fff;
+    }
+
+    .btn {
+        font-size: 0.75em;
+        padding: 3px 6px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .btn-danger {
+        background-color: red;
+        border-color: red;
+    }
+
+    select {
+        font-size: 0.85em;
+        padding: 5px;
+        background-color: #333;
+        color: white;
+        border: 1px solid #555;
+        border-radius: 5px;
+    }
+
+    .org-container {
+        background: #222;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(255, 255, 255, 0.2);
+        margin-bottom: 20px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <h1>Injury List</h1>
+
+    <!-- Organization Selection (Only for Super Admin) -->
+    {% if request.user.is_superuser %}
+        <div class="org-container">
+            <label for="organization">Select Organization:</label>
+            <select id="organization" onchange="filterByOrganization()">
+                <option value="">All Organizations</option>
+                {% for org in organizations %}
+                    <option value="{{ org.id }}" {% if selected_org_id == org.id %}selected{% endif %}>
+                        {{ org.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    {% endif %}
+
+    <div class="table-container">
+        <h2>Open Injuries</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Player Name</th>
+                    <th>Organization</th>
+                    <th>Injury Type</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for injury in injuries %}
+                    {% if injury.status == 'open' %}
+                        {% if request.user.is_superuser or injury.player.organization.id == request.user.organization.id %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'player_injury_details' injury.player.id %}" class="text-light">
+                                        {{ injury.player.name }}
+                                    </a>
+                                </td>
+                                <td>{{ injury.player.organization.name }}</td>
+                                <td>{{ injury.injury_type }}</td>
+                                <td>{{ injury.severity }}</td>
+                                <td>
+                                    <form method="POST" action="{% url 'update_injury_status' injury.id %}" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <select name="status">
+                                            <option value="open" {% if injury.status == 'open' %}selected{% endif %}>Open</option>
+                                            <option value="closed" {% if injury.status == 'closed' %}selected{% endif %}>Closed</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-primary">Update</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <a href="{% url 'add_treatment' injury_id=injury.id %}" class="btn btn-primary">Add Treatment</a>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-container">
+        <h2>Closed Injuries (History)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Player Name</th>
+                    <th>Organization</th>
+                    <th>Injury Type</th>
+                    <th>Severity</th>
+                    <th>Date Closed</th>
+                    <th>Medical Documents</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for injury in injuries %}
+                    {% if injury.status == 'closed' %}
+                        {% if request.user.is_superuser or injury.player.organization.id == request.user.organization.id %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'player_injury_details' injury.player.id %}" class="text-light">
+                                        {{ injury.player.name }}
+                                    </a>
+                                </td>
+                                <td>{{ injury.player.organization.name }}</td>
+                                <td>{{ injury.injury_type }}</td>
+                                <td>{{ injury.severity }}</td>
+                                <td>{{ injury.updated_at|date:"Y-m-d H:i:s" }}</td>
+                                <td>
+                                    {% if injury.medical_documents %}
+                                        <a href="{{ injury.medical_documents.url }}" download class="text-light">Download</a>
+                                    {% else %}
+                                        No documents
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="text-center">
+        <a href="{% url 'create_injury' %}" class="btn btn-secondary">Add New Injury</a>
+    </div>
+
+<script>
+    function filterByOrganization() {
+        var selectedOrg = document.getElementById("organization").value;
+        window.location.href = "?organization=" + selectedOrg;
+    }
+</script>
+{% endblock %}

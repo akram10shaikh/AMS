@@ -1,0 +1,148 @@
+html,body {
+    height: 100%;
+}
+
+body {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   flex-direction: column;
+   background-color: #F3F4F8 !important;
+}
+
+input:focus, select:focus {
+    outline: none;
+}
+
+.container {
+    background-color: #FAFAFA;
+    width: 50% !important;
+    display: flex;
+   align-items: center;
+   justify-content: center;
+   flex-direction: column;
+    box-shadow: 1px 1px 10px 2px #00000025 !important;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.container h1 {
+    font-size: 2.2rem;
+    margin-bottom: 30px;
+}
+
+.container form {
+    width: 70%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.container form .input-container {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+form label {
+    font-size: 1rem;
+    color: #555562
+}
+
+form input, form select {
+    border: 1px solid #DADBDD;
+    border-radius: 2px;
+    padding: 4px;
+    background-color: #fff;;
+}
+
+form button {
+    background-color: #0D81FE;
+    border-radius: 3px;
+    padding: 6px 10px;
+    border: none;
+    color: #fff;
+}
+
+form button:hover {
+    background-color: #0874E9;
+}
+
+.inner-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 90%;
+    margin-top: 50px;
+}
+
+.inner-container h2 {
+    font-size: 1.5rem;
+}
+
+.inner-container .line {
+    background-color: #DADBDD;
+    height: 1.5px;
+    width: 100%;
+}
+
+.inner-container ul {
+    margin: 20px 0;
+}
+
+.inner-container a {
+    background-color: #6C757E;
+    border-radius: 3px;
+    padding: 6px 10px;
+    border: none;
+    color: #fff;
+    margin-top: 20px;
+    align-self: center;
+    text-decoration: none;
+}
+
+ .inner-container a:hover {
+    background-color: #53595F;
+ }
+ 
+.btn-open-popup:hover {
+    background-color: #4caf50;
+}
+
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-label {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #444;
+    text-align: left;
+}
+
+.form-input {
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.btn-submit{
+    margin-top: 5%;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+
+
+/* Animation for popup */
+.overlay-container.show {
+    display: flex;
+    opacity: 1;
+}

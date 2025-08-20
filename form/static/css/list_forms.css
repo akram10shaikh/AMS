@@ -1,0 +1,99 @@
+:root {
+    --custom-bg-color: #F3F4F8;
+    --custom-text-color: #000;
+    --custom-container-bg: #FAFAFA;
+    --custom-header-bg: #3C4249;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+}
+
+.container {
+    background-color: var(--custom-bg-color);
+    width: 90% !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    box-shadow:  var(--custom-bg-color);
+    padding: 2px;
+    border-radius: 10px;
+}
+
+h1 {
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+    margin-left:48%;
+}
+.flex{
+    display: flex;
+    width:100%;
+}
+.flex .head{
+    display: block;
+    flex-basis: 50%;
+    margin-left:20%;
+    margin-right:2%;
+}
+.flex .dropdown{
+    flex-basis: 35%;
+    display: contents;
+    color:white;
+}
+.dropdown button{
+    margin-left:18%;
+    height:60%;
+}
+.container table {
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top:3%;
+}
+
+.container table, th, td {
+    border: var(--custom-container-bg);;
+    padding: 4px;
+}
+
+table thead {
+    background-color: var(--custom-header-bg);
+    color: var(--custom-text-color);
+    text-align: center;
+    font-weight: 400 !important;
+    font-size: 1.1rem
+}
+
+thead tr th {
+    font-weight: 600;
+}
+
+tbody tr td:last-child {
+    text-align: center;
+}
+
+table a {
+    text-decoration: none;
+    color: #fff;
+    padding: 5px 7px;
+    border-radius: 5px;
+    margin: 4px;
+}
+
+table .view-btn {
+    background-color: #FFC30A;
+}
+
+table .view-btn:hover {
+    background-color: #CDA022;
+}
+
+table .delete-btn {
+    background-color: #EC504E
+}
+
+table .delete-btn:hover {
+    background-color: #DA4544;
+}
+

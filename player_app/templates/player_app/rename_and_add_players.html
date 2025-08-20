@@ -1,0 +1,22 @@
+<form method="POST">
+    {% csrf_token %}
+    
+    <!-- Form to rename the group -->
+    <h3>Rename Group: "{{ group.name }}"</h3>
+    <label for="name">New Group Name:</label>
+    <input type="text" name="name" value="{{ group.name }}" required>
+    <br><br>
+
+    <!-- Form to add players to the group -->
+    <h3>Add Players to Group:</h3>
+    <label for="players">Select Players:</label>
+    <select name="players" multiple>
+        {% for player in players %}
+            <option value="{{ player.id }}" {% if player in group.players_in_groups.all %}selected{% endif %}>{{ player.name }}</option>
+        {% endfor %}
+    </select>
+    <br><br>
+
+    <!-- Submit Button -->
+    <button type="submit">Update Group</button>
+</form>

@@ -1,0 +1,540 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+ 
+
+  h1 {
+    margin-bottom: 0.5em;
+    font-weight: 700;
+    color: #222;
+    font-size: 2.5rem;
+    text-align: center;
+  }
+  h3 {
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 0.3em;
+    margin-bottom: 1rem;
+    color: #007bff;
+  }
+
+  /* --- Filter Form Styles --- */
+  .filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px 25px;
+    margin-bottom: 30px;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .filter-form label {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: #444;
+    white-space: nowrap;
+  }
+  .filter-form select,
+  .filter-form input[type=search] {
+    min-width: 170px;
+    padding: 9px 12px;
+    font-size: 1rem;
+    border: 1.8px solid #ccc;
+    border-radius: 6px;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .filter-form select:focus,
+  .filter-form input[type=search]:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 6px rgba(0,123,255,0.5);
+  }
+  .filter-form button {
+    background-color: #007bff;
+    border: none;
+    padding: 10px 28px;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border-radius: 7px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.4);
+    transition: background-color 0.3s ease;
+  }
+  .filter-form button:hover,
+  .filter-form button:focus {
+    background-color: #0056b3;
+  }
+
+  /* --- Cards Container --- */
+  .cards {
+    display: flex;
+    gap: 25px;
+    justify-content: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+  .card {
+    background: white;
+    padding: 30px 20px;
+    width: 240px;
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    text-align: center;
+    color: #007bff;
+    font-weight: 700;
+    font-size: 1.9rem;
+    user-select: none;
+    transition: box-shadow 0.3s ease;
+  }
+  .card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.14);
+  }
+  .card h3 {
+    font-weight: 600;
+    font-size: 1.4rem;
+    margin-bottom: 0.6em;
+    color: #0056b3;
+  }
+  .card p {
+    margin: 0;
+    font-size: 2.8rem;
+  }
+
+  /* --- Participation Type List --- */
+  .participation-list {
+    list-style: none;
+    padding: 0;
+    max-width: 350px;
+    margin: 0 auto 45px auto;
+  }
+  .participation-list li {
+    background: white;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #045cb5;
+  }
+  .participation-list li .count {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #023e7d;
+  }
+  .view-more {
+    margin-left: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    color: #007bff;
+    font-size: 0.95rem;
+  }
+  .view-more:hover,
+  .view-more:focus {
+    text-decoration: underline;
+  }
+
+  /* --- Tables --- */
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.05);
+    background: white;
+    margin-bottom: 50px;
+  }
+  thead {
+    background-color: #0056b3;
+    color: white;
+  }
+  th, td {
+    padding: 14px 18px;
+    text-align: left;
+    font-size: 1rem;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+  }
+  tbody tr:hover {
+    background-color: #f0f7ff;
+  }
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+  th {
+    font-weight: 700;
+    user-select: none;
+  }
+  .note {
+    font-style: italic;
+    color: #555;
+    white-space: pre-wrap;
+  }
+  /* Responsive fix: compacting filter and cards on small devices */
+  @media (max-width: 940px) {
+    .filter-form {
+      justify-content: flex-start;
+    }
+    .filter-form select,
+    .filter-form input[type=search] {
+      min-width: 140px;
+    }
+    .cards {
+      flex-direction: column;
+      max-width: 280px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .card {
+      width: 100%;
+      max-width: none;
+      margin-bottom: 20px;
+    }
+    .participation-list {
+      max-width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h3 style="font-size:35px;">Organization Dashboard</h3>
+
+<!-- Filters Form -->
+<form class="filter-form" onsubmit="return false;" aria-label="Filter players and injuries">
+  <label for="filterCategory">Category:</label>
+  <select id="filterCategory" name="category" aria-describedby="filterCategoryHelp">
+    <option value="all">All Categories</option>
+    <option value="boys_under-15">Boys under 15</option>
+    <option value="boys_under-19">Boys under 19</option>
+    <option value="men_under-23">Men Under 23</option>
+    <option value="men_senior">Men Senior</option>
+  </select>
+
+  <label for="filterGender">Gender:</label>
+  <select id="filterGender" name="gender" aria-describedby="filterGenderHelp">
+    <option value="all">All Genders</option>
+    <option value="M">Male</option>
+    <option value="F">Female</option>
+    <option value="O">Other</option>
+  </select>
+
+  <label for="searchInput">Search:</label>
+  <input type="search" id="searchInput" placeholder="Player or Injury name..." aria-label="Search player or injury names" />
+
+  <button type="button" id="resetFilters" aria-label="Reset filters">Reset</button>
+</form>
+
+<!-- Cards -->
+<div class="cards" role="region" aria-label="Summary statistics">
+  <div class="card" aria-live="polite" aria-atomic="true">
+    <h3>Total Injuries</h3>
+    <p >{{ total_injuries_count }}</p>
+  </div>
+  <div class="card" aria-live="polite" aria-atomic="true">
+    <h3>Active Injuries</h3>
+    <p >{{ active_injuries_count }}</p>
+  </div>
+</div>
+
+<!-- Participation Types -->
+<section aria-labelledby="participationTitle">
+  <h3 id="participationTitle">Participation Types</h3>
+  <ul class="participation-list" id="participationList">
+    {% for pt in participation_counts %}
+      <li data-role="{{ pt.role|default:'N/A' }}">
+        {{ pt.name }}: <span class="count">{{ pt.player_count }}</span>
+        <a href="{% url 'organization_camp_detail' camp_id=pt.id %}" target="_blank" class="view-more" tabindex="0">View More</a>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<!-- Active Injuries Table -->
+<section aria-labelledby="activeInjuriesTitle">
+  <h3 id="activeInjuriesTitle">Active Injuries</h3>
+  <table id="activeInjuriesTable" role="grid" aria-describedby="activeInjuriesDesc">
+    <caption id="activeInjuriesDesc" class="sr-only">List of currently active injuries</caption>
+    <thead>
+      <tr>
+        <th scope="col">Player</th>
+        <th scope="col">Injury Name</th>
+        <th scope="col">Severity</th>
+        <th scope="col">Status</th>
+        <th scope="col">Injury Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for injury in active_injuries %}
+      <tr data-category="{{ injury.player.age_category|default:'none' }}" data-gender="{{ injury.player.gender|default:'none' }}">
+        <td class="player-name">{{ injury.player.name }}</td>
+        <td class="injury-name">{{ injury.name }}</td>
+        <td>{{ injury.severity|default:"-" }}</td>
+        <td>{{ injury.status|default:"-" }}</td>
+        <td>{{ injury.injury_date }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" style="text-align:center; font-style: italic;">No active injuries found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- Player Details Table -->
+<section aria-labelledby="playerDetailsTitle">
+  <h3 id="playerDetailsTitle">Player Details</h3>
+  <table id="playerDetailsTable" role="grid" aria-describedby="playerDetailsDesc">
+    <caption id="playerDetailsDesc" class="sr-only">List of players with participation types and injury notes</caption>
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Participation Type (Role)</th>
+        <th scope="col">Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for player in players %}
+      <tr data-category="{{ player.age_category|default:'none' }}" data-gender="{{ player.gender|default:'none' }}">
+        <td class="player-name">{{ player.name }}</td>
+        <td> {% for camp in player.camps.all %}
+      {{ camp.name }}{% if not forloop.last %}, {% endif %}
+    {% empty %}
+      No camps
+    {% endfor %}</td>
+        <td>
+          {% if player.injuries.all %}
+            <ul style="padding-left: 16px; margin: 0;">
+              {% for injury in player.injuries.all %}
+                {% if injury.notes %}
+                <li class="note">
+                  <strong>Injury:</strong> {{ injury.name|default:"N/A" }}<br />
+                  {{ injury.notes|linebreaksbr }}
+                </li>
+                {% else %}
+                <li class="note"><em>No notes for injury '{{ injury.name|default:"N/A" }}'</em></li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          {% else %}
+            <em>No injuries/notes</em>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+<h3>Recent Activity Logs</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>Type</th>
+      <th>Actor/User</th>
+      <th>Subject</th>
+      <th>Action / Description</th>
+      <th>Details</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for log in activity_logs %}
+    <tr>
+      <td>
+        {% if log.timestamp %}
+          {{ log.timestamp|date:"Y-m-d H:i:s" }}
+        {% elif log.created_at %}
+          {{ log.created_at|date:"Y-m-d H:i:s" }}
+        {% endif %}
+      </td>
+
+      <td>
+        {% if log.log_type == 'medical' %}
+          Medical Document Log
+        {% elif log.log_type == 'injury' %}
+          Injury Log
+        {% elif log.log_type == 'player' %}
+          Player Log
+        {% else %}
+          Unknown
+        {% endif %}
+      </td>
+
+      <td>
+        {% if log.log_type == 'medical' %}
+    {{ log.user.username|default:"Unknown User" }}
+  {% elif log.log_type == 'injury' or log.log_type == 'player' %}
+    {{ log.actor.username|default:"Unknown User" }}
+  {% else %}
+    Unknown User
+  {% endif %}
+      </td>
+
+      <td>
+        {% if log.log_type == 'medical' %}
+          {{ log.player.name }} - Document: {{ log.document }}
+        {% elif log.log_type == 'injury' %}
+          {{ log.injury.player.name }} - Injury: {{ log.injury.name }}
+        {% elif log.log_type == 'player' %}
+          {{ log.player.name }}
+        {% else %}
+          N/A
+        {% endif %}
+      </td>
+
+      <td>
+        {% if log.log_type == 'medical' %}
+          {{ log.activity_type }}
+        {% elif log.log_type == 'injury' %}
+          {{ log.action }}
+        {% elif log.log_type == 'player' %}
+          {{ log.action }}
+        {% else %}
+          N/A
+        {% endif %}
+      </td>
+
+      <td>
+        {% if log.log_type == 'medical' %}
+          {{ log.description|default:"-" }}
+        {% elif log.log_type == 'injury' %}
+          {{ log.details|default:"-" }}
+        {% elif log.log_type == 'player' %}
+          {{ log.details|default:"-" }}
+        {% else %}
+          -
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}
+      <tr><td colspan="6" style="text-align:center;">No activity logs found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- JavaScript for filtering -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const filterCategory = document.getElementById('filterCategory');
+    const filterGender = document.getElementById('filterGender');
+    const searchInput = document.getElementById('searchInput');
+    const resetBtn = document.getElementById('resetFilters');
+
+    const playerRows = Array.from(document.querySelectorAll('#playerDetailsTable tbody tr'));
+    const injuryRows = Array.from(document.querySelectorAll('#activeInjuriesTable tbody tr')).filter(r => r.querySelector('.player-name'));// Ignore empty row
+    const totalInjuriesCountEl = document.getElementById('totalInjuriesCount');
+    const activeInjuriesCountEl = document.getElementById('activeInjuriesCount');
+    const participationListItems = Array.from(document.querySelectorAll('#participationList li'));
+
+    function normalize(text) {
+      return (text || '').toString().toLowerCase().trim();
+    }
+
+    function filter() {
+      const selectedCategory = normalize(filterCategory.value);
+      const selectedGender = normalize(filterGender.value);
+      const searchTerm = normalize(searchInput.value);
+
+      // Filter player rows
+      let visiblePlayers = 0;
+      playerRows.forEach(row => {
+        const cat = normalize(row.getAttribute('data-category'));
+        const gender = normalize(row.getAttribute('data-gender'));
+        const playerName = normalize(row.querySelector('.player-name').textContent);
+        const notesCell = row.querySelector('td:nth-child(3)');
+        const notesText = normalize(notesCell ? notesCell.textContent : '');
+
+        const categoryMatch = (selectedCategory === 'all' || cat === selectedCategory);
+        const genderMatch = (selectedGender === 'all' || gender === selectedGender);
+        const searchMatch = !searchTerm || playerName.includes(searchTerm) || notesText.includes(searchTerm);
+
+        if (categoryMatch && genderMatch && searchMatch) {
+          row.style.display = '';
+          visiblePlayers++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      // Filter injury rows
+      let visibleInjuries = 0;
+      injuryRows.forEach(row => {
+        const cat = normalize(row.getAttribute('data-category'));
+        const gender = normalize(row.getAttribute('data-gender'));
+        const playerName = normalize(row.querySelector('.player-name').textContent);
+        const injuryName = normalize(row.querySelector('.injury-name').textContent);
+
+        const categoryMatch = (selectedCategory === 'all' || cat === selectedCategory);
+        const genderMatch = (selectedGender === 'all' || gender === selectedGender);
+        const searchMatch = !searchTerm || playerName.includes(searchTerm) || injuryName.includes(searchTerm);
+
+        if (categoryMatch && genderMatch && searchMatch) {
+          row.style.display = '';
+          visibleInjuries++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      // Update counts with filtered stats
+      totalInjuriesCountEl.textContent = visibleInjuries + ' (filtered)';
+      activeInjuriesCountEl.textContent = visibleInjuries + ' (filtered)';
+
+      // Update participation counts dynamically
+      participationListItems.forEach(li => {
+        const role = normalize(li.getAttribute('data-role'));
+        const count = playerRows.filter(row => {
+          const rowRole = normalize(row.querySelector('td:nth-child(2)').textContent);
+          const cat = normalize(row.getAttribute('data-category'));
+          const gender = normalize(row.getAttribute('data-gender'));
+          return row.style.display !== 'none' &&
+                 (selectedCategory === 'all' || cat === selectedCategory) &&
+                 (selectedGender === 'all' || gender === selectedGender) &&
+                 (role === 'n/a' ? (rowRole === '' || rowRole === 'n/a') : rowRole === role);
+        }).length;
+        const countSpan = li.querySelector('.count');
+        if(countSpan) countSpan.textContent = count;
+      });
+    }
+
+    // Hook event listeners
+    filterCategory.addEventListener('change', filter);
+    filterGender.addEventListener('change', filter);
+    searchInput.addEventListener('input', filter);
+    resetBtn.addEventListener('click', () => {
+      filterCategory.value = 'all';
+      filterGender.value = 'all';
+      searchInput.value = '';
+      filter();
+    });
+
+    // Initial filter run to sync counts
+    filter();
+  });
+</script>
+
+<!-- Screen reader only helper for accessible captions -->
+<style>
+  .sr-only {
+    position: absolute !important;
+    height: 1px; width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+  }
+</style>
+
+{% endblock %}

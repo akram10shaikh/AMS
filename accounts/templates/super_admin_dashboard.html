@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Dashboard</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        body {
+            background-color: #f4f4f4;
+            display: flex;
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex-grow: 1;
+            height: 100%;
+            width: 100%;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+
+        .sidebar {
+            width: 20%;
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            height: 100%;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            width: 100%;
+        }
+
+        .sidebar ul li {
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.1em;
+            padding: 10px;
+            display: block;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        .sidebar ul li a:hover {
+            background-color: #18bc9c;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+            background-color: #ecf0f1;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .main-content h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .main-content p {
+            font-size: 1.2em;
+            color: #34495e;
+        }
+
+        .create-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #18bc9c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.1em;
+            cursor: pointer;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .create-btn:hover {
+            background-color: #16a085;
+        }
+
+        .filter-section {
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-section select {
+            padding: 10px;
+            width: 100%;
+            font-size: 1.1em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .logout-section {
+            position: fixed;
+            top: 80px;
+            right: 10px;
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .logout-section button {
+            background-color: #dd1710;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                padding: 10px;
+                text-align: center;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h2>Super Admin</h2>
+            <ul>
+                <li><a href="{% url 'organization_list' %}">Organization Dashboard</a></li>
+                <li><a href="{% url 'staff_list' %}">Staff Dashboard</a></li>
+                <li><a href="{% url 'player_list' %}">Player Dashboard</a></li>
+                <li><a href="{% url 'form:list_forms' %}">Forms Dashboard</a></li>
+            </ul>
+        </div>
+
+        <div class="logout-section">
+            {% if user.is_authenticated %}
+                <span><strong>{{ user.username }}</strong> - {{ user.get_role_display }}</span>
+                <form method="POST" action="{% url 'logout' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <span>Not logged in</span>
+            {% endif %}
+        </div>
+
+        <div class="main-content">
+            <a href="{% url 'add_organization' %}" class="create-btn">Create New Organization</a>
+            <h1>Super Admin Dashboard</h1>
+            <p>Use the navigation to manage organizations, staff, and players.</p>
+
+            <!-- Organization Filter Dropdown -->
+            <div class="filter-section">
+                <label for="organization"><strong>Select Organization:</strong></label>
+                <form method="GET" action="{% url 'super_admin_dashboard' %}">
+                    <select name="organization" id="organization" onchange="this.form.submit()">
+                        <option value="">-- Select an Organization --</option>
+                        {% for org in organizations %}
+                            <option value="{{ org.id }}" {% if org.id == selected_org_id %}selected{% endif %}>
+                                {{ org.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+
+            {% if selected_org_id %}
+                <div class="card">
+                    <h4>Players in {{ selected_org.name }}</h4>
+                    {% if players %}
+                        <ul>
+                            {% for player in players %}
+                                <li>{{ player.name }} - {{ player.email }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No players found.</p>
+                    {% endif %}
+                </div>
+
+                <div class="card">
+                    <h4>Staff Members in {{ selected_org.name }}</h4>
+                    {% if staff_members %}
+                        <ul>
+                            {% for staff in staff_members %}
+                                <li>{{ staff.name }} - {{ staff.email }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No staff found.</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

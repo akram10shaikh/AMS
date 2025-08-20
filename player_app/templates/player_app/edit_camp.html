@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Camp/Tournament{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style>
+    body {
+        background-color: #000;
+        color: #fff;
+        font-size: 0.9em;
+    }
+
+    h1 {
+        color: #fff;
+    }
+
+    .form-control {
+        background-color: #444;
+        color: #fff;
+        border: 1px solid #007bff;
+        padding: 8px;
+        border-radius: 5px;
+        transition: border 0.3s ease-in-out;
+    }
+
+    .form-control:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
+    }
+
+    /* 🔹 Highlight Start Date (Read-Only) */
+    input[type="date"][readonly] {
+        background-color: #222 !important;
+        color: #ffffff !important;
+        font-weight: bold;
+        border: 1px solid #ffeb3b !important; /* Yellow border */
+    }
+
+    /* 🔹 End Date */
+    input[type="date"] {
+        background-color: #2c2c2c;
+        color: #fff;
+        border: 1px solid #ff9800;
+        font-size: 1em;
+        font-weight: bold;
+    }
+
+    input[type="date"]:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 8px rgba(255, 193, 7, 0.5);
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        font-size: 1em;
+        padding: 10px;
+        width: 100%;
+        transition: background 0.3s ease-in-out;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: auto;
+        padding: 20px;
+    }
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Edit Camp/Tournament</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="campName">Camp/Tournament Name:</label>
+            <input type="text" class="form-control" id="campName" name="name" value="{{ camp.name }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="campType">Type:</label>
+            <select class="form-control" id="campType" name="camp_type" required>
+                <option value="camp" {% if camp.camp_type == "camp" %}selected{% endif %}>Camp</option>
+                <option value="tournament" {% if camp.camp_type == "tournament" %}selected{% endif %}>Tournament</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="startDate">Start Date:</label>
+            <input type="date" class="form-control" id="startDate" name="start_date"
+                   value="{{ camp.start_date|date:'Y-m-d' }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="endDate">End Date:</label>
+            <input type="date" class="form-control" id="endDate" name="end_date"
+                   value="{{ camp.end_date|date:'Y-m-d' }}" min="{{ camp.start_date|date:'Y-m-d' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="venue">Venue:</label>
+            <input type="text" class="form-control" id="venue" name="venue" value="{{ camp.venue }}">
+        </div>
+
+        <div class="form-group">
+            <label for="participants">Participants:</label>
+            <select class="form-control" id="participants" name="participants" multiple>
+                {% for player in participants %}
+                    {% if player.organization == camp.organization %}
+                        <option value="{{ player.id }}" {% if player in camp.participants.all %}selected{% endif %}>
+                            {{ player.name }}
+                        </option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Login</title>
+    <style>
+        /* Basic page styling */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+        }
+
+        /* Login form container */
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        /* Heading styling */
+        .login-container h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* Form fields styling */
+        .login-container label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            text-align: left;
+        }
+
+        .login-container input[type="text"],
+        .login-container input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s ease;
+        }
+
+        .login-container input[type="text"]:focus,
+        .login-container input[type="password"]:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
+        /* Submit button styling */
+        .login-container button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-container button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h1>Staff Login</h1>
+        <form method="post">
+            {% csrf_token %}
+            <label for="username">Username:</label>
+            <input type="text" name="username" id="username" required>
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+</body>
+</html>

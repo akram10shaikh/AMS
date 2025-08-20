@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ player.name }} - Injury & Treatment Details</title>
+</head>
+<body>
+    <h1>Injury Details for {{ player.name }}</h1>
+
+    {% for injury in injuries %}
+        <div style="border: 1px solid #000; padding: 10px; margin-bottom: 15px;">
+            <h3>Injury Information</h3>
+            <p><strong>Injury Type:</strong> {{ injury.injury_type }}</p>
+            <p><strong>Affected Body Part:</strong> {{ injury.affected_body_part }}</p>
+            <p><strong>Severity:</strong> {{ injury.severity }}</p>
+            <p><strong>Injury Date:</strong> {{ injury.injury_date }}</p>
+            <p><strong>Status:</strong> {{ injury.status }}</p>
+            <p><strong>Notes:</strong> {{ injury.notes }}</p>
+            <p><strong>Medical Documents:</strong>
+                {% if injury.medical_documents %}
+                    <a href="{{ injury.medical_documents.url }}" download>Download Document</a>
+                {% else %}
+                    No documents available
+                {% endif %}
+            </p>
+        </div>
+
+        <h2>Treatment Details for {{ player.name }}</h2>
+        <div style="border: 1px solid #000; padding: 10px; margin-bottom: 15px;">
+            {% with treatment_recommendations=injury.treatmentrecommendation_set.all %}
+                {% if treatment_recommendations %}
+                    {% for treatment in treatment_recommendations %}
+                        <p><strong>Treatment:</strong> {{ treatment.treatment }}</p>
+                        <p><strong>Recommendation Notes:</strong> {{ treatment.recommendation_notes }}</p>
+                        <p><strong>Recovery Time (Weeks):</strong> {{ treatment.recovery_time_weeks }}</p>
+                        <p><strong>Physio:</strong> {{ treatment.physio.name }}</p>
+                        <p><strong>Date Recommended:</strong> {{ treatment.created_at }}</p>
+                        <hr>
+                    {% endfor %}
+                {% else %}
+                    <p>No treatment recommendations available for this injury.</p>
+                {% endif %}
+            {% endwith %}
+        </div>
+    {% endfor %}
+
+    <!-- Assigned Programs -->
+    <h2>Assigned Programs for {{ player.name }}</h2>
+    <div style="border: 1px solid #000; padding: 10px; margin-bottom: 15px;">
+        {% if assigned_programs %}
+            {% for program in assigned_programs %}
+                <p><strong>Program Type:</strong> {{ program.program.program_type }}</p>
+                <p><strong>Description:</strong> {{ program.program.description }}</p>
+                <p><strong>Assigned By:</strong> {{ program.assigned_by }}</p>
+                <p><strong>Assigned Date:</strong> {{ program.assigned_at|date:"Y-m-d" }}</p>
+
+                {% if program.injury %}
+                    <p><strong>Linked Injury:</strong> {{ program.injury.injury_type }}</p>
+                {% else %}
+                    <p><strong>Linked Injury:</strong> None</p>
+                {% endif %}
+
+                <h4>Workout Progress</h4>
+                <div style="border-top: 1px solid #ccc; padding-top: 5px;">
+                    {% if workout_data %}
+                        {% for workout in workout_data %}
+                            <p><strong>Date:</strong> {{ workout.created_at|date:"Y-m-d" }}</p>
+                            <p><strong>Details:</strong> {{ workout.workout_details }}</p>
+                            <hr>
+                        {% endfor %}
+                    {% else %}
+                        <p>No workout data recorded yet.</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No programs assigned to this player.</p>
+        {% endif %}
+    </div>
+
+    <!-- New Section: Camp/Tournament Participation -->
+    <h2>Camp/Tournament Participation</h2>
+    <div style="border: 1px solid #000; padding: 10px; margin-bottom: 15px;">
+        {% if camps %}
+            {% for camp in camps %}
+                <p><strong>Name:</strong> {{ camp.name }}</p>
+                <p><strong>Type:</strong> {{ camp.get_camp_type_display }}</p>
+                <p><strong>Start Date:</strong> {{ camp.start_date|date:"Y-m-d" }}</p>
+                <p><strong>End Date:</strong> {{ camp.end_date|date:"Y-m-d" }}</p>
+                <p><strong>Venue:</strong> {{ camp.venue }}</p>
+                <p><strong>Organization:</strong> {{ camp.organization }}</p>
+                <hr>
+            {% endfor %}
+        {% else %}
+            <p>{{ player.name }} has not participated in any camps or tournaments.</p>
+        {% endif %}
+    </div>
+
+    <a href="{% url 'injury_list' %}">Back to Injury List</a>
+</body>
+</html>

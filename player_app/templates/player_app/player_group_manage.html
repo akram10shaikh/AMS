@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Groups{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style>
+    body {
+        background-color: #000; /* Black background */
+        color: #fff; /* White text color */
+        font-size: 0.9em; /* Smaller text size for the entire page */
+    }
+
+    h1, h3 {
+        color: #fff; /* White headings */
+    }
+
+    .player-card {
+        display: inline-block;
+        width: 50px;
+        height: 50px;
+        margin: 1%;
+        text-align: center;
+        border-radius: 20%;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2); /* Light shadow */
+        position: relative;
+        cursor: pointer; /* Change cursor to pointer */
+        transition: transform 0.3s, box-shadow 0.3s; /* Smooth transition for hover effects */
+
+    }
+
+    .player-card:hover {
+          transform: scale(1.05); /* Slightly enlarge the card on hover */
+          box-shadow: 0 8px 16px rgba(255, 255, 255, 0.4); /* Increase shadow on hover */
+    }
+
+    .player-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .player-card-container {
+        display: inline-block;
+        text-align: center;
+        margin: 1%;
+    }
+
+    .player-card-container p {
+        margin-top: 10px;
+        font-size: 14px;
+        color: #ccc; /* Light grey text */
+    }
+
+    .remove-player {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        background-color: red;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 15px; /* Smaller button */
+        height: 15px; /* Smaller button */
+        font-size: 10px; /* Smaller text */
+        line-height: 12px;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .list-group-item {
+        background-color: #444; /* Dark grey background */
+        color: #fff; /* White text */
+    }
+
+    .list-group-item.selected {
+        background-color: #007bff; /* Highlight selected item */
+        color: #fff; /* White text */
+    }
+
+    .add-group-btn {
+        margin-top: 10px;
+        background-color: #444; /* Dark grey button */
+        color: #fff; /* White text */
+    }
+
+    .player-select-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5px;
+        border: 1px solid #444; /* Dark grey border */
+        margin-bottom: 5px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .player-select-container.selected {
+        background-color: #d3edda; /* Light green background */
+        border-color: #c3e6cb; /* Light green border */
+    }
+
+    .player-select-container input {
+        display: none;
+    }
+
+    .player-select-container label {
+        cursor: pointer;
+        flex-grow: 1;
+        color: #fff; /* White text */
+    }
+
+    .checkmark {
+        display: none;
+        color: green;
+        font-weight: bold;
+    }
+
+    .player-select-container.selected .checkmark {
+        display: block;
+    }
+
+    .player-select-list {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .player-select-list .player-select-container {
+        width: 48%;
+        margin-right: 1%;
+    }
+
+    .player-select-list .player-select-container:nth-child(2n) {
+        margin-right: 0;
+    }
+
+    .modal-content {
+        background-color: #333; /* Dark background for modal */
+        color: #fff; /* White text */
+    }
+
+    .modal-header, .modal-footer {
+        border-bottom: 1px solid #444; /* Dark grey border */
+    }
+
+    .form-control {
+        background-color: #555; /* Dark grey background */
+        color: #fff; /* White text */
+        border: 1px solid #666; /* Light grey border */
+    }
+
+    .btn-primary {
+        background-color: #007bff; /* Blue background */
+        border-color: #007bff; /* Blue border */
+    }
+
+    .btn-secondary {
+        background-color: #6c757d; /* Dark grey background */
+        border-color: #6c757d; /* Dark grey border */
+    }
+
+    .btn-danger {
+        background-color: red; /* Red background */
+        border-color: red; /* Red border */
+    }
+
+    .container {
+        max-width: 1200px; /* Set a maximum width for the container */
+        margin-left: 0; /* Move the container to the left */
+    }
+
+    .row {
+        margin-right: 0; /* Remove right margin for rows */
+    }
+
+    .col-md-8, .col-md-4 {
+        padding-right: 0; /* Remove right padding for columns */
+    }
+
+    .modal-dialog {
+        position: absolute;
+        right: 0;
+        margin: 30px;
+    }
+
+    .modal-lg {
+        max-width: 600px; /* Adjust modal width */
+    }
+
+    .right-content {
+        border-left: 1px solid #444; /* Dark grey border */
+        padding-left: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left Side: List of Groups and Players in Selected Group -->
+    <div class="col-md-8">
+        <div class="row">
+            <!-- Groups Column -->
+            <div class="col-md-4">
+                <h3>Groups</h3>
+                <ul class="list-group" id="groupList">
+                    {% for group in groups %}
+                    <li class="list-group-item" onclick="showGroupPlayers('{{ group.pk }}', this)">
+                        {{ group.name }}
+                        <form method="post" action="{% url 'delete_group' group.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="group_id" value="{{ group.pk }}">
+                            <button type="submit" class="btn btn-danger btn-sm float-right ml-2">Delete</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <button class="btn btn-primary add-group-btn" data-toggle="modal" data-target="#createGroupModal">Create
+                    Group
+                </button>
+                <div class="d-flex">
+                    <a href="{% url 'player_create' %}" class="btn btn-primary">Add New Player</a>
+                </div>
+            </div>
+
+            <!-- Players Column -->
+            <div class="col-md-8">
+                <div id="groupDetails" style="display: none;">
+                    <h3>Players</h3>
+                    <div id="playersList" class="d-flex flex-wrap"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Create Group Modal -->
+<div class="modal fade" id="createGroupModal" tabindex="-1" role="dialog" aria-labelledby="createGroupModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createGroupModalLabel">Create Group</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" id="createGroupForm" action="{% url 'manage_groups' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="groupName">Group Name</label>
+                        <input type="text" class="form-control" id="groupName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="groupPlayers">Select Players</label>
+                        <div id="groupPlayers" class="player-select-list">
+                            {% for player in players %}
+                            <div class="player-select-container" id="player-{{ player.pk }}"
+                                 onclick="togglePlayerSelection({{ player.pk }})">
+                                <input type="checkbox" id="player_{{ player.pk }}" name="group_players"
+                                       value="{{ player.pk }}">
+                                <label for="player_{{ player.pk }}">{{ player.name }}</label>
+                                <span class="checkmark">✔</span>
+                            </div>
+
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" name="create_group" class="btn btn-primary">Create Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<script>
+    // Default image path - Adjust according to your media URL settings
+    const defaultImagePath = "/media/default_profile.jpg";
+
+function showGroupPlayers(groupId, element) {
+    $('#playersList').empty();
+    $('#groupList .list-group-item').removeClass('selected');
+    $(element).addClass('selected');
+
+    $.ajax({
+        url: "{% url 'get_group_players' %}",
+        data: {
+            'group_id': groupId
+        },
+        success: function(data) {
+            data.players.forEach(function(player) {
+                var firstName = player.name.split(' ')[0];
+                var playerImage = player.image ? player.image : defaultImagePath;
+                var editUrl = window.location.origin + "/player_app" + "/player/" + player.pk + "/edit/";
+
+                var playerCard = `
+                    <div class="player-card-container">
+                        <div class="player-card" onclick="window.open('${editUrl}', '_blank')" data-toggle="tooltip" title="Click to edit ${player.name}'s profile">
+                            <img src="${playerImage}" alt="${player.name}">
+                            <button class="remove-player" onclick="event.stopPropagation(); removePlayerFromGroup(${groupId}, ${player.pk})">×</button>
+                        </div>
+                        <p>${firstName}</p>
+                    </div>`;
+                $('#playersList').append(playerCard);
+            });
+            $('#groupDetails').show();
+        }
+    });
+}
+
+
+
+    function togglePlayerSelection(playerId) {
+        var playerContainer = $('#player-' + playerId);
+        var checkbox = playerContainer.find('input[type="checkbox"]');
+        var checkmark = playerContainer.find('.checkmark');
+
+        if (checkbox.is(':checked')) {
+            checkbox.prop('checked', false);
+            playerContainer.removeClass('selected');
+            checkmark.hide();
+        } else {
+            checkbox.prop('checked', true);
+            playerContainer.addClass('selected');
+            checkmark.show();
+        }
+    }
+
+    function removePlayerFromGroup(groupId, playerId) {
+        $.post("{% url 'manage_groups' %}", {
+            'group_id': groupId,
+            'player_id': playerId,
+            'remove_player_from_group': true,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        }, function() {
+            showGroupPlayers(groupId, $('#groupList .list-group-item.selected')[0]);
+        });
+    }
+
+   $(document).ready(function() {
+    // Initialize Bootstrap tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+
+    $('#managePlayersBtn').click(function() {
+        $.ajax({
+            url: "{% url 'manage_all_groups' %}",
+            type: 'get',
+            success: function(data) {
+                $('#rightContent').html(data);
+            }
+        });
+    });
+});
+
+</script>
+{% endblock %}

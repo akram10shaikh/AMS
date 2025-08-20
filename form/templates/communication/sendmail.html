@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Send Mail{% endblock %}
+
+{% block content %}
+{% if form.errors %}
+    <div class="alert alert-danger">
+        <ul>
+            {% for field in form %}
+            {% for error in field.errors %}
+            <li>{{ field.label }}: {{ error }}</li>
+            {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    <div class="container">
+        <h2>Mail</h2>
+        <form method="POST" action="" enctype="multipart/form-data" class="info">
+            {% csrf_token %}
+            {% if is_email %}
+            <div class="mb-3">
+                <label for="subject" class="form-label">Subject</label>
+                <input type="text" class="form-control" id="subject" name="subject">
+            </div>
+            {% endif %}
+            <div class="mb-3">
+                <label for="message" class="form-label">Write your Message</label>
+                <textarea class="form-control" id="message" name="message"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="recipient" class="form-label">Recipient (Players or team)</label>
+                <select class="form-control" name="recipient" id="recipient" multiple>
+                    <optgroup label='Players'>
+                    {% for player in players %}
+                    <option value="player_{{player.id}}">{{player.firstname}} {{player.lastname}}</option>
+                    {% endfor %}
+                    </optgroup>
+                    <optgroup label="Team">
+                        {% for team in teamlist %}
+                        <option value="team_{{team.id}}">{{team.title}}</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+            </div>
+            {% if is_email %}
+            <button type="submit" class="btn bg-info">Send mail</button>
+            {% else %}
+            <button type="submit" class="btn bg-info">Send whatsapp message</button>
+            {% endif %}
+        </form>
+    </div>
+                
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'main.html' %}
+{% load static %}
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/list_forms.css' %}"> 
+{% endblock %}
+
+{% block content %}
+    <div class="container"> 
+        <div class="flex">
+            <div class="head"> <h1>All Forms</h1></div>
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                Actions</button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                <li><a class="dropdown-item " href="{% url 'form:create_form2' %}">Create New Form Template</a></li>
+                <li><a class="dropdown-item " href="{% url 'form:mass_import' %}">Mass Upload Response</a></li>
+                <li><a class="dropdown-item " href="{% url 'form:form_data'%}">Download Form Data</a></li>
+                <li><a class="dropdown-item " href="{% url 'form:recycle_data'%}">Recycle Bin</a></li>
+                </ul>
+            </div>
+        </div>  
+        <div class="color-pickers">
+            <label for="bgColorPicker">Background Color:</label>
+            <input type="color" id="bgColorPicker">
+
+            <label for="textColorPicker">Text Color:</label>
+            <input type="color" id="textColorPicker">
+        </div>
+        <div>
+            {% if messages %}
+            {% for message in messages%}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="text" class="form-input" id="search_value" name="search_value">
+            <button type="submit">Search</button>
+        </form>
+        <table id="example">
+            <thead>
+                <tr>
+                    <th>Form Id</th>
+                    <th>Title</th>
+                    <th>Add Response</th>
+                    <th>Actions</th>
+                    <th>Input View</th>
+                    <th>Download Form Template</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for form in forms %}
+                <tr>
+                    <td>{{ form.id }}</td>
+                    <td>{{ form.title }}</td>
+                    <td><a class="btn btn-light" href="{% url 'form:add_response' form.id %}">Add Form Input</a></td>
+                    <td>
+                        <a class="view-btn" href="{% url 'form:form_detail' form.id %}">View</a>
+                        <a class="delete-btn" href="{% url 'form:move_to_recycle' form.id %}"
+                        onclick="return confirm('Are you sure?');">Move To Trash</a>
+                    </td> 
+                    <td><a class="btn btn-light" href="{% url 'form:view_answer' form.id %}">View Form Input</a></td>
+                    <td><a class="btn btn-light" href="{% url 'form:form_template' form.id %}">Download Form Template</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+    <script>
+        new DataTable('#example', {
+            search: {
+                return: false,
+            }
+        });
+    </script>
+{% endblock %}
+

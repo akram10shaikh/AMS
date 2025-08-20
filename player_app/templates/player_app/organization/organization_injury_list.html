@@ -1,0 +1,414 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+{% load player_extras %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+
+.injury-dashboard-banner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  background: linear-gradient(95deg, #f9f7ff 69%, #e9f2ff 111%);
+  border-radius: 28px;
+  box-shadow: 0 12px 46px #7d73e60e, 0 2px 18px #b8c3d322;
+  padding: 50px 80px 44px 54px;
+  margin-bottom: 40px;
+  gap: 56px;
+}
+
+.injury-banner-left {
+  display: flex; align-items: flex-end;
+  gap: 64px; min-width: 400px;
+}
+
+.injury-count-card {
+  background: #fff7d8;
+  border-radius: 22px;
+  box-shadow: 0 8px 36px #fbcd3d22;
+  min-width: 200px; min-height: 155px;
+  text-align: center;
+  padding: 32px 28px 17px 28px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+
+.injury-count {
+  font-size: 4.6em;
+  font-weight: 900;
+  color: #c87800;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.injury-count-label {
+  font-size: 1.35em;
+  color: #966009;
+  font-weight: 700;
+  letter-spacing: .01em;
+  margin-top: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.injury-spark-boxes {
+  display: flex;
+  gap: 36px;
+}
+
+.injury-spark {
+  background: #fff;
+  border-radius: 17px;
+  box-shadow: 0 2px 17px #a3f1a130;
+  min-width: 150px;
+  min-height: 100px;
+  text-align: center;
+  padding: 19px 18px 11px 18px;
+  display: flex; flex-direction: column; justify-content: center;
+  border-left-width: 7px;
+  border-left-style: solid;
+}
+.spark-active { border-left-color: #ec760f;}
+.spark-recovered { border-left-color: #077f32;}
+.spark-label {
+  font-size: 1.08em;
+  color: #656671;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 9px;
+}
+.spark-value {
+  font-size: 2.45em;
+  font-weight: 900;
+  color: #ec760f;
+  line-height: 1;
+}
+.spark-recovered .spark-value { color: #077f32; }
+
+.injury-banner-right {
+  flex: 1 1 350px;
+  margin-left: 30px;
+  min-width: 340px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.injury-banner-title {
+  font-size: 2.8em;
+  font-weight: 900;
+  color: #c24400;
+  margin-bottom: 12px;
+  letter-spacing: .01em;
+}
+.injury-banner-desc {
+  font-size: 1.45em;
+  color: #7b7472;
+  font-weight: 500;
+  max-width: 540px;
+}
+
+@media (max-width:1100px) {
+  .injury-dashboard-banner { flex-direction:column; align-items: flex-start; gap:22px; padding: 24px 5vw 18px 6vw;}
+  .injury-banner-title {font-size:2em;}
+  .injury-count-card{min-width:120px;}
+  .injury-spark{min-width:80px;}
+}
+@media (max-width:700px) {
+  .injury-dashboard-banner {padding: 7px 2vw 8px 3vw;}
+  .injury-banner-title {font-size:1.1em;}
+  .injury-count-card, .injury-spark{padding:8px;}
+}
+
+.player-table-card { margin: 40px auto; background: #fff; border-radius: 14px; box-shadow: 0 2px 24px 0 #0001; padding: 36px 26px 30px 26px; max-width: 98vw;}
+.injury-table thead th { font-weight: bold; color: #eb5700; background: #fff4ea; border-bottom: 2.5px solid #ffecd1; }
+.injury-table td, .injury-table th { vertical-align: middle; }
+.table-responsive { overflow-x: auto;}
+.table-striped tbody tr:nth-of-type(odd) { background: #fff9f3;}
+.filter-dropdown-btn {margin-right:16px;}
+.filter-popover {display: none; position: absolute; z-index: 99; min-width: 320px; padding: 22px 18px 14px 18px; background: #fafafd; border-radius: 11px; box-shadow: 0 2px 22px #0002; top: 56px; left: 0;}
+.show-filters { display: block !important; }
+.table-actions a { margin-right: 7px; font-size:1.12em; color: #ec760f;}
+.table-actions a:hover { color: #ef3942; }
+.filter-active-badge { background:#ffe7cc; color:#be6600; border-radius:14px; font-size:0.97em; padding:2px 13px; margin-right:4px;}
+.filter-remove-x { color:#c13a3a; margin-left:7px; cursor:pointer; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="injury-dashboard-banner">
+  <div class="injury-banner-left">
+    <div class="injury-count-card">
+      <div class="injury-count">{{ injury_total }}</div>
+      <div class="injury-count-label">Total Injuries</div>
+    </div>
+    <div class="injury-spark-boxes">
+      <div class="injury-spark spark-active">
+        <span class="spark-label">Active Injuries</span>
+        <span class="spark-value">{{ injury_open }}</span>
+      </div>
+      <div class="injury-spark spark-recovered">
+        <span class="spark-label">Recovered</span>
+        <span class="spark-value">{{ injury_closed }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="player-table-card position-relative">
+  <h3 class="mb-3 text-center" style="color:#cf2e04; font-weight:600;">Injury List</h3>
+
+  <div class="d-flex align-items-center flex-wrap mb-2" style="position:relative;">
+    <button type="button" class="btn btn-primary btn-sm filter-dropdown-btn" id="filterBtn">
+      <i class="fa fa-filter"></i> Filter
+      {% if filters_count %}<span class="badge badge-warning ml-1">{{ filters_count }}</span>{% endif %}
+    </button>
+    <button type="button" class="btn btn-success btn-sm" id="downloadExcelBtn" style="margin-left:8px;">
+      <i class="fa fa-file-excel"></i> Export
+    </button>
+    <button type="button" class="btn btn-secondary btn-sm" id="columnSelectBtn" style="margin-left:8px;">
+      <i class="fa fa-columns"></i> Columns
+    </button>
+    {% if filters_count %}
+      <a class="btn btn-light btn-sm ml-2" href="{% url 'organization_injury_list' %}">Clear All</a>
+    {% endif %}
+  </div>
+
+  <!-- Filter Popover Menu -->
+  <div class="filter-popover" id="filterPopover">
+    <form method="get" class="w-100" id="filterFormPopover" autocomplete="off">
+      <button class="btn-close-filter" type="button" id="closeFilterBtn">&times;</button>
+      <div class="form-group">
+        <label><b>Severity</b></label>
+        <select multiple name="severity" class="form-control form-control-sm">
+          {% for val, label in SEVERITY_CHOICES %}
+            <option value="{{ val }}" {% if val in active_filters.severity %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label><b>Status</b></label>
+        <select multiple name="status" class="form-control form-control-sm">
+          {% for val, label in STATUS_CHOICES %}
+            <option value="{{ val }}" {% if val in active_filters.status %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label><b>Body Region</b></label>
+        <select multiple name="body_region" class="form-control form-control-sm">
+          {% for val, label in BODY_PART_CHOICES %}
+            <option value="{{ val }}" {% if val in active_filters.body_region %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label><b>Player</b></label>
+        <select multiple name="player_id" class="form-control form-control-sm">
+          {% for id, name in PLAYER_CHOICES %}
+            <option value="{{ id }}" {% if id|stringformat:"s" in active_filters.player_id %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label><b>Injury Title</b></label>
+        <input type="text" name="name" class="form-control form-control-sm" value="{{ active_filters.name }}">
+      </div>
+      <div class="text-right mt-3">
+        <button class="btn btn-primary btn-sm" type="submit">Apply</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Column Selection Popover -->
+  <div class="filter-popover" style="min-width:240px;" id="columnPopover">
+    <button class="btn-close-filter" type="button" id="closeColumnBtn">&times;</button>
+    <form id="columnFormPopover" class="w-100 px-2 py-1" autocomplete="off">
+      <label class="mb-2"><b>Select additional columns (choose up to 4)</b></label>
+      <div style="max-height:350px;overflow:auto;">
+        <label><input type="checkbox" checked disabled> S.No (fixed)</label><br>
+        <label><input type="checkbox" checked disabled> Player Name (fixed)</label><br>
+        <label><input type="checkbox" checked disabled> Title (fixed)</label><br>
+        <label><input type="checkbox" class="col-toggle" value="col-type"> Type</label><br>
+        <label><input type="checkbox" class="col-toggle" value="col-severity"> Severity</label><br>
+        <label><input type="checkbox" class="col-toggle" value="col-date"> Date</label><br>
+        <label><input type="checkbox" class="col-toggle" value="col-return"> Expected Return</label><br>
+        <label><input type="checkbox" class="col-toggle" value="col-status"> Status</label><br>
+        <label><input type="checkbox" class="col-toggle" value="col-reported"> Reported By</label><br>
+        <label><input type="checkbox" class="col-toggle" value="col-region"> Body Region</label><br>
+        <label><input type="checkbox" class="col-toggle" value="col-segment"> Body Segment</label><br>
+        <label><input type="checkbox" class="col-toggle" value="col-venue"> Venue</label><br>
+        <label><input type="checkbox" class="col-toggle" value="col-notes"> Notes</label><br>
+      </div>
+      <div class="text-right mt-2">
+        <button type="button" class="btn btn-primary btn-sm" id="applyColumnsBtn">Apply</button>
+      </div>
+    </form>
+  </div>
+
+  {% if filters_count %}
+  <div class="mb-2 d-flex align-items-center flex-wrap">
+    {% for val in active_filters.severity %}
+      <span class="filter-active-badge">Severity: {{ SEVERITY_CHOICES|get_label_from_choice:val }} <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'severity' or v != val %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove">&#10005;</a></span>
+    {% endfor %}
+    {% for val in active_filters.status %}
+      <span class="filter-active-badge">Status: {{ STATUS_CHOICES|get_label_from_choice:val }} <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'status' or v != val %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove">&#10005;</a></span>
+    {% endfor %}
+    {% for val in active_filters.body_region %}
+      <span class="filter-active-badge">Region: {{ val|title }} <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'body_region' or v != val %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove">&#10005;</a></span>
+    {% endfor %}
+    {% for val in active_filters.player_id %}
+      <span class="filter-active-badge">Player: {{ PLAYER_CHOICES|get_label_from_choice:val }} <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'player_id' or v != val %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove">&#10005;</a></span>
+    {% endfor %}
+    {% if active_filters.name %}
+      <span class="filter-active-badge">Title: {{ active_filters.name }} <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'name' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove">&#10005;</a></span>
+    {% endif %}
+    <span class="text-info ml-2">Filters applied: {{ filters_count }}</span>
+  </div>
+  {% endif %}
+
+  <div class="table-responsive">
+    <table class="table table-striped injury-table align-middle">
+      <thead>
+        <tr>
+          <th class="col-serial">S.No</th>
+          <th class="col-player">Player</th>
+          <th class="col-title">Title</th>
+          <th class="col-type">Type</th>
+          <th class="col-severity">Severity <a href="?sort=severity{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'sort' %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}{% endfor %}" title="Sort"><i class="fa fa-sort"></i></a></th>
+          <th class="col-date">Date <a href="?sort=date{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'sort' %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}{% endfor %}" title="Sort"><i class="fa fa-sort"></i></a></th>
+          <th class="col-return">Expected Return</th>
+          <th class="col-status">Status <a href="?sort=status{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'sort' %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}{% endfor %}" title="Sort"><i class="fa fa-sort"></i></a></th>
+          <th class="col-reported">Reported By</th>
+          <th class="col-region">Body Region</th>
+          <th class="col-segment">Body Segment</th>
+          <th class="col-venue">Venue</th>
+          <th class="col-notes">Notes</th>
+          <th class="col-actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for injury in injuries %}
+        <tr>
+          <td class="col-serial">{{ forloop.counter }}</td>
+          <td class="col-player" style="font-weight:600; color:#cb6a01;">{{ injury.player.name }}</td>
+          <td class="col-title">{{ injury.name }}</td>
+          <td class="col-type">{{ injury.injury_type }}</td>
+          <td class="col-severity">{{ injury.get_severity_display }}</td>
+          <td class="col-date">{% if injury.injury_date %}{{ injury.injury_date|date:"d M Y" }}{% endif %}</td>
+          <td class="col-return">{% if injury.expected_date_of_return %}{{ injury.expected_date_of_return|date:"d M Y" }}{% endif %}</td>
+          <td class="col-status">{{ injury.get_status_display }}</td>
+          <td class="col-reported">{% if injury.reported_by %}{{ injury.reported_by.name }}{% endif %}</td>
+          <td class="col-region">{{ injury.affected_body_part|title }}</td>
+          <td class="col-segment">{{ injury.body_segment }}</td>
+          <td class="col-venue">{{ injury.venue }}</td>
+          <td class="col-notes">
+            {% if injury.notes %}<span title="{{ injury.notes }}">{{ injury.notes|truncatechars:30 }}</span>{% endif %}
+          </td>
+          <td class="col-actions table-actions">
+            <a href="{% url 'organization_injury_detail' injury.id %}" title="Details"><i class="fa fa-eye"></i></a>
+            <a href="{% url 'organization_injury_edit' injury.id %}" title="Edit"><i class="fa fa-pen"></i></a>
+            <a href="{% url 'organization_injury_delete' injury.id %}" title="Delete" 
+               onclick="return confirm('Delete injury {{ injury }}?')"><i class="fa fa-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="14" class="text-center text-muted">No injuries found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// --- Exactly copy your filter and column js logic, but update classes/columns as above ---
+const filterBtn = document.getElementById("filterBtn");
+const filterPopover = document.getElementById("filterPopover");
+const closeFilterBtn = document.getElementById("closeFilterBtn");
+
+document.addEventListener('click', function(e) {
+  if (filterBtn && filterPopover) {
+    if (filterBtn.contains(e.target)) {
+      filterPopover.classList.toggle("show-filters");
+      filterPopover.style.left = (filterBtn.offsetLeft) + "px";
+      filterPopover.style.top = (filterBtn.offsetTop + filterBtn.offsetHeight + 6) + "px";
+    } else if (!filterPopover.contains(e.target)) {
+      filterPopover.classList.remove("show-filters");
+    }
+  }
+});
+if (closeFilterBtn && filterPopover) {
+  closeFilterBtn.onclick = function() {
+    filterPopover.classList.remove('show-filters');
+  };
+}
+
+// --- Column selection popover logic ---
+const columnBtn = document.getElementById("columnSelectBtn");
+const columnPopover = document.getElementById("columnPopover");
+const closeColumnBtn = document.getElementById("closeColumnBtn");
+const colCheckboxes = document.querySelectorAll(".col-toggle");
+const applyColumnsBtn = document.getElementById("applyColumnsBtn");
+const FIXED_COLS = ["col-serial", "col-player", "col-title", "col-actions"];
+const ALL_SWAP_COLS = [
+  "col-type", "col-severity", "col-date", "col-return", "col-status", "col-reported",
+  "col-region", "col-segment", "col-venue", "col-notes"
+];
+const MAX_SELECTABLE = 4;
+function getSelectedCols() { return Array.from(colCheckboxes).filter(cb => cb.checked).map(cb => cb.value); }
+function setTableColumns(selectedCols) {
+  [...FIXED_COLS, ...ALL_SWAP_COLS].forEach(col => {
+    document.querySelectorAll('.' + col).forEach(cell => {
+      if (FIXED_COLS.includes(col)) cell.style.display = "";
+      else cell.style.display = selectedCols.includes(col) ? "" : "none";
+    });
+  });
+}
+function saveSelectedCols(cols) { localStorage.setItem("injury_table_columns", JSON.stringify(cols)); }
+function loadSelectedCols() {
+  let val = localStorage.getItem("injury_table_columns");
+  try { return val ? JSON.parse(val) : null; } catch { return null; }
+}
+function enforceMaxSelectable(e) {
+  const checked = getSelectedCols();
+  if (checked.length > MAX_SELECTABLE) {
+    e.target.checked = false;
+    alert("You can select only " + MAX_SELECTABLE + " additional columns.");
+  }
+}
+colCheckboxes.forEach(cb => { cb.addEventListener("change", enforceMaxSelectable); });
+
+if (columnBtn && columnPopover) {
+  columnBtn.onclick = function() {
+    columnPopover.classList.toggle("show-filters");
+    columnPopover.style.left = (columnBtn.offsetLeft) + "px";
+    columnPopover.style.top = (columnBtn.offsetTop + columnBtn.offsetHeight + 6) + "px";
+    const stored = loadSelectedCols() || ALL_SWAP_COLS.slice(0, MAX_SELECTABLE);
+    colCheckboxes.forEach(cb => cb.checked = stored.includes(cb.value));
+  };
+}
+if (closeColumnBtn && columnPopover) {
+  closeColumnBtn.onclick = function() { columnPopover.classList.remove('show-filters'); };
+}
+if (applyColumnsBtn) {
+  applyColumnsBtn.onclick = function() {
+    const selected = getSelectedCols();
+    if (selected.length === 0) {
+      alert("Select at least one additional column."); return;
+    }
+    setTableColumns(selected);
+    saveSelectedCols(selected);
+    columnPopover.classList.remove('show-filters');
+  };
+}
+document.addEventListener("DOMContentLoaded", function() {
+  const stored = loadSelectedCols();
+  setTableColumns(stored || ALL_SWAP_COLS.slice(0, MAX_SELECTABLE));
+});
+document.getElementById("downloadExcelBtn").onclick = function() {
+  let url = "{% url 'organization_injury_export' %}";
+  let params = new URLSearchParams(window.location.search);
+  window.location.href = url + (params.toString() ? ("?" + params.toString()) : "");
+};
+</script>
+{% endblock %}

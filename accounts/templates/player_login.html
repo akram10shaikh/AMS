@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Login</title>
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Body Styling */
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Container for Form */
+        .form-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            max-width: 100%;
+        }
+
+        /* Header Styling */
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        /* Form Field Styling */
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        /* Submit Button Styling */
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #18bc9c;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #16a085;
+        }
+
+        /* Error Message Styling */
+        p {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 600px) {
+            .form-container {
+                width: 90%;
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            input, button {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <h1>Player Login</h1>
+        <form method="POST" action="{% url 'player_login' %}">
+            {% csrf_token %}
+
+            <label for="email">Email:</label>
+            <input type="email" name="email" id="email" required>
+
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password" required>
+
+            <button type="submit">Login</button>
+
+            {% if error_message %}
+                <p>{{ error_message }}</p>
+            {% endif %}
+        </form>
+    </div>
+
+</body>
+</html>

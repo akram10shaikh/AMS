@@ -1,0 +1,290 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+{% block extra_head %}
+<style>
+    /* Base styles */
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+            Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+        background-color: #f5f7fa;
+        color: #222;
+        margin: 0;
+        padding: 0;
+    }
+
+    h2 {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+    }
+
+    .container {
+        max-width: 1200px;
+        padding: 1rem 1.5rem;
+        margin: 0 auto;
+    }
+
+    /* Search form styling */
+    form.search-box {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        align-items: center;
+    }
+
+    form.search-box input[type="text"],
+    form.search-box select {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 1rem;
+        min-width: 160px;
+        flex-grow: 1;
+        box-sizing: border-box;
+        transition: border-color 0.3s ease;
+    }
+
+    form.search-box input[type="text"]:focus,
+    form.search-box select:focus {
+        border-color: #0078d7; /* subtle blue */
+        outline: none;
+        box-shadow: 0 0 5px rgba(0, 120, 215, 0.4);
+    }
+
+    form.search-box button {
+        background-color: #0078d7;
+        color: white;
+        border: none;
+        padding: 0.55rem 1.25rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    form.search-box button:hover,
+    form.search-box button:focus {
+        background-color: #005fa3;
+        outline: none;
+    }
+
+    /* Table styles */
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+        background: white;
+        border-radius: 8px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+        min-width: 700px; /* force horizontal scroll on small */
+    }
+
+    thead {
+        background-color: #0078d7;
+        color: white;
+    }
+
+    thead th {
+        text-align: left;
+        padding: 0.75rem 1rem;
+        font-weight: 700;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+    tbody tr {
+        border-bottom: 1px solid #e1e4e8;
+        transition: background-color 0.15s ease;
+    }
+    tbody tr:hover {
+        background-color: #e6f0ff;
+    }
+
+    tbody td {
+        padding: 0.6rem 1rem;
+        vertical-align: middle;
+        white-space: nowrap;
+        color: #333;
+    }
+
+    tbody td:nth-child(6) {
+        max-width: 280px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 900px) {
+        form.search-box {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        form.search-box input[type="text"],
+        form.search-box select,
+        form.search-box button {
+            min-width: auto;
+            width: 100%;
+        }
+        tbody td:nth-child(6) {
+            max-width: 150px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        thead th, tbody td {
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        tbody td:nth-child(6) {
+            max-width: 100%;
+        }
+    }
+
+    /* No results row */
+    tbody tr.no-results td {
+        text-align: center;
+        font-style: italic;
+        padding: 2rem 1rem;
+        color: #666;
+    }
+
+ mark {
+        background-color: #fffa90;
+        color: #333;
+        padding: 0 2px;
+        border-radius: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Activity Logs</h2>
+
+    <form id="filterForm" class="search-box" onsubmit="return false;" role="search" aria-label="Filter activity logs">
+        <input 
+            id="searchInput"
+            type="search" 
+            name="q" 
+            placeholder="Search logs..." 
+            aria-label="Search logs"
+        >
+        <select id="logTypeFilter" name="log_type" aria-label="Select log type">
+            <option value="all">All Logs</option>
+            <option value="medical">Medical Logs</option>
+            <option value="injury">Injury Logs</option>
+            <option value="player">Player Logs</option>  <!-- Added this -->
+        </select>
+        <button type="button" id="clearFiltersBtn" aria-label="Clear filters">Clear</button>
+    </form>
+
+    <div class="table-wrapper" role="region" aria-live="polite">
+        <table id="activityLogTable">
+            <thead>
+                <tr>
+                    <th scope="col">Date/Time</th>
+                    <th scope="col">Log Type</th>
+                    <th scope="col">User</th>
+                    <th scope="col">Target</th>
+                    <th scope="col">Action</th>
+                    <th scope="col">Description/Details</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% if logs %}
+                {% for log in logs %}
+                    <tr>
+                        <td>{{ log.time|date:"Y-m-d H:i" }}</td>
+                        <td class="log-type">{{ log.log_type|lower }}</td>
+                        <td>{{ log.user }}</td>
+                        <td>{{ log.target }}</td>
+                        <td>{{ log.action }}</td>
+                        <td title="{{ log.desc|default:'-' }}">{{ log.desc|default:"-" }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr class="no-results">
+                    <td colspan="6">No activity found.</td>
+                </tr>
+            {% endif %}
+            </tbody>
+        </table>
+        <p id="noMatchMessage" style="display:none; text-align:center; margin-top:1rem; color:#888;">
+            No matching logs found.
+        </p>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const logTypeFilter = document.getElementById('logTypeFilter');
+    const table = document.getElementById('activityLogTable');
+    const tbody = table.tBodies[0];
+    const rows = Array.from(tbody.rows);
+    const noMatchMessage = document.getElementById('noMatchMessage');
+    const clearBtn = document.getElementById('clearFiltersBtn');
+
+    function normalizeText(text) {
+        return text.toLowerCase();
+    }
+
+    function filterRows() {
+        const searchTerm = normalizeText(searchInput.value.trim());
+        const selectedLogType = logTypeFilter.value;
+
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            // Get cells text to search/filter
+            const logTypeCell = row.querySelector('.log-type');
+            const logType = logTypeCell ? normalizeText(logTypeCell.textContent) : '';
+
+            // Combine all cell texts for searching
+            const rowText = normalizeText(row.textContent);
+
+            // Check if matches search term (in any cell)
+            const matchesSearch = rowText.includes(searchTerm);
+
+            // Check if matches log type filter
+            const matchesLogType = selectedLogType === 'all' || logType === selectedLogType;
+
+            if (matchesSearch && matchesLogType) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        noMatchMessage.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+
+    // Attach event listeners
+    searchInput.addEventListener('input', filterRows);
+    logTypeFilter.addEventListener('change', filterRows);
+
+    clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        logTypeFilter.value = 'all';
+        filterRows();
+        searchInput.focus();
+    });
+
+    // Initial filter on page load
+    filterRows();
+});
+</script>
+{% endblock %}

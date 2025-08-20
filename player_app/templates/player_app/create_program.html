@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Rehab/Training Program{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style>
+    body {
+        background-color: #000; /* Black background */
+        color: #fff; /* White text color */
+        font-size: 0.9em;
+    }
+
+    h1, h3 {
+        color: #fff;
+    }
+
+    .form-container {
+        background-color: #333; /* Dark background for the form */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+        max-width: 600px;
+        margin: 40px auto;
+    }
+
+    .form-container label {
+        font-weight: bold;
+        margin-top: 10px;
+        display: block;
+    }
+
+    .form-control {
+        background-color: #555;
+        color: #fff;
+        border: 1px solid #666;
+    }
+
+    .form-control:focus {
+        background-color: #444;
+        color: #fff;
+        border-color: #007bff;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        margin-top: 15px;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1 class="text-center">Create Rehab/Training Program</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="name">Program Name:</label>
+            <input type="text" name="name" id="name" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <textarea name="description" id="description" class="form-control" rows="4"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="program_type">Program Type:</label>
+            <select name="program_type" id="program_type" class="form-control">
+                <option value="rehab">Rehabilitation</option>
+                <option value="training">Training</option>
+            </select>
+        </div>
+
+        <div class="form-group form-check">
+            <input type="checkbox" name="template" id="template" class="form-check-input">
+            <label for="template" class="form-check-label">Save as Template</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Create Program</button>
+
+    </form>
+<br>
+    <a href="{% url 'program_list' %}" class="btn btn-success btn-sm">Rehab/Training Program List</a>
+
+</div>
+{% endblock %}

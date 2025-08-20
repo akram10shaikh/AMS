@@ -1,0 +1,410 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Test Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Container */
+  .container {
+    max-width: 1200px;
+    margin: 1.5rem auto 3rem;
+    padding: 0 1rem;
+    position: relative;
+    transition: margin-right 0.3s ease;
+  }
+
+  /* Header */
+  .header1 {
+    background-color: #2d3748;
+    color: #edf2f7;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 1.75rem;
+    user-select: none;
+    margin-bottom: 2rem;
+  }
+
+  /* Buttons */
+  .modal-btns {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .modal-btns a,
+  .modal-btns button {
+    background-color: #3182ce;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.65rem 1.3rem;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.3s ease;
+    min-width: 140px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    line-height: normal;
+  }
+  .modal-btns a:hover,
+  .modal-btns button:hover,
+  .modal-btns a:focus,
+  .modal-btns button:focus {
+    background-color: #2c5282;
+    outline: none;
+  }
+
+  /* Sidebar styles */
+  #filterSidebar {
+    position: fixed;
+    top: 0;
+    right: -320px; /* initially hidden */
+    width: 320px;
+    height: 100%;
+    background: #f9fafb;
+    border-left: 1px solid #cbd5e0;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+    padding: 1rem 1.5rem;
+    overflow-y: auto;
+    transition: right 0.3s ease;
+    z-index: 1500;
+  }
+  #filterSidebar.active {
+    right: 0;
+  }
+
+  #filterSidebar h3 {
+    color: #2c5282;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    user-select: none;
+  }
+
+  #filterSidebar form button {
+    background-color: #3182ce;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1.2rem;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 100%;
+    user-select: none;
+    transition: background-color 0.3s ease;
+    margin-top: 1rem;
+  }
+  #filterSidebar form button:hover,
+  #filterSidebar form button:focus {
+    background-color: #2c5282;
+    outline: none;
+  }
+
+  /* Form inputs in sidebar */
+  #filterSidebar form label {
+    display: block;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.95rem;
+  }
+  #filterSidebar form input[type="text"],
+  #filterSidebar form input[type="date"],
+  #filterSidebar form select,
+  #filterSidebar form input[type="number"],
+  #filterSidebar form textarea {
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    font-size: 1rem;
+    border: 1.5px solid #cbd5e0;
+    border-radius: 6px;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    font-family: inherit;
+  }
+  #filterSidebar form input[type="text"]:focus,
+  #filterSidebar form input[type="date"]:focus,
+  #filterSidebar form select:focus,
+  #filterSidebar form input[type="number"]:focus,
+  #filterSidebar form textarea:focus {
+    outline: none;
+    border-color: #3182ce;
+    box-shadow: 0 0 6px #bee3f8;
+    background-color: #ebf8ff;
+  }
+
+  /* Close sidebar button */
+  #closeSidebarBtn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #888;
+    cursor: pointer;
+    user-select: none;
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    transition: color 0.2s ease;
+  }
+  #closeSidebarBtn:hover,
+  #closeSidebarBtn:focus {
+    color: #3182ce;
+    outline: none;
+  }
+
+  /* Adjust container margin when sidebar active */
+  .container.shifted {
+    margin-right: 320px;
+  }
+
+  /* Search input */
+  #searchContainer {
+    margin-bottom: 2rem;
+    max-width: 400px;
+    user-select: none;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  #searchContainer label {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    font-size: 1rem;
+    display: block;
+  }
+  #searchInput {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1.5px solid #cbd5e0;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    font-family: inherit;
+  }
+  #searchInput:focus {
+    outline: none;
+    border-color: #3182ce;
+    box-shadow: 0 0 8px #bee3f8;
+    background-color: #ebf8ff;
+  }
+
+  /* Test section */
+  .test-section {
+    margin-bottom: 3rem;
+  }
+  .test-section h3 {
+    font-size: 1.5rem;
+    color: #2b6cb0;
+    margin-bottom: 1rem;
+    border-bottom: 3px solid #90cdf4;
+    padding-bottom: 0.3rem;
+    user-select: none;
+  }
+  .table-wrapper {
+    overflow-x: auto;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.05);
+    border-radius: 8px;
+    background: white;
+    padding: 1rem;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 650px;
+    font-size: 0.95rem;
+    user-select: none;
+  }
+  thead {
+    background-color: #bee3f8;
+  }
+  th, td {
+    border: 1px solid #cbd5e0;
+    padding: 0.6rem 1rem;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  tbody tr:nth-child(even) {
+    background-color: #edf2f7;
+  }
+  tbody tr:hover {
+    background-color: #bee3f8;
+  }
+
+  /* Responsive styles */
+  @media (max-width: 768px) {
+    #filterSidebar {
+      width: 100%;
+      right: -100%;
+      transition: right 0.3s ease;
+    }
+    #filterSidebar.active {
+      right: 0;
+    }
+    .container.shifted {
+      margin-right: 0;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="header1">Player Test Dashboard</div>
+
+<div class="modal-btns">
+  <a href="{% url 'add_test_result' %}" class="btn btn-primary" aria-label="Add New Test Result">Add New Test Result</a>
+  <button type="button" id="toggleSidebarBtn" aria-expanded="false" aria-controls="filterSidebar">
+    Filter Test Results
+  </button>
+</div>
+
+<div id="filterSidebar" aria-label="Filter Test Results Sidebar" aria-hidden="true" role="complementary">
+  <button id="closeSidebarBtn" aria-label="Close Filter Sidebar">&times;</button>
+  <h3>Filter Test Results</h3>
+  <form method="get" novalidate>
+    {{ form.as_p }}
+    <button type="submit">Apply Filter</button>
+  </form>
+</div>
+
+<main class="container" id="mainContainer">
+
+  <div id="searchContainer">
+    <label for="searchInput">Search Player or Test:</label>
+    <input type="text" id="searchInput" placeholder="Type player name or test..." autocomplete="off" aria-label="Search player or test name" />
+  </div>
+
+  {% if summary_by_test %}
+  {% for test_name, rows in summary_by_test.items %}
+    <section class="test-section" aria-labelledby="test-{{ forloop.counter }}-heading">
+      <h3 id="test-{{ forloop.counter }}-heading">Test: {{ test_name }}</h3>
+      <div class="table-wrapper">
+        <table role="grid" aria-describedby="test-{{ forloop.counter }}-heading" style="margin-bottom:30px;">
+          <thead>
+            <tr>
+              <th scope="col">Serial</th>
+              <th scope="col">Player Name</th>
+              <th scope="col">Date and Time (Last Trial)</th>
+              <th scope="col">Phase (Last Trial)</th>
+              <th scope="col">Trial 1 (Second Last)</th>
+              <th scope="col">Trial 2 (Last)</th>
+              <th scope="col">Best Trial</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+            <tr>
+              <td>{{ row.serial }}</td>
+              <td>{{ row.player_name }}</td>
+              <td>{{ row.last_date }}</td>
+              <td>{{ row.last_phase }}</td>
+              <td>{% if row.trial_1 != None %}{{ row.trial_1 }}{% else %}&mdash;{% endif %}</td>
+              <td>{{ row.trial_2 }}</td>
+              <td>{{ row.best_trial }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" style="font-style: italic;">No data found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endfor %}
+  {% else %}
+  <p style="text-align: center; font-style: italic; color: #888;">No data found.</p>
+  {% endif %}
+
+</main>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const sidebar = document.getElementById('filterSidebar');
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
+    const closeBtn = document.getElementById('closeSidebarBtn');
+    const mainContainer = document.getElementById('mainContainer');
+
+    function openSidebar() {
+      sidebar.classList.add('active');
+      sidebar.setAttribute('aria-hidden', 'false');
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      mainContainer.classList.add('shifted');
+      closeBtn.focus();
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove('active');
+      sidebar.setAttribute('aria-hidden', 'true');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      mainContainer.classList.remove('shifted');
+      toggleBtn.focus();
+      document.body.style.overflow = '';
+    }
+
+    toggleBtn.addEventListener('click', function () {
+      if (sidebar.classList.contains('active')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    });
+
+    closeBtn.addEventListener('click', closeSidebar);
+
+    // Close sidebar when clicking outside of sidebar (only on small screens)
+    window.addEventListener('click', function (event) {
+      if (sidebar.classList.contains('active') && !sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
+        closeSidebar();
+      }
+    });
+
+    // Close sidebar on Escape key
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && sidebar.classList.contains('active')) {
+        closeSidebar();
+      }
+    });
+
+    // Search filter
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', function () {
+      const filter = this.value.toLowerCase();
+      const tables = document.querySelectorAll('.table-wrapper > table');
+
+      tables.forEach(table => {
+        const tbody = table.tBodies[0];
+        if (!tbody) return;
+        const testSection = table.closest('.test-section');
+        const testNameElem = testSection ? testSection.querySelector('h3') : null;
+        const testName = testNameElem ? testNameElem.textContent.toLowerCase() : '';
+
+        let visibleRowCount = 0;
+
+        Array.from(tbody.rows).forEach(row => {
+          const playerName = row.cells[1].textContent.toLowerCase();
+
+          if (playerName.includes(filter) || testName.includes(filter)) {
+            row.style.display = '';
+            visibleRowCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        testSection.style.display = (visibleRowCount === 0) ? 'none' : '';
+      });
+    });
+  });
+</script>
+
+{% endblock %}

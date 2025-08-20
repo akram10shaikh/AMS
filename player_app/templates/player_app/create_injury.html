@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Injury{% endblock %}
+
+{% block extra_head %}
+
+<style>
+   
+
+    h1 {
+        color: #fff;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .form-container {
+        background: #222;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(255, 255, 255, 0.2);
+        width: 60%;
+        margin: auto;
+    }
+
+    .form-control {
+        background-color: #555;
+        color: #fff;
+        border: 1px solid #666;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    select {
+        font-size: 0.85em;
+        padding: 5px;
+        background-color: #333;
+        color: white;
+        border: 1px solid #555;
+        border-radius: 5px;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <h1>Create Injury Record</h1>
+
+    <div class="form-container">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Organization Selection (Only for Super Admin) -->
+            {% if request.user.is_superuser %}
+                <div class="form-group">
+                    <label for="organization">Select Organization:</label>
+                    <select id="organization" name="organization" class="form-control">
+                        <option value="">Select an Organization</option>
+                        {% for org in organizations %}
+                            <option value="{{ org.id }}">{{ org.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+
+            <!-- Player Selection -->
+            <div class="form-group">
+                <label for="player">Select Player:</label>
+                <select id="player" name="player" class="form-control">
+                    {% for player in players %}
+                        {% if request.user.is_superuser or player.organization == request.user.organization %}
+                            <option value="{{ player.id }}" data-org="{{ player.organization.id }}">{{ player.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Rest of the Injury Form -->
+            {{ form.non_field_errors }}
+            <div class="form-group">
+                <label for="injury_type">Injury Type:</label>
+                {{ form.injury_type }}
+            </div>
+
+            <div class="form-group">
+                <label for="affected_body_part">Affected Body Part:</label>
+                {{ form.affected_body_part }}
+            </div>
+
+            <div class="form-group">
+                <label for="severity">Severity:</label>
+                {{ form.severity }}
+            </div>
+
+            <div class="form-group">
+                <label for="injury_date">Injury Date:</label>
+                {{ form.injury_date }}
+            </div>
+
+            <div class="form-group">
+                <label for="status">Status:</label>
+                {{ form.status }}
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Notes:</label>
+                {{ form.notes }}
+            </div>
+
+<!--            <div class="form-group">-->
+<!--                <label for="medical_documents">Medical Documents:</label>-->
+<!--                {{ form.medical_documents }}-->
+<!--            </div>-->
+
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </form>
+
+        <br>
+        <div class="text-center">
+            <a href="{% url 'injury_list' %}" class="btn btn-secondary">Back to Injury List</a>
+        </div>
+    </div>
+
+    <script>
+        // Auto-filter players when an organization is selected (for Super Admins)
+        document.getElementById("organization")?.addEventListener("change", function() {
+            let selectedOrg = this.value;
+            let allPlayers = document.querySelectorAll("#player option");
+
+            allPlayers.forEach(option => {
+                if (option.dataset.org === selectedOrg || selectedOrg === "") {
+                    option.style.display = "block";
+                } else {
+                    option.style.display = "none";
+                    option.selected = false;
+                }
+            });
+        });
+    </script>
+{% endblock %}

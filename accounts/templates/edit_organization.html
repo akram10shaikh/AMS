@@ -1,0 +1,18 @@
+<form method="post" id="edit-organization-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Update</button>
+</form>
+
+<script>
+    $('#edit-organization-form').on('submit', function(event) {
+        event.preventDefault();
+        var url = $(this).attr('action');
+        $.post(url, $(this).serialize(), function(data) {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            }
+        });
+    });
+</script>

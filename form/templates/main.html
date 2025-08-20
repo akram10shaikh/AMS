@@ -1,0 +1,173 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>FORMS HOME</title>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        
+        <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: var(--custom-bg-color) !important;
+            color: var(--custom-text-color);
+        }
+        .navbar {
+            width: 100%;
+            background-color: var(--navbar-bg-color, #343a40);
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar .navbar-left a, .navbar .navbar-right a {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 8px 15px;
+            display: inline-block;
+        }
+        .navbar .navbar-right a:not(:last-child) {
+            border-right: 1px solid #ffffff;
+        }
+        .navbar a:hover {
+            background-color: #007bff;
+        }
+        .content-wrapper {
+            display: flex;
+            flex-grow: 1;
+            margin-top: 45px; /* Adjust according to the height of the navbar */
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 60px; /* Collapsed width */
+            background-color: var(--sidebar-bg-color, #343a40);
+            height: calc(100vh - 50px); /* Adjust according to the height of the navbar */
+            padding-top: 20px;
+            position: fixed;
+            top: 50px; /* Adjust according to the height of the navbar */
+            overflow: hidden;
+            transition: width 0.3s;
+        }
+        .sidebar:hover {
+            width: 250px; /* Expanded width */
+        }
+        .sidebar .logo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+        .sidebar a {
+            padding: 10px 15px;
+            text-decoration: none;
+            font-size: 1rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        .sidebar a i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        .sidebar a:hover {
+            background-color: #007bff;
+        }
+        .sidebar .text {
+            display: none;
+        }
+        .sidebar:hover .text {
+            display: inline;
+        }
+        .container {
+            margin-left: 65px; /* Collapsed sidebar width */
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+            height: calc(100vh - 50px); /* Adjust according to the height of the navbar */
+            transition: margin-left 0.3s;
+        }
+        .sidebar:hover ~ .main-content {
+            margin-left: 250px; /* Expanded sidebar width */
+        }
+    </style>
+    {% block css %}  {% endblock %}
+</head>
+<body>
+    <div class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <!-- Navbar Left: Home Logo -->
+            <a href="{% url 'form:list_forms' %}" class="navbar-brand">Home Logo AMS</a>
+            <li>
+            {% if user.is_authenticated %}
+                <span><strong>{{ user.username }}</strong> - {{ user.get_role_display }}</span>
+                <form method="POST" action="{% url 'logout' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="background-color: #dd1710; color: white; border: none; padding: 5px 10px; margin-left: 10px; cursor: pointer;">Logout</button>
+                </form>
+            </li>
+        {% else %}
+            <span>Not logged in</span>
+        {% endif %}
+    
+            <!-- Navbar Right: User Authentication -->
+            
+        </div>
+    </div>
+    <div class="content-wrapper">
+        <div class="sidebar">
+            <a href="{% url 'form:list_forms' %}"><i class="fas fa-list"></i><span class="text">All Forms</span></a>
+            <a href="{% url 'form:create_form2' %}"><i class="fas fa-plus"></i><span class="text">Create Form</span></a>
+            <a href="{% url 'form:assign_form' %}"><i class="fas fa-plus"></i><span class="text">assign Form</span></a>
+            <a href="{% url 'form:form_activity_list' %}"><span class="text">Form Activities</span></a>
+            <a href="{% url 'form:recycle_data' %}"><span class="text">Recycle Bin</span></a>
+            <a href=""><span class="text">----------------------</span></a>
+        </div>
+        {% block content %}
+        {% endblock %}
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const bgColorPicker = document.getElementById('bgColorPicker');
+            const textColorPicker = document.getElementById('textColorPicker');
+
+            // Load saved colors from local storage
+            const savedBgColor = localStorage.getItem('bgColor');
+            const savedTextColor = localStorage.getItem('textColor');
+
+            if (savedBgColor) {
+                document.documentElement.style.setProperty('--custom-bg-color', savedBgColor);
+                bgColorPicker.value = savedBgColor;
+            }
+
+            if (savedTextColor) {
+                document.documentElement.style.setProperty('--custom-text-color', savedTextColor);
+                textColorPicker.value = savedTextColor;
+            }
+
+            bgColorPicker.addEventListener('input', function () {
+                const color = bgColorPicker.value;
+                document.documentElement.style.setProperty('--custom-bg-color', color);
+                localStorage.setItem('bgColor', color);
+            });
+
+            textColorPicker.addEventListener('input', function () {
+                const color = textColorPicker.value;
+                document.documentElement.style.setProperty('--custom-text-color', color);
+                localStorage.setItem('textColor', color);
+            });
+        });
+    </script>
+</body>
+</html>

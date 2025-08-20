@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Management</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            display: flex;
+        }
+        /* Sidebar styles */
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            position: fixed;
+            background-color: #000; /* Black background */
+            padding-top: 20px;
+        }
+        .sidebar .nav-link {
+            color: #fff; /* White text for links */
+        }
+        .sidebar .nav-link:hover {
+            background-color: #444; /* Dark gray background on hover */
+            color: #fff;
+        }
+        .content {
+            margin-left: 270px; /* Space for the sidebar */
+            padding: 20px;
+            width: calc(100% - 270px); /* Adjust content width */
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <h3 class="text-center text-white">Menu</h3>
+    <div class="list-group list-group-flush">
+        <a href="{% url 'organization_dashboard' %}" class="list-group-item list-group-item-action bg-black">Organization Dashboard</a>
+        <a href="{% url 'staff_register_org' %}" class="list-group-item list-group-item-action bg-black">Add Staff</a>
+        <a href="{% url 'organization_player_list' %}" class="list-group-item list-group-item-action bg-black">Player Dashboard</a>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="content">
+    <div class="container mt-5">
+        <h2 class="text-center">Staff List</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Mobile Number</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                    <th>Organization</th>
+                    <th>Permissions</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for staff in staff_members %}
+                <tr id="staff-{{ staff.id }}">
+                    <td>{{ staff.name }}</td>
+                    <td>{{ staff.age }}</td>
+                    <td>{{ staff.mobile_number }}</td>
+                    <td>{{ staff.email }}</td>
+                    <td>{{ staff.address }}</td>
+                    <td>{{ staff.organization.name }}</td>
+                    <td>
+                        {% if staff.player_management %}Player Management{% endif %}
+                        {% if staff.injury_tracking %}Injury Tracking{% endif %}
+                        {% if staff.add_form %}Add Form{% endif %}
+                        {% if staff.add_result %}Add Result{% endif %}
+                        {% if staff.view_result %}View Result{% endif %}
+                    </td>
+                    <td>
+                        <button class="btn btn-primary btn-sm edit-btn" data-id="{{ staff.id }}">Edit</button>
+                        <button class="btn btn-danger btn-sm delete-btn" data-id="{{ staff.id }}">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Staff</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit-staff-id">
+                    <div class="form-group">
+                        <label for="edit-name">Name</label>
+                        <input type="text" class="form-control" id="edit-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-age">Age</label>
+                        <input type="number" class="form-control" id="edit-age" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-mobile_number">Mobile Number</label>
+                        <input type="text" class="form-control" id="edit-mobile_number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-email">Email</label>
+                        <input type="email" class="form-control" id="edit-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-address">Address</label>
+                        <textarea class="form-control" id="edit-address" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-organization">Organization</label>
+                        <select class="form-control" id="edit-organization" required>
+                            {% for org in organizations %}
+                                <option value="{{ org.id }}">{{ org.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group form-check">
+                        <input type="checkbox" class="form-check-input" id="edit-player_management">
+                        <label class="form-check-label" for="edit-player_management">Player Management</label>
+                    </div>
+                    <div class="form-group form-check">
+                        <input type="checkbox" class="form-check-input" id="edit-injury_tracking">
+                        <label class="form-check-label" for="edit-injury_tracking">Injury Tracking</label>
+                    </div>
+                    <div class="form-group form-check">
+                        <input type="checkbox" class="form-check-input" id="edit-add_form">
+                        <label class="form-check-label" for="edit-add_form">Add Form</label>
+                    </div>
+                    <div class="form-group form-check">
+                        <input type="checkbox" class="form-check-input" id="edit-add_result">
+                        <label class="form-check-label" for="edit-add_result">Add Result</label>
+                    </div>
+                    <div class="form-group form-check">
+                        <input type="checkbox" class="form-check-input" id="edit-view_result">
+                        <label class="form-check-label" for="edit-view_result">View Result</label>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="update-btn">Update</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('.edit-btn').on('click', function() {
+        var staffId = $(this).data('id');
+        $.get(`/staff/${staffId}/edit/`, function(data) {
+            $('#edit-staff-id').val(data.id);
+            $('#edit-name').val(data.name);
+            $('#edit-age').val(data.age);
+            $('#edit-mobile_number').val(data.mobile_number);
+            $('#edit-email').val(data.email);
+            $('#edit-address').val(data.address);
+            $('#edit-organization').val(data.organization);
+            $('#edit-player_management').prop('checked', data.player_management);
+            $('#edit-injury_tracking').prop('checked', data.injury_tracking);
+            $('#edit-add_form').prop('checked', data.add_form);
+            $('#edit-add_result').prop('checked', data.add_result);
+            $('#edit-view_result').prop('checked', data.view_result);
+            $('#editModal').modal('show');
+        });
+    });
+
+    $('#update-btn').on('click', function() {
+        var staffId = $('#edit-staff-id').val();
+        $.ajax({
+            url: `/staff/${staffId}/update/`,
+            type: 'POST',
+            data: {
+                'name': $('#edit-name').val(),
+                'age': $('#edit-age').val(),
+                'mobile_number': $('#edit-mobile_number').val(),
+                'email': $('#edit-email').val(),
+                'address': $('#edit-address').val(),
+                'organization': $('#edit-organization').val(),
+                'player_management': $('#edit-player_management').is(':checked'),
+                'injury_tracking': $('#edit-injury_tracking').is(':checked'),
+                'add_form': $('#edit-add_form').is(':checked'),
+                'add_result': $('#edit-add_result').is(':checked'),
+                'view_result': $('#edit-view_result').is(':checked'),
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(data) {
+                $('#editModal').modal('hide');
+                location.reload();
+            }
+        });
+    });
+
+    $('.delete-btn').on('click', function() {
+        var staffId = $(this).data('id');
+        if (confirm('Are you sure you want to delete this staff member?')) {
+            $.ajax({
+                url: `/staff/${staffId}/delete/`,
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function() {
+                    $('#staff-' + staffId).remove();
+                }
+            });
+        }
+    });
+});
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

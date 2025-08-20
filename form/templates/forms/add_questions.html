@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Add Questions</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/add_question.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Add Questions to Form "{{ form.title }}"</h1>
+        <form method="post">
+            {% csrf_token %}
+            <div class="input-container">
+                <label for="question_text">Choose From Already Created Questions</label>
+                <select id="question_text" name="question_text"  onchange="handleRedirect(this.value)">
+                    {% for ques in questions %}
+                    <option value="{{ques.id}}">{{ques.question_text}}</option>
+                    {% endfor %}
+                    <option value="create new question">create new question</option>
+                </select>
+            </div>
+            <label for="input_add_player">Add More Player</label>
+            <input type="checkbox" id="input_add_player" name="input_add_player" >
+            <button type="submit">Add Question</button>
+        </form>
+    </div>
+        <div class="inner-container">
+            <h2>Existing Questions</h2>
+            <div class="line"></div>
+            <ul>
+                {% for question in exist_question %}
+                <li>
+                    <strong>{{ question.question_text }}</strong>
+                    (Type: {{ question.get_question_type_display }})
+                    {% if question.question_type in 'multiple_choice checkbox dropdown' %}
+                    <ul>
+                        {% for choice in question.options.all %}
+                        <li>{{ choice.choice_text }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li>No questions added yet.</li>
+                {% endfor %}
+            </ul>
+
+            <a href="{% url 'form:list_forms'  %}">All Form Details</a>
+        </div>
+    </div>
+    <script>
+        function handleRedirect(value) {
+            // Check if the selected value is the one that should trigger the redirect
+            if (value === 'create new question') {
+                // Redirect to the desired URL
+                window.location.href = "{% url 'form:create_question' form.id %}";
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-zJ3+PoYG2hIe7w6FIp40/xzWq58jz3IMtkJqjRn5YqUo2+0D98IjOBhp0+P8DrMo"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>

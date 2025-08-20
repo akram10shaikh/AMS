@@ -1,0 +1,82 @@
+{% extends 'main.html' %}
+{% load static %}
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/list_forms.css' %}">
+    <style>
+        .container h1 {
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+            margin-left: 10%;
+        }
+    </style>  
+{% endblock %}
+{% block content %}
+    <div class="container">
+        <h1>All Forms</h1>
+        <div class="color-pickers">
+            <label for="bgColorPicker">Background Color:</label>
+            <input type="color" id="bgColorPicker">
+
+            <label for="textColorPicker">Text Color:</label>
+            <input type="color" id="textColorPicker">
+        </div>
+        <table class="table table-striped" id="example">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for form in forms %}
+                <tr>
+                    <td>{{ form.title }}</td>
+                    <td>{{ form.description }}</td>
+                    <td>
+                        <a class="view-btn" href="{% url 'form:restore_data' form.id %}">Restore</a>
+                    
+                        <a class="delete-btn" href="{% url 'form:delete_form' form.id %}"
+                            onclick="return confirm('Are you sure?');">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const bgColorPicker = document.getElementById('bgColorPicker');
+            const textColorPicker = document.getElementById('textColorPicker');
+
+            // Load saved colors from local storage
+            const savedBgColor = localStorage.getItem('bgColor');
+            const savedTextColor = localStorage.getItem('textColor');
+
+            if (savedBgColor) {
+                document.documentElement.style.setProperty('--custom-bg-color', savedBgColor);
+                bgColorPicker.value = savedBgColor;
+            }
+
+            if (savedTextColor) {
+                document.documentElement.style.setProperty('--custom-text-color', savedTextColor);
+                textColorPicker.value = savedTextColor;
+            }
+
+            bgColorPicker.addEventListener('input', function () {
+                const color = bgColorPicker.value;
+                document.documentElement.style.setProperty('--custom-bg-color', color);
+                localStorage.setItem('bgColor', color);
+            });
+
+            textColorPicker.addEventListener('input', function () {
+                const color = textColorPicker.value;
+                document.documentElement.style.setProperty('--custom-text-color', color);
+                localStorage.setItem('textColor', color);
+            });
+        });
+        new DataTable('#example'); 
+    </script>
+{% endblock content %}

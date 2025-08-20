@@ -1,0 +1,13 @@
+{# templates/player_app/organization/organization_player_delete.html #}
+{% extends "player_app/organization/base.html" %}
+{% block content %}
+<div class="form-card" style="max-width:440px;margin:60px auto 0 auto;text-align:center;">
+    <h4 style="color:#d61b2c;">Confirm Delete</h4>
+    <p class="mb-4">Are you sure you want to delete <b>{{ player.name }}</b>?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, delete</button>
+        <a class="btn btn-outline-secondary ml-2" href="{% url 'organization_player_list' %}">Cancel</a>
+    </form>
+</div>
+{% endblock %}

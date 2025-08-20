@@ -1,0 +1,201 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Edit Camp/Tournament{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style>
+    /* Container customization */
+    .container {
+        max-width: 600px;
+        margin: 40px auto; /* Vertical spacing */
+        padding: 20px 30px;
+        background: #121212; /* Dark card background */
+        border-radius: 12px;
+        box-shadow:
+            0 4px 8px rgba(0, 0, 0, 0.9),
+            0 0 5px #007bff44;
+    }
+
+    h1 {
+        color: black;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        text-align: center;
+        letter-spacing: 0.04em;
+    }
+
+    /* Form group spacing */
+    .form-group {
+        margin-bottom: 1.6rem;
+    }
+
+    label {
+        display: block;
+        color: #01223fff; /* Soft blue label color */
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.02em;
+    }
+
+    /* Form controls */
+    .form-control {
+        background-color: #222428;
+        color: #e3eaff;
+        border: 1.5px solid #2f80ed;
+        padding: 10px 14px;
+        font-size: 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.2);
+        width: 100%;
+    }
+
+    .form-control:focus {
+        background-color: #1a1d22;
+        border-color: #52b788; /* Soft green focus */
+        outline: none;
+        box-shadow:
+            0 0 8px #52b788bb,
+            inset 0 1px 3px rgb(0 0 0 / 0.4);
+        color: #d1f7d1;
+    }
+
+    /* Make readonly start date visually distinct */
+    input[type="date"][readonly] {
+        background-color: #2d2f33 !important;
+        color: #ffd633 !important; /* Vibrant yellow */
+        font-weight: 700;
+        border-color: #ffd633 !important;
+        cursor: not-allowed;
+    }
+
+    /* Normal End Date styling */
+    input[type="date"] {
+        background-color: #252a30;
+        border: 1.5px solid #fb8c00;
+        font-weight: 700;
+        font-size: 1rem;
+        color: #ffe6a1;
+        border-radius: 8px;
+    }
+
+    input[type="date"]:focus {
+        border-color: #ffb74d;
+        box-shadow: 0 0 8px #ffb74daa;
+        background-color: #312f23;
+        color: #fff4bb;
+        outline: none;
+    }
+
+    /* Select multiple participants, height and scroll */
+    select[multiple] {
+        min-height: 140px;
+        background-color: #22272b;
+        border: 1.5px solid #2f80ed;
+        border-radius: 8px;
+        color: #d4e9ff;
+        padding: 10px 12px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+        overflow-y: auto;
+    }
+
+    select[multiple]:focus {
+        border-color: #52b788;
+        box-shadow: 0 0 8px #52b788bb;
+        outline: none;
+        background-color: #1a1f22;
+        color: #cdf7cd;
+    }
+
+    /* Button styling */
+    .btn-primary {
+        background-color: #2168f3;
+        border-color: #2168f3;
+        font-size: 1.1rem;
+        font-weight: 700;
+        padding: 12px 0;
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 6px 12px rgba(33, 104, 243, 0.6);
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-primary:hover,
+    .btn-primary:focus {
+        background-color: #1659d6;
+        border-color: #1659d6;
+        box-shadow: 0 8px 18px rgba(22, 89, 214, 0.8);
+        outline: none;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 480px) {
+        .container {
+            padding: 15px 20px;
+            margin: 20px 10px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            margin-bottom: 1.2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Edit Camp/Tournament</h1>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="campName">Camp/Tournament Name:</label>
+            <input type="text" class="form-control" id="campName" name="name" value="{{ camp.name }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="campType">Type:</label>
+            <select class="form-control" id="campType" name="camp_type" required>
+                <option value="camp" {% if camp.camp_type == "camp" %}selected{% endif %}>Camp</option>
+                <option value="tournament" {% if camp.camp_type == "tournament" %}selected{% endif %}>Tournament</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="startDate">Start Date:</label>
+            <input type="date" class="form-control" id="startDate" name="start_date"
+                   value="{{ camp.start_date|date:'Y-m-d' }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="endDate">End Date:</label>
+            <input type="date" class="form-control" id="endDate" name="end_date"
+                   value="{{ camp.end_date|date:'Y-m-d' }}" min="{{ camp.start_date|date:'Y-m-d' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="venue">Venue:</label>
+            <input type="text" class="form-control" id="venue" name="venue" value="{{ camp.venue }}">
+        </div>
+
+        <div class="form-group">
+            <label for="participants">Participants:</label>
+            <select class="form-control" id="participants" name="participants" multiple>
+                {% for player in participants %}
+                    {% if player.organization == camp.organization %}
+                        <option value="{{ player.id }}" {% if player in camp.participants.all %}selected{% endif %}>
+                            {{ player.name }}
+                        </option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3" style="margin-bottom:50px;">Save Changes</button>
+    </form>
+</div>
+{% endblock %}

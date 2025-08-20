@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Create Form</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/create_form.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+
+<body>
+    <div style="position: fixed; top: 80px; right: 10px; z-index: 1000; background-color: #f1f1f1; padding: 10px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+        {% if user.is_authenticated %}
+            <span><strong>{{ user.username }}</strong> - {{ user.get_role_display }}</span>
+            <form method="POST" action="{% url 'logout' %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" style="background-color: #dd1710; color: white; border: none; padding: 5px 10px; margin-left: 10px; cursor: pointer;">Logout</button>
+            </form>
+        {% else %}
+            <span>Not logged in</span>
+        {% endif %}
+    </div>
+    <div class="container">
+        <h1>Create Form</h1>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" required>
+            <label for="description">Description</label>
+            <textarea id="description" name="description"></textarea>
+            <label for="termsandconditions">Terms And Conditions</label>
+            <textarea id="termsandconditions" name ="termsandconditions"></textarea>
+            <label for="image">Attach Any Image (optional)</label>
+            <input type="file" id="image" name="image">
+            {% if request.user.is_super_admin %}
+                <label for="organization">Organization:</label>
+                <select name="organization" id="organization">
+                    {% for organization in organization_list %}
+                        <option value="{{ organization.id }}">{{ organization.name }}</option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+            <label for="form_visibility">Form Visibility</label>
+            <div class="toggle">
+                <label class="switch">
+                    <input type="hidden" name="form_visibility" value="private">
+                    <input type="checkbox" id="form_visibility" name="form_visibility" value="public">
+                    <span class="slider round"></span>
+                </label>
+                <span id="toggle-status">Public</span>
+            </div>
+            <button type="submit">Create Form</button>
+        </form>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script> 
+        document.getElementById('form_visibility').addEventListener('change', function() {
+            var status = document.getElementById('toggle-status');
+            if (this.checked) { 
+                status.textContent = 'Public';
+            } else { 
+                status.textContent = 'Private'; 
+                this.value = 'private'; 
+            }
+        }); 
+    </script>
+</body>
+</html>

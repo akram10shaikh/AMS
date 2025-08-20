@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Staff</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <style>
+        body {
+            display: flex;
+        }
+        .sidebar {
+            min-width: 250px;
+            max-width: 250px;
+            height: 100vh;
+            background-color: #f8f9fa;
+            padding: 15px;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .sidebar a {
+            text-decoration: none;
+            color: #000;
+            display: block;
+            padding: 10px 0;
+        }
+        .sidebar a:hover {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <h4> </h4>
+    <ul>
+                <li><a href="{% url 'organization_list' %}">Organization Dashboard</a></li>
+                <li><a href="{% url 'staff_list' %}">Staff Dashboard</a></li>
+                <li><a href="{% url 'player_list' %}">Player Dashboard</a></li>
+            </ul>
+</div>
+
+<!-- Main Content -->
+<div class="content">
+    <div class="container mt-5">
+        <h2>Add Staff</h2>
+
+        <!-- Error Messages -->
+        {% if errors %}
+            <div class="alert alert-danger">
+                <ul>
+                    {% for error in errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <!-- Success Message -->
+        {% if messages %}
+            <div class="alert alert-success">
+                {{ messages }}
+            </div>
+        {% endif %}
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+
+            <!-- Name -->
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" name="name" id="name" class="form-control" placeholder="Enter full name" required>
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" name="email" id="email" class="form-control" placeholder="Enter email" required>
+            </div>
+
+            <!-- Mobile Number -->
+            <div class="mb-3">
+                <label for="mobile_number" class="form-label">Mobile Number</label>
+                <input type="text" name="mobile_number" id="mobile_number" class="form-control" placeholder="Enter mobile number" required>
+            </div>
+
+            <!-- Age -->
+            <div class="mb-3">
+                <label for="age" class="form-label">Age</label>
+                <input type="number" name="age" id="age" class="form-control" required>
+            </div>
+
+            <!-- Address -->
+            <div class="mb-3">
+                <label for="address" class="form-label">Address</label>
+                <textarea name="address" id="address" class="form-control" rows="3" placeholder="Enter address" required></textarea>
+            </div>
+
+            <!-- Organization Dropdown -->
+            <div class="mb-3">
+                <label for="organization" class="form-label">Organization</label>
+                <select name="organization" id="organization" class="form-select" required>
+                    <option value="">Select an organization</option>
+                    {% for organization in organizations %}
+                        <option value="{{ organization.id }}">{{ organization.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Permissions -->
+            <label class="form-check-label" for="player_management">Permission</label>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="player_management" id="player_management">
+                <label class="form-check-label" for="player_management">Player Management</label>
+            </div>
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="injury_tracking" id="injury_tracking">
+                <label class="form-check-label" for="injury_tracking">Injury Tracking</label>
+            </div>
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="form_submit" id="form_submit">
+                <label class="form-check-label" for="injury_tracking">Submit Form</label>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" name="password" id="password" class="form-control" placeholder="Enter password" required>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary">Add Staff</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    {% if messages %}
+        alert('Staff added successfully!');
+    {% endif %}
+</script>
+
+</body>
+</html>

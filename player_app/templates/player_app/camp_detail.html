@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Camps & Tournaments{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style>
+    body {
+        background-color: #000; /* Black background */
+        color: #fff; /* White text color */
+        font-size: 0.9em;
+    }
+
+    h1, h3 {
+        color: #fff;
+    }
+
+    .camp-card {
+        display: inline-block;
+        width: 250px;
+        margin: 10px;
+        background-color: #444;
+        color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .camp-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 16px rgba(255, 255, 255, 0.4);
+    }
+
+    .camp-card-header {
+        background-color: #333;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .camp-card-body {
+        padding: 15px;
+    }
+
+    .camp-card-body p {
+        margin: 5px 0;
+        font-size: 14px;
+        color: #ccc;
+    }
+
+    .camp-actions {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        background-color: #333;
+        border-top: 1px solid #555;
+    }
+
+    .btn {
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .btn-danger {
+        background-color: red;
+        border-color: red;
+    }
+
+    .add-camp-btn {
+        margin-top: 10px;
+        background-color: #444;
+        color: #fff;
+    }
+
+    .modal-content {
+        background-color: #333;
+        color: #fff;
+    }
+
+    .form-control {
+        background-color: #555;
+        color: #fff;
+        border: 1px solid #666;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin-left: 0;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ camp.name }}</h1>
+    <p><strong>Type:</strong> {{ camp.get_camp_type_display }}</p>
+    <p><strong>Start Date:</strong> {{ camp.start_date }}</p>
+    <p><strong>End Date:</strong> {{ camp.end_date }}</p>
+    <p><strong>Venue:</strong> {{ camp.venue }}</p>
+    <h3>Participants</h3>
+    <ul>
+        {% for participant in camp.participants.all %}
+        <li>{{ participant.name }}</li>
+        {% empty %}
+        <li>No participants added yet.</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'edit_camp' camp.id %}" class="btn btn-primary">Edit</a>
+    <form method="post" action="{% url 'delete_camp' camp.id %}" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+<br>
+    <br>
+    <br>
+    <h3>Activity History</h3>
+    <div class="timeline">
+        {% for activity in camp.activities.all %}
+        <div class="timeline-item">
+            <p><strong>{{ activity.action }}</strong> - {{ activity.details }}</p>
+            <p>
+                <small>
+                    By:
+                    {% if activity.performed_by %}
+                        {{ activity.performed_by.username }}
+                    {% else %}
+                        System
+                    {% endif %}
+                    | {{ activity.timestamp }}
+                </small>
+            </p>
+    </div>
+    <a href="{% url 'download_activity_history' camp.id %}" class="btn btn-success">Download Activity History</a>
+    {% empty %}
+    <p>No activity recorded for this camp/tournament.</p>
+    {% endfor %}
+</div>
+
+</div>
+{% endblock %}

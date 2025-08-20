@@ -1,0 +1,365 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+{% block extra_head %}
+<style>
+:root {
+  --primary: #7232fa;
+  --primary-dark: #3a1577;
+  --soft-bg: #f5f7fa;
+  --surface: #fff;
+  --surface-alt: #f8f6ff;
+  --text-main: #251c46;
+  --accent: #48c6ef;
+  --radius-lg: 26px;
+  --radius-md: 18px;
+  --shadow-card: 0 8px 32px #814cb41a, 0 1px 8px #baa2e533;
+  --shadow-hover: 0 16px 44px #7e27ff3e;
+  --timeline-blue: #b4d9fb;
+}
+body { background: var(--soft-bg); }
+.main-container {
+  margin-left: 80px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 60px 0 80px 0;
+}
+.flex-col-center {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1160px;
+  gap: 2.5rem;
+}
+.header-modern {
+  color: var(--primary-dark);
+  font-family: 'Poppins', sans-serif;
+  font-size: 2.1em;
+  font-weight: 800;
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+  text-align: left;
+  line-height: 1.03;
+  padding-left: 13px;
+}
+@media(max-width: 600px){ .header-modern {font-size: 1.3em; padding-left:4px;} }
+.section-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 36px;
+  width: 100%;
+  align-items: stretch;
+}
+@media(max-width: 1000px){
+  .section-grid { grid-template-columns: 1fr; gap:20px;}
+}
+.card-glass {
+  background: linear-gradient(120deg, var(--surface), #f5fbff 98%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 34px 38px 35px 38px;
+  position: relative;
+  transition: box-shadow .23s;
+  overflow: hidden;
+  margin-bottom: 23px;
+}
+.card-glass:hover { box-shadow: var(--shadow-hover);}
+.section-label {
+  color: var(--primary);
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: .97em;
+  letter-spacing: .11em;
+  margin-bottom: 20px;
+  display: block;
+  opacity:.92;
+}
+.profile-row-flex { display: flex; align-items: flex-start; gap: 29px; }
+.player-img-fancy {
+  min-width: 110px; max-width:110px; aspect-ratio: 1/1;
+  border-radius: 50%; object-fit: cover;
+  background: #f2f0fe;
+  border: 4.5px solid var(--accent);
+  box-shadow: 0 1.5px 12px #70daf652;
+}
+.profile-fields-list {
+  list-style:none; margin:0; padding:0; column-count:2; column-gap:22px; width:100%;
+}
+.profile-fields-list li {
+  margin-bottom: 0.75em;
+  break-inside: avoid-column;
+  font-size: 1.08em; color: var(--text-main);
+}
+.profile-label {
+  color: #653acd;
+  font-size: 1em; font-weight: 600; margin-right: 4px;
+}
+.injury-details-table {
+  width: 100%; border-collapse: separate; border-spacing: 0 9px; font-size: 1.07em;
+}
+.injury-details-table th, .injury-details-table td {
+  background: none; border: none; padding:6px 11px 6px 0;
+  text-align: left; vertical-align: middle;
+}
+.injury-details-table th {
+  font-weight:600; color: #6631ec; width: 138px; font-size:1em;
+}
+.injury-details-table td { color: #232447; font-weight:500; }
+
+.document-list-table {
+  width: 100%; border-collapse: separate; border-spacing: 0 7px;
+  box-shadow:0 2px 13px #48c6ef0f;
+}
+.document-list-table th {
+  color: #48c6ef; font-weight: 800; letter-spacing: .03em;
+  border-bottom:2px solid #e5e8f8; font-size:.98em;
+}
+.document-list-table td {
+  background: #f8faff;
+  color: #276089; font-size: .97em; border-radius:12px;
+  padding:8px 11px 8px 0;
+}
+.document-list-table tr:hover td { background:#e6f3fe; }
+.doc-download-link {
+  text-decoration: none; font-weight:600; color:#7846fc;
+  background: #f3edff;
+  padding: 2.5px 14px 2.5px 9px; border-radius: 17px;
+  transition: background .14s;
+}
+.doc-download-link:hover { background: #e1fff5; color:#237164;}
+.doc-view-chip {
+  font-size:.93em; border-radius:9px; padding:2px 13px; margin-right:2px;
+  background: #e1e6fc; color: #7232fa; font-weight:bold;
+}
+.doc-uploader {font-size:.95em; color:#9459e5;}
+.upload-form-wrap {
+  margin-top: 13px; margin-bottom: 18px;
+  background: #f9f8fd;
+  border-radius: 14px; padding: 21px 22px 12px 22px;
+  box-shadow:0 1.5px 7px #e3c6ff13;
+}
+.upload-form-wrap label { font-weight:600; color: #613fd8; }
+.upload-form-wrap input[type="file"] {
+  background: #eefaff;
+  border: 1.5px dashed #caeafd;
+  border-radius:8px;
+  padding:7px;
+}
+.upload-form-wrap .btn {
+  background: linear-gradient(85deg, #6e9bfc 80%, #6efce3 120%);
+  color:#412c76; font-weight:700;
+  border-radius: 8px; box-shadow:0 2px 7px #78d3e033;
+  padding:9px 27px;
+  font-size:1.08em;
+  margin-top: 12px;
+  border:none;
+  transition: background .19s, color .11s;
+}
+.upload-form-wrap .btn:hover { background: #48c6ef; color:#fff; }
+.timeline-activity-modern {
+  background: #f5faff;
+  border-radius: var(--radius-md);
+  padding: 28px 30px 16px 37px;
+  margin-top: 12px;
+  box-shadow: 0 1.5px 9px #74baff2a;
+}
+.timeline-title {
+  color: #4b36bd;
+  font-weight: 700;
+  letter-spacing: .01em;
+  font-size: 1.14em;
+  margin-bottom: 20px;
+}
+.activity-list{
+  list-style: none; margin:0; padding:0;
+}
+.activity-list li {
+  display: flex; align-items:flex-start; gap:9px; position: relative;
+  font-size: 1em; padding-left: 0; margin-bottom: 12px;
+}
+.activity-list li::before {
+  content: "";
+  position: absolute; left: -23px; top: 13px;
+  width: 7px; height: 7px; border-radius:50%;
+  background: var(--accent); box-shadow:0 1px 6px var(--accent);
+}
+.activity-list .atime {color:#6e7fad; font-size: .98em; margin-right:.9em;}
+.activity-list .actor {color:#6235ff; font-weight:700;}
+.activity-list .action {margin-right:.3em;font-weight:600;}
+.activity-list .text-muted {color:#8893b9;}
+.activity-list li:last-child::before { background: #5ec494;}
+.timeline-empty {color: #bbb6c7;}
+.section-actions {
+  margin: 30px 37px 0 0; text-align: right;
+  display: flex; justify-content: flex-end; gap: 19px;
+}
+.section-actions .btn {
+  padding: 10px 36px; font-weight: 700;
+  font-size: 1.12em; border-radius: 7.5px; border: none;
+  background: linear-gradient(89deg, #7232fa 90%, #6ed0fc 140%);
+  color: #fff; box-shadow: 0 2px 13px #60c4b733;
+  transition: background .15s, box-shadow .19s;
+  text-decoration:none; outline: none;
+}
+.section-actions .btn:hover { background: #6235ff; color:#fff;}
+.section-actions .btn-light {
+  color: #663be0; background: #efeffd; box-shadow:none;
+}
+.section-actions .btn-light:hover { background: #e0e6f9;}
+@media(max-width:900px){
+  .main-container {padding:22px 0 36px 0;}
+  .header-modern{font-size:1.1em;}
+  .card-glass, .timeline-activity-modern {padding:11px 3vw 16px 4vw;}
+  .section-actions{margin:15px 5vw;}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-container">
+  <div class="flex-col-center">
+
+    <div class="header-modern">
+      Player <span style="color:#a7a4f2;font-weight:400;">&bull;</span>
+      Injury <span style="color:#a7a4f2;font-weight:400;">&bull;</span>
+      Medical Documents <span style="color:#a7a4f2;font-weight:400;">&bull;</span>
+      Activity Log
+    </div>
+
+    <div class="section-grid">
+
+      <!-- Profile Card -->
+      <div class="card-glass">
+        <span class="section-label">Player Profile</span>
+        <div class="profile-row-flex">
+          <img class="player-img-fancy" src="{% if player.image %}{{ player.image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" alt="Player photo">
+          <ul class="profile-fields-list">
+            <li><span class="profile-label">Name:</span> {{ player.name }}</li>
+            <li><span class="profile-label">Gender:</span> {{ player.get_gender_display }}</li>
+            <li><span class="profile-label">Age:</span> {% if player.age %}{{ player.age }} yrs{% endif %}</li>
+            <li><span class="profile-label">DOB:</span> {{ player.date_of_birth }}</li>
+            <li><span class="profile-label">Email:</span> {{ player.email }}</li>
+            <li><span class="profile-label">Primary Contact:</span> {{ player.primary_contact_number }}</li>
+            <li><span class="profile-label">Secondary Contact:</span> {{ player.secondary_contact_number }}</li>
+            <li><span class="profile-label">State:</span> {{ player.state }}</li>
+            <li><span class="profile-label">Age Category:</span> {{ player.get_age_category_display }}</li>
+            <li><span class="profile-label">Role:</span> {{ player.role }}</li>
+            <li><span class="profile-label">Team:</span> {{ player.team }}</li>
+            <li><span class="profile-label">Handedness:</span> {{ player.get_handedness_display }}</li>
+            <li><span class="profile-label">Batting Style:</span> {{ player.batting_style }}</li>
+            <li><span class="profile-label">Bowling Style:</span> {{ player.bowling_style }}</li>
+            <li><span class="profile-label">District Assoc. ID:</span> {{ player.district_cricket_association_id }}</li>
+            <li><span class="profile-label">Guardian Name:</span> {{ player.guardian_name }}</li>
+            <li><span class="profile-label">Relation:</span> {{ player.get_relation_display }}</li>
+            <li><span class="profile-label">Guardian Mobile:</span> {{ player.guardian_mobile_number }}</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Injury Information Card -->
+      <div class="card-glass">
+        <span class="section-label">Injury Information</span>
+        <table class="injury-details-table">
+          <tr><th>Title:</th><td>{{ injury.name }}</td></tr>
+          <tr><th>Type:</th><td>{{ injury.injury_type }}</td></tr>
+          <tr><th>Severity:</th><td>{{ injury.get_severity_display }}</td></tr>
+          <tr><th>Status:</th><td>{{ injury.get_status_display }}</td></tr>
+          <tr><th>Date:</th><td>{{ injury.injury_date }}</td></tr>
+          <tr><th>Expected Return:</th><td>{{ injury.expected_date_of_return }}</td></tr>
+          <tr><th>Body Region:</th><td>{{ injury.affected_body_part }}</td></tr>
+          <tr><th>Body Segment:</th><td>{{ injury.body_segment }}</td></tr>
+          <tr><th>Venue:</th><td>{{ injury.venue }}</td></tr>
+          <tr><th>Notes:</th><td>{{ injury.notes }}</td></tr>
+          <tr><th>Reported By:</th><td>{% if injury.reported_by %}{{ injury.reported_by.name }}{% endif %}</td></tr>
+        </table>
+      </div>
+
+    </div> <!-- end section-grid -->
+
+    <!-- Medical Documents Card -->
+    <div class="card-glass">
+      <span class="section-label">Medical Documents</span>
+
+      <!-- List Section -->
+      <h5 style="margin-top:1.2em; color:#2e61bf;">Uploaded Documents</h5>
+      {% if medical_documents %}
+        <table class="document-list-table" style="margin-top:13px;">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Title</th>
+              <th>File</th>
+              <th>Notes</th>
+              <th>View Option</th>
+              <th>Uploaded By</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for doc in medical_documents %}
+            <tr>
+              <td>{{ doc.date|default:"-" }}</td>
+              <td>{{ doc.title|default:"-" }}</td>
+              <td>
+                {% if doc.document %}
+                  <a href="{{ doc.document.url }}" target="_blank" class="doc-download-link">
+                    &#8681; Download
+                  </a>
+                {% else %}
+                  <span style="color:#ccc;">-</span>
+                {% endif %}
+              </td>
+              <td>{{ doc.notes|default:"" }}</td>
+              <td><span class="doc-view-chip">{{ doc.get_view_option_display }}</span></td>
+              <td><span class="doc-uploader">{% if doc.user %}{{ doc.user }}{% else %}-{% endif %}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p style="color: #999; margin-top:17px; margin-bottom:8px; font-size:1.03em;">No medical documents for this injury yet.</p>
+      {% endif %}
+
+      <!-- Upload Form Section -->
+      <h5 style="margin-top:2em; color:#308b69;">Upload New Medical Document</h5>
+      <div class="upload-form-wrap">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            {{ form.date.label_tag }}{{ form.date }}
+            {{ form.title.label_tag }}{{ form.title }}
+            {{ form.document.label_tag }}{{ form.document }}
+            {{ form.view_option.label_tag }}{{ form.view_option }}
+            {{ form.notes.label_tag }}{{ form.notes }}
+          </div>
+          <button type="submit" class="btn" style="margin-top:10px;">&#43; Upload Document</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Activity Timeline -->
+    <div class="timeline-activity-modern">
+      <div class="timeline-title">Activity Log</div>
+      <ul class="activity-list">
+        {% for log in activity_logs %}
+        <li>
+          <span class="atime">{{ log.created_at|date:"d M Y, H:i" }}</span>
+          <span class="actor">{% if log.actor %}{{ log.actor }}{% endif %}</span>
+          <span class="action">{{ log.action|title }}</span>
+          {% if log.details %}<span class="text-muted">{{ log.details }}</span>{% endif %}
+        </li>
+        {% empty %}
+        <li><span class="timeline-empty">No activity log entries found.</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Actions Footer -->
+    <div class="section-actions">
+      <a href="{% url 'organization_injury_edit' injury.id %}" class="btn btn-warning">Edit</a>
+      <a href="{% url 'organization_injury_list' %}" class="btn btn-light">Back to List</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

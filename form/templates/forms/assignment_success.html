@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment Success</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            margin: 20px auto;
+            max-width: 800px;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #28a745;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        .btn-unassign {
+            background-color: #dc3545;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .btn-unassign:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Unassign Wellness Form</h2>
+
+    <h3>Assigned Data:</h3>
+    <table>
+        <thead>
+        <tr>
+            <th>Form</th>
+            <th>Player</th>
+            <th>Group</th>
+            <th>Camp</th>
+            <th>Tournament</th>
+            <th>Assigned Date</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for assignment in assignments %}
+        <tr>
+            <td>{{ assignment.wellness_form.name }}</td>
+            <td>{% if assignment.player %}{{ assignment.player.name }}{% else %}N/A{% endif %}</td>
+            <td>{% if assignment.group %}{{ assignment.group.name }}{% else %}N/A{% endif %}</td>
+            <td>{% if assignment.camp %}{{ assignment.camp.name }}{% else %}N/A{% endif %}</td>
+            <td>{% if assignment.tournament %}{{ assignment.tournament.name }}{% else %}N/A{% endif %}</td>
+            <td>{{ assignment.assigned_date }}</td>
+            <td>
+                <form method="post" action="{% url 'unassign_action' pk=assignment.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-unassign">Unassign</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

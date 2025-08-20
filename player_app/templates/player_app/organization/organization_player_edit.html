@@ -1,0 +1,192 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+{% block extra_head %}
+<style>
+.container {
+    max-width: 900px;
+    margin: 55px auto 0 auto;
+    padding-bottom: 40px;
+}
+.form-card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 12px #eff0f6;
+    padding: 2.2rem 2.2rem 1.5rem 2.2rem;
+    margin: 0 auto;
+}
+.form-title {
+    font-size: 1.33rem;
+    font-weight: 600;
+    margin-bottom: 26px;
+    color: #6200ee;
+}
+form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px 32px;
+}
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+}
+.form-group label {
+    font-size: 1rem;
+    color: #3e3e50;
+    font-weight: 500;
+    margin-bottom: 7px;
+}
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="date"],
+.form-group input[type="number"],
+.form-group select,
+.form-group input[type="password"] {
+    padding: 10px 12px;
+    border: 1px solid #d4d7e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #232733;
+    background: #f6f7fa;
+    outline: none;
+    transition: border 0.2s;
+}
+.form-group input[type="file"] {
+    padding: 9px 3px;
+    font-size: 1rem;
+    background: none;
+    border: none;
+}
+.form-group input:focus, .form-group select:focus {
+    border: 1.5px solid #b9e62d;
+    background: #fff;
+}
+.full-width {
+    grid-column: span 2;
+}
+.btn-submit {
+    background: #e6f249;
+    color: #232733;
+    border: none;
+    font-weight: 600;
+    font-size: 1.08rem;
+    border-radius: 8px;
+    padding: 12px 32px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.15s;
+}
+.btn-submit:hover { background: #dce93f; }
+.invalid-feedback { color: crimson; font-size:0.95em; }
+.alert { grid-column: span 2; margin-bottom: 18px;}
+.img-preview-edit {
+    max-width: 80px; max-height: 80px; border-radius: 50%;
+    margin-top: 8px; box-shadow: 0 1px 4px #ccc2;
+}
+@media (max-width: 800px) {
+    .form-card { padding: 18px 3vw; }
+    form { grid-template-columns: 1fr; gap: 16px 0; }
+    .full-width { grid-column: span 1; }
+    .container { padding: 10px 2vw; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="form-card">
+    <div class="form-title">Edit Player: <span style="color:#222">{{ player.name }}</span></div>
+    <form method="post" enctype="multipart/form-data" autocomplete="off">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger full-width">
+          {% for error in form.non_field_errors %}{{ error }}<br>{% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="form-group">
+        {{ form.name.label_tag }}{{ form.name }}
+        {% for error in form.name.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.image.label_tag }}{{ form.image }}
+        {% if player.image %}
+          <img src="{{ player.image.url }}" class="img-preview-edit" alt="Player image">
+        {% endif %}
+        {% for error in form.image.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.email.label_tag }}{{ form.email }}
+        {% for error in form.email.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.date_of_birth.label_tag }}{{ form.date_of_birth }}
+        {% for error in form.date_of_birth.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.primary_contact_number.label_tag }}{{ form.primary_contact_number }}
+        {% for error in form.primary_contact_number.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.secondary_contact_number.label_tag }}{{ form.secondary_contact_number }}
+        {% for error in form.secondary_contact_number.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.gender.label_tag }}{{ form.gender }}
+        {% for error in form.gender.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.state.label_tag }}{{ form.state }}
+        {% for error in form.state.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.role.label_tag }}{{ form.role }}
+        {% for error in form.role.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.batting_style.label_tag }}{{ form.batting_style }}
+        {% for error in form.batting_style.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.bowling_style.label_tag }}{{ form.bowling_style }}
+        {% for error in form.bowling_style.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.handedness.label_tag }}{{ form.handedness }}
+        {% for error in form.handedness.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.age_category.label_tag }}{{ form.age_category }}
+        {% for error in form.age_category.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.guardian_name.label_tag }}{{ form.guardian_name }}
+        {% for error in form.guardian_name.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.relation.label_tag }}{{ form.relation }}
+        {% for error in form.relation.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.guardian_mobile_number.label_tag }}{{ form.guardian_mobile_number }}
+        {% for error in form.guardian_mobile_number.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="form-group full-width">
+        {{ form.new_password.label_tag }}
+        {{ form.new_password }}
+        {% for error in form.new_password.errors %}
+          <div class="invalid-feedback">{{ error }}</div>
+        {% endfor %}
+        <small class="form-text text-muted">Leave blank if you do not want to change the password.</small>
+      </div>
+
+      <div class="form-group full-width" style="margin-top: 10px;padding-bottom:100px;">
+        <button class="btn-submit" type="submit">Save Changes</button>
+        <a class="form-group full-width btn btn-outline-secondary btn-sm ml-3 " style="background-color:red;color:white;margin-top: 10px;" href="{% url 'organization_player_list' %}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

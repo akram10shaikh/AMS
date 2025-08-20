@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage All Groups</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            padding: 20px;
+        }
+        .card {
+            margin-top: 20px;
+            background-color: #222;
+            border-color: #333;
+        }
+        .card-header {
+            background-color: #333;
+            color: #fff;
+        }
+        .player-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #333;
+            color: #fff;
+        }
+        .list-group-item {
+            background-color: #444;
+            color: #fff;
+        }
+        .modal-content {
+            background-color: #222;
+            color: #fff;
+            border: 1px solid #333;
+        }
+        .form-control {
+            background-color: #444;
+            color: #fff;
+            border: 1px solid #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h3 class="text-center">Manage All Groups</h3>
+        <div class="card">
+            <div class="card-body">
+                <form method="post" action="{% url 'manage_all_groups' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="group">Select Group:</label>
+                        <select class="form-control" name="group_id" id="group" onchange="fetchGroupPlayers(this.value)">
+                            <option value="">Select a group</option>
+                            {% for group in groups %}
+                                <option value="{{ group.id }}">{{ group.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Renaming Group Section -->
+                    <div class="form-group rename-group-wrapper">
+                        <input type="text" class="form-control" id="rename-group" placeholder="Enter name to Rename Group">
+                        <button type="button" class="btn btn-primary" onclick="renameGroup()">Rename Group</button>
+                    </div>
+
+                    <div class="search-bar">
+                        <input type="text" class="form-control" id="player-search" onkeyup="searchPlayers()" placeholder="Search for players...">
+                    </div>
+
+                    <div id="player-selection" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        Players in Group
+                                    </div>
+                                    <ul class="list-group list-group-flush player-list" id="group-players-list">
+                                        <!-- Group players will be dynamically loaded here -->
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        Other Players
+                                    </div>
+                                    <ul class="list-group list-group-flush player-list" id="other-players-list">
+                                        <!-- Other players will be dynamically loaded here -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <button type="submit" class="btn btn-primary" name="action" value="add">Add Selected Players to Group</button>
+                            <button type="submit" class="btn btn-danger" name="action" value="remove">Remove Selected Players from Group</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+
+    function fetchGroupPlayers(groupId) {
+        if (groupId) {
+            fetch(`/get_group_players/?group_id=${groupId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const groupPlayersList = document.getElementById('group-players-list');
+                    const otherPlayersList = document.getElementById('other-players-list');
+                    groupPlayersList.innerHTML = '';
+                    otherPlayersList.innerHTML = '';
+
+                    const groupPlayerIds = data.players.map(player => player.pk);
+
+                    data.players.forEach(player => {
+                        const playerItem = document.createElement('li');
+                        playerItem.className = 'list-group-item';
+
+                        const playerCheckbox = document.createElement('input');
+                        playerCheckbox.type = 'checkbox';
+                        playerCheckbox.name = 'player_ids';
+                        playerCheckbox.value = player.pk;
+                        playerCheckbox.checked = true;
+                        playerItem.appendChild(playerCheckbox);
+
+                        const playerLabel = document.createElement('span');
+                        playerLabel.textContent = player.name;
+                        playerLabel.className = 'ml-2';
+                        playerItem.appendChild(playerLabel);
+
+                        groupPlayersList.appendChild(playerItem);
+                    });
+
+                    fetch(`/get_all_players/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            data.players.forEach(player => {
+                                if (!groupPlayerIds.includes(player.pk)) {
+                                    const playerItem = document.createElement('li');
+                                    playerItem.className = 'list-group-item';
+
+                                    const playerCheckbox = document.createElement('input');
+                                    playerCheckbox.type = 'checkbox';
+                                    playerCheckbox.name = 'player_ids';
+                                    playerCheckbox.value = player.pk;
+                                    playerItem.appendChild(playerCheckbox);
+
+                                    const playerLabel = document.createElement('span');
+                                    playerLabel.textContent = player.name;
+                                    playerLabel.className = 'ml-2';
+                                    playerItem.appendChild(playerLabel);
+
+                                    otherPlayersList.appendChild(playerItem);
+                                }
+                            });
+                        });
+
+                    document.getElementById('player-selection').style.display = 'block';
+                });
+        } else {
+            document.getElementById('player-selection').style.display = 'none';
+        }
+    }
+
+    function searchPlayers() {
+        const input = document.getElementById('player-search');
+        const filter = input.value.toLowerCase();
+        const players = document.querySelectorAll('.list-group-item');
+
+        players.forEach(player => {
+            if (player.textContent.toLowerCase().includes(filter)) {
+                player.style.display = '';
+            } else {
+                player.style.display = 'none';
+            }
+        });
+    }
+
+    function renameGroup() {
+        const groupId = document.getElementById('group').value;
+        const newName = document.getElementById('rename-group').value;
+
+        if (groupId && newName) {
+            fetch(`/rename_group/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    group_id: groupId,
+                    new_name: newName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Group renamed successfully!');
+                    location.reload();
+                } else {
+                    alert('Failed to rename group. Please try again.');
+                }
+            });
+        } else {
+            alert('Please select a group and enter a new name.');
+        }
+    }
+</script>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
