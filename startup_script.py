@@ -11,7 +11,6 @@ from django.contrib.auth import get_user_model
 def run():
     try:
         print("⚙️ Running migrations...")
-	call_command('makemigrations')
         call_command('migrate')
 
         print("📦 Collecting static files...")

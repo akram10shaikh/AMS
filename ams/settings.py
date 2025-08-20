@@ -91,7 +91,7 @@ DATABASES = {
     )
 }
 
-DATABASES['default'] = dj_database_url.parse("postgresql://codepluo_user:a3k6srEkm5QZrtajb0tExJQRsXxfKP79@dpg-d2c38e2dbo4c73bavlc0-a.oregon-postgres.render.com/codepluo")
+DATABASES['default'] = dj_database_url.parse("postgresql://ams_o84u_user:0YrcP7PeEJpplawc8g8lr3DwcsCk3tUL@dpg-d2iordbuibrs73a3gsbg-a/ams_o84u")
 
 
 # Password validation
