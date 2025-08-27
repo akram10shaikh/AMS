@@ -499,24 +499,19 @@ from .forms import InjuryForm
 from django.views.decorators.http import require_GET
 
 
+from datetime import date, timedelta
+from django.shortcuts import render, get_object_or_404
+
 def organization_injury_list(request):
+    # Determine organization based on user role
     if request.user.role == "Staff":
         org = request.user.staff.organization
-
-    if request.user.role == "OrganizationAdmin":
+    elif request.user.role == "OrganizationAdmin":
         org = get_object_or_404(Organization, user=request.user)
-   
-    injuries = (
-        Injury.objects
-        .filter(player__organization=org)
-        .select_related("player", "reported_by")
-    )
-    injuries_qs = injuries
-    injury_total = injuries_qs.count()
-    injury_open = injuries_qs.filter(status='open').count()
-    injury_closed = injuries_qs.filter(status='closed').count()
 
-    # --- Filter Parameters ---
+    injuries = Injury.objects.filter(player__organization=org).select_related("player", "reported_by")
+
+    # Existing filters
     severity_vals = request.GET.getlist('severity')
     status_vals = request.GET.getlist('status')
     body_parts = request.GET.getlist('body_region')
@@ -524,7 +519,37 @@ def organization_injury_list(request):
     search_name = request.GET.get('name', '')
     sort = request.GET.get('sort', '')
 
-    # --- Filtering Logic ---
+    # New filters: date and injury_type
+    month = request.GET.get('month')
+    year = request.GET.get('year')
+    range_filter = request.GET.get('range')    # 'last3' or 'last6'
+    season = request.GET.get('season')
+    categories = request.GET.getlist('category')  # injury_type filter
+
+    today = date.today()
+
+    # Apply date range filters with mutual exclusion logic
+    if range_filter == "last3":
+        min_date = today - timedelta(days=90)
+        injuries = injuries.filter(injury_date__gte=min_date)
+    elif range_filter == "last6":
+        min_date = today - timedelta(days=182)
+        injuries = injuries.filter(injury_date__gte=min_date)
+    elif month and year:
+        injuries = injuries.filter(injury_date__month=int(month), injury_date__year=int(year))
+    elif season:
+        sy, ey = map(int, season.split('-'))
+        start = date(sy, 4, 1)
+        end = date(ey, 3, 31)
+        injuries = injuries.filter(injury_date__gte=start, injury_date__lte=end)
+    else:
+        injuries = injuries.filter(injury_date__year=today.year, injury_date__month=today.month)
+
+    # Filter by injury_type (used as category)
+    if categories:
+        injuries = injuries.filter(injury_type__in=categories)
+
+    # Apply other filters
     if severity_vals:
         injuries = injuries.filter(severity__in=severity_vals)
     if status_vals:
@@ -536,57 +561,79 @@ def organization_injury_list(request):
     if search_name:
         injuries = injuries.filter(name__icontains=search_name)
 
-    # --- Filters Count ---
-    filters_count = len(severity_vals) + len(status_vals) + len(body_parts) + len(player_ids)
-    if search_name:
-        filters_count += 1
+    # Stats for dashboard cards
+    injury_total = injuries.count()
+    injury_open = injuries.filter(status='open').count()
+    injury_closed = injuries.filter(status='closed').count()
 
-    # --- Choices for Filters ---
+    # Choices (for filters dropdown)
     SEVERITY_CHOICES = Injury.SEVERITY_CHOICES
     STATUS_CHOICES = Injury.STATUS_CHOICES
-    BODY_PART_CHOICES = list(
-        Injury.objects.filter(player__organization=org)
-        .values_list('affected_body_part', flat=True)
-        .distinct()
-        .exclude(affected_body_part__isnull=True)
-        .exclude(affected_body_part__exact='')
-    )
+    BODY_PART_CHOICES = list(Injury.objects.filter(player__organization=org)
+                             .values_list('affected_body_part', flat=True).distinct()
+                             .exclude(affected_body_part__isnull=True)
+                             .exclude(affected_body_part__exact=''))
     BODY_PART_CHOICES = [(val, val.title()) for val in BODY_PART_CHOICES if val]
-
     PLAYER_CHOICES = Player.objects.filter(organization=org).values_list('id', 'name')
 
-    # --- Sorting ---
-    if sort == 'date':
-        injuries = injuries.order_by('-injury_date')
-    elif sort == 'severity':
-        sev_order = {'minor': 0, 'moderate': 1, 'severe': 2}
-        injuries = sorted(injuries, key=lambda inj: sev_order.get(inj.severity or '', 9))
-    elif sort == 'status':
-        stat_order = {'open': 0, 'closed': 1}
-        injuries = sorted(injuries, key=lambda inj: stat_order.get(inj.status or '', 9))
+    CATEGORY_CHOICES = (Injury.objects.filter(player__organization=org)
+                        .exclude(injury_type__isnull=True)
+                        .exclude(injury_type='')
+                        .values_list('injury_type', flat=True).distinct())
 
-    request_getlist = {k: request.GET.getlist(k) for k in request.GET}
+    # Season choices for last 2 seasons
+    this_year = today.year
+    curr_april = date(this_year, 4, 1)
+    if today >= curr_april:
+        season_choices = [f"{this_year}-{this_year+1}", f"{this_year-1}-{this_year}"]
+    else:
+        season_choices = [f"{this_year-1}-{this_year}", f"{this_year-2}-{this_year-1}"]
+
+    # Filters count
+    filters_count = (len(severity_vals) + len(status_vals) + len(body_parts) +
+                     len(player_ids) + len(categories))
+    if search_name:
+        filters_count += 1
+    if month or year:
+        filters_count += 1
+    if range_filter:
+        filters_count += 1
+    if season:
+        filters_count += 1
+
     context = {
         'injuries': injuries,
         'SEVERITY_CHOICES': SEVERITY_CHOICES,
         'STATUS_CHOICES': STATUS_CHOICES,
         'BODY_PART_CHOICES': BODY_PART_CHOICES,
         'PLAYER_CHOICES': PLAYER_CHOICES,
+        'CATEGORY_CHOICES': CATEGORY_CHOICES,
+        'season_choices': season_choices,
+        'injury_total': injury_total,
+        'injury_open': injury_open,
+        'injury_closed': injury_closed,
+        'filters_count': filters_count,
         'active_filters': {
             'severity': severity_vals,
             'status': status_vals,
             'body_region': body_parts,
             'player_id': player_ids,
-            'name': search_name
+            'name': search_name,
+            'category': categories,
+            'month': month,
+            'year': year,
+            'range': range_filter,
+            'season': season,
         },
-        'filters_count': filters_count,
-        'sort': sort,
-        'request_getlist': request_getlist,
+        'filter_month': month,
+        'filter_year': year,
+        'filter_range': range_filter,
+        'filter_season': season,
+        'filter_categories': categories,
+        'today': today,
+        'request_getlist': {k: request.GET.getlist(k) for k in request.GET},
         'request_obj': request,
-        'injury_total': injury_total,
-        'injury_open': injury_open,
-        'injury_closed': injury_closed,
-
+        'sort': sort,
     }
     return render(
         request,
@@ -2154,3 +2201,57 @@ def add_treatment_recommendation(request, injury_id):
         "treatment_recommendations": treatment_recommendations,
         "physios": Staff.objects.filter(role="physio"),  # Pass available Physios for selection
     })
+
+# --------------------------------------------------------------------------------------------------------------------------------
+# Team Management Views
+# --------------------------------------------------------------------------------------------------------------------------------
+from datetime import datetime, date, time
+def teams_dashboard(request):
+    category_keys = [
+        ('boys_under-15', 'Boys under 15'),
+        ('boys_under-19', 'Boys under 19'),
+        ('men_under-23', 'Men Under 23'),
+        ('men_senior', 'Men Senior'),
+    ]
+
+    categories = []
+    for key, display in category_keys:
+        teams = Team.objects.filter(category=key, is_active=True).prefetch_related('players', 'staff')
+        categories.append((key, display, teams))
+
+    today = date.today()
+
+    end = CampTournament.objects.filter(
+        organization=request.user.organization,
+        is_deleted=False,
+    )
+   
+
+    # Ongoing: started on or before today, and end_date after today or null (no end date means ongoing)
+    ongoing_camps = CampTournament.objects.filter(
+        organization=request.user.organization,
+        is_deleted=False,
+        start_date__lte=today,
+    ).filter(
+        Q(end_date__gt=today) | Q(end_date__isnull=True)
+    ).order_by('name')
+
+    # Closed: started on or before today and ended on or before today
+    closed_camps = CampTournament.objects.filter(
+        organization=request.user.organization,
+        is_deleted=False,
+        start_date__lte=today,
+        end_date__lte=today,
+    ).order_by('name')
+
+
+    camps = {
+        'ongoing': ongoing_camps,
+        'closed': closed_camps,
+    }
+
+    context = {
+        'categories': categories,
+        'camps': camps,
+    }
+    return render(request, 'player_app/organization/teams_dashboard.html', context)

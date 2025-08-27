@@ -86,4 +86,5 @@ urlpatterns = [
 
                   path('organization/dashboard/', views.organization_dashboard_org, name='organization_dashboard_org'),
 
+                  path('teams-dashboard/', views.teams_dashboard, name='teams_dashboard'),
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

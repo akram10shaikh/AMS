@@ -27,6 +27,7 @@ SECRET_KEY = 'django-insecure-@e5e=*y!%=@=ytdhn_=9%q%ntg$7@!)d7&e&7mdt@2a+$^sp30
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
+
 ALLOWED_HOSTS = ['*']
 
 
@@ -87,7 +88,7 @@ DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///db.sqlite3',  # fallback for local
         conn_max_age=600,
-        ssl_require=True
+        ssl_require=False
     )
 }
 

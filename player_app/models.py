@@ -360,3 +360,24 @@ class TestAndResult(models.Model):
         return f"{self.player} - {self.test} ({self.date}) Trial: {self.trial}"
   
 
+class Team(models.Model):
+    category_choices = [
+        ('boys_under-15', 'Boys under 15'),
+        ('boys_under-19', 'Boys under 19'),
+        ('men_under-23', 'Men Under 23'),
+        ('men_senior', 'Men Senior')
+    ]
+    name = models.CharField(max_length=150)
+    images = models.ImageField(upload_to='team_images/', null=True, blank=True,)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='teams')
+    players = models.ManyToManyField('Player', blank=True, related_name='teams')
+    staff = models.ManyToManyField(Staff, blank=True, related_name='teams')
+    category = models.CharField(max_length=100, choices=category_choices,null=True)  # e.g., "U19 Boys", "Senior Men"
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='teams_created')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    is_active = models.BooleanField(default=True)  # Optional: To mark team status
+    
+    def __str__(self):
+        return f"{self.name} ({self.organization.name})"
