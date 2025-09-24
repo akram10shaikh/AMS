@@ -1065,7 +1065,7 @@ def organization_delete_camp(request, camp_id):
     messages.success(request, 'Camp/Tournament deleted successfully.')
     return redirect('organization_camps_tournaments')
 
-
+from django.db.models import Avg
 from django.db.models import Min, Max
 from collections import defaultdict
 @login_required
@@ -1126,7 +1126,11 @@ def test_dashboard(request):
         best_trial = min(t.trial for t in trials)
 
         last_trial_obj = last_two_trials[-1]
-
+        # Individual Average: mean of all trials for this player and test
+        
+        indv_average = sum(t.trial for t in trials) / len(trials) if trials else None
+        group_average = TestAndResult.objects.filter(test=test).aggregate(Avg('trial'))['trial__avg']
+        
         summary_rows.append({
             'player_name': last_trial_obj.player.name,
             'test': test,
@@ -1135,6 +1139,8 @@ def test_dashboard(request):
             'trial_1': trial_1,
             'trial_2': trial_2,
             'best_trial': best_trial,
+            'indv_average': indv_average,
+            'group_average': group_average,
         })
 
     # Group rows by test
@@ -1161,8 +1167,14 @@ def add_test_result(request):
     if request.method == 'POST':
         form = TestAndResultForm(request.POST, organization=organization)
         if form.is_valid():
-            form.save()
-            return redirect('test_dashboard')  # Redirect to the test dashboard after saving
+            final_level_value = form.cleaned_data.get('final_level')
+            result_id = NomativeData.objects.get(final_level=float(final_level_value))
+            result = model_to_dict(result_id)
+            instance = form.save(commit=False)
+            instance.distance_covered = float(result["total_distance"])
+            instance.predicted_vo2max = float(result["approximately_vo2max"])
+            instance.save()
+            return redirect('new_test_dashboard') 
     else:
         form = TestAndResultForm(organization=organization)
 
@@ -2255,3 +2267,159 @@ def teams_dashboard(request):
         'camps': camps,
     }
     return render(request, 'player_app/organization/teams_dashboard.html', context)
+
+def player_record(request):
+    user_organization = getattr(request.user, 'organization', None)
+    players_in_org = Player.objects.filter(organization=user_organization)
+    tests = TestAndResult.objects.all()
+    return render(request,'player_app/organization/player_record.html',
+                  {'players': players_in_org,'tests':tests})
+
+
+def player_data(request):
+    if request.method == 'POST':
+        # Process the form data here
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('latestDate')
+        player_id = request.POST.get('playerSelect')
+        test = request.POST.get('testSelect')
+
+        # tests = TestAndResult.objects.filter(player_id=player_id, test=test, date__range=[start_date, end_date])
+
+        return redirect('player_info', player_id=player_id,test=test,data=end_date)
+    return render(request, 'player_app/organization/player_record.html')  
+
+def player_info(request, player_id,test,data):
+    player = get_object_or_404(Player, id=player_id)
+    players = Player.objects.all()
+    tests = TestAndResult.objects.filter(player_id=player_id, test=test)
+    min_value = tests.aggregate(Min('trial'))['trial__min']
+    max_value = tests.aggregate(Max('trial'))['trial__max']
+    # Individual average for this player's tests (trial field)
+    individual_avg = tests.aggregate(avg_trial=Avg('trial'))['avg_trial']
+    print(min_value,max_value)
+    # Group average for this test for all players
+    group_tests = TestAndResult.objects.filter(test=test)
+    group_avg = group_tests.aggregate(avg_trial=Avg('trial'))['avg_trial']
+ 
+    individual_normalized = (individual_avg - min_value) / (max_value - min_value) * 100 if max_value != min_value else 0
+    abc = "start"
+    return render(request, 'player_app/organization/player_record.html', {
+        'player': player,
+        'players': players,
+        'tests': tests,
+        'individual_avg': individual_avg,
+        'group_avg': group_avg,
+        'abc': abc,
+        'max_value': max_value,
+        'min_value': min_value,
+        'test': test,
+        'individual_normalized':individual_normalized,
+    })
+
+def new_test_details(request):
+    results = TestAndResult.objects.select_related('player').all()
+    return render(request, 'player_app/organization/new_test_details.html', {'results': results})
+
+def new_add_test(request):
+    if request.method == 'POST':
+        player_id = request.POST.get('player_id')
+        player = get_object_or_404(Player, id=player_id)
+        result = TestAndResult.objects.create(
+            date=request.POST['date'],
+            player=player,
+            category=request.POST['category'],
+            phase=request.POST['phase'],
+            test_name='YoYo',
+            yoyo_level=request.POST['yoyo_level'],
+            notes=request.POST.get('notes'),
+            reported_by=request.user,
+            reported_by_designation=request.POST['reported_by_designation'],
+        )
+        # ActivityLog.objects.create(
+        #     user=request.user,
+        #     action='created',
+        #     object_id=result.id,
+        #     content_type_id=YoYoTestResult._meta.pk.value_to_string(result),
+        #     details='Added YoYo test result'
+        # )
+        return redirect('new_test_details')
+    # Fetch players and categories for the form
+    players = Player.objects.all()
+    categories = set([c.age_category for c in players])
+    return render(request, 'player_app/organization/new_add_test.html', {'players': players, 'categories': categories})
+
+def new_edit_test(request, pk):
+    result = get_object_or_404(TestAndResult, pk=pk)
+    if request.method == 'POST':
+        result.date = request.POST['date']
+        result.category = request.POST['category']
+        result.phase = request.POST['phase']
+        result.yoyo_level = request.POST['yoyo_level']
+        result.notes = request.POST.get('notes')
+        result.reported_by_designation = request.POST['reported_by_designation']
+        result.save()
+        # ActivityLog.objects.create(
+        #     user=request.user,
+        #     action='edited',
+        #     object_id=result.id,
+        #     content_type_id=YoYoTestResult._meta.pk.value_to_string(result),
+        #     details='Edited YoYo test result'
+        # )
+        return redirect('new_test_details')
+    players = Player.objects.all()
+    categories = set([c.age_category for c in players])
+    return render(request, 'player_app/organization/new_edit_test.html', {'result': result, 'players': players, 'categories': categories})
+
+def new_delete_test(request, pk):
+    result = get_object_or_404(TestAndResult, pk=pk)
+    result.delete()
+    # ActivityLog.objects.create(
+    #     user=request.user,
+    #     action='deleted',
+    #     object_id=pk,
+    #     content_type_id=YoYoTestResult._meta.pk.value_to_string(result),
+    #     details='Deleted YoYo test result'
+    # )
+    return redirect('new_test_details')
+
+from django.forms.models import model_to_dict
+def nomative_data(request):
+    data = NomativeData.objects.all()
+    return render(request, 'player_app/organization/nomative_data.html', {'datas': data})
+
+
+@login_required
+def new_test_dashboard(request):
+    user_organization = getattr(request.user, 'organization', None)
+    if not user_organization:
+        return render(request, 'player_app/organization/test_results.html', {
+            'error_message': "Your account is not linked to any organization.",
+        })
+
+    players_in_org = Player.objects.filter(organization=user_organization)
+    qs = TestAndResult.objects.select_related('player').filter(player__in=players_in_org).order_by(
+        'player__name', 'test', 'date'
+    )
+
+    # Calculate group averages per test
+    group_averages = qs.values('test').annotate(group_avg=Avg('trial'))
+    group_avg_dict = {item['test']: item['group_avg'] for item in group_averages}
+
+    # Calculate individual averages per player per test
+    indv_averages = qs.values('player', 'test').annotate(indv_avg=Avg('trial'))
+    indv_avg_dict = {(item['player'], item['test']): item['indv_avg'] for item in indv_averages}
+
+    # Annotate each trial with averages
+    trials_with_avg = []
+    for trial in qs:
+        trial.individual_average = indv_avg_dict.get((trial.player.id, trial.test), None)
+        trial.group_average = group_avg_dict.get(trial.test, None)
+        trials_with_avg.append(trial)
+
+    context = {
+        'trials': trials_with_avg,
+    }
+
+
+    return render(request, 'player_app/organization/new_test_dashboard.html', context)

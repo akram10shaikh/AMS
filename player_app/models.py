@@ -330,7 +330,7 @@ class TreatmentRecommendation(models.Model):
 
 class TestAndResult(models.Model):
     TEST_CHOICES = [
-         ('10m', '10m'),
+        ('10m', '10m'),
         ('20m', '20m'),
         ('40m', '40m'),
         ('YoYo', 'YoYo'),
@@ -347,14 +347,24 @@ class TestAndResult(models.Model):
         ('2 KM', '2 KM'),
         ('CMJ Scores', 'CMJ Scores'),
     ]
-    test = models.CharField(max_length=32, choices=TEST_CHOICES)
+    test = models.CharField(max_length=32, choices=TEST_CHOICES,null=True)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    date = models.DateField()
-    phase = models.CharField(max_length=128)
+    date = models.DateField(null=True)
+    phase = models.CharField(max_length=128,null=True)
     trial = models.FloatField()
+    final_level = models.CharField(max_length=32,null=True)
+    notes = models.TextField(blank=True, null=True)
+    distance_covered = models.FloatField(null=True, blank=True)
+    predicted_vo2max = models.FloatField(null=True, blank=True)
+    reported_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='yoyo_reports'
+    )
+    reported_by_designation = models.CharField(max_length=100,null=True)
+    target = models.FloatField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True,null=True)
+    updated_at = models.DateTimeField(auto_now=True,null=True)
 
-    class Meta:
-        ordering = ['-date']
+
 
     def __str__(self):
         return f"{self.player} - {self.test} ({self.date}) Trial: {self.trial}"
@@ -381,3 +391,24 @@ class Team(models.Model):
     
     def __str__(self):
         return f"{self.name} ({self.organization.name})"
+
+
+class NomativeData(models.Model):
+    speed_level = models.IntegerField(null=True)
+    shuttle_no = models.IntegerField(null=True)
+    speed_kmh = models.FloatField(null=True)
+    speed_ms = models.FloatField(null=True)
+    level_time = models.FloatField(null=True)
+    total_distance = models.FloatField(null=True)
+    approximately_vo2max = models.FloatField(null=True)
+    final_level = models.FloatField(null=True)
+    gender_m = models.CharField(max_length=10, default="Male")
+    gender_f = models.CharField(max_length=10, default="Female")
+    rating_f = models.CharField(max_length=50, null=True)
+    rating_m = models.CharField(max_length=50, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Level: {self.speed_level}, Shuttle: {self.shuttle_no}"
+    

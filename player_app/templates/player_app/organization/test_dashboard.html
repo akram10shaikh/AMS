@@ -264,6 +264,7 @@
   <button type="button" id="toggleSidebarBtn" aria-expanded="false" aria-controls="filterSidebar">
     Filter Test Results
   </button>
+  <a href="{% url 'nomative_data' %}" class="btn btn-secondary" aria-label="View Nomative Data">View Nomative Data</a>
 </div>
 
 <div id="filterSidebar" aria-label="Filter Test Results Sidebar" aria-hidden="true" role="complementary">
@@ -297,6 +298,8 @@
               <th scope="col">Trial 1 (Second Last)</th>
               <th scope="col">Trial 2 (Last)</th>
               <th scope="col">Best Trial</th>
+              <th scope="col">Individual Average</th>
+              <th scope="col">Group Average</th>
             </tr>
           </thead>
           <tbody>
@@ -309,6 +312,8 @@
               <td>{% if row.trial_1 != None %}{{ row.trial_1 }}{% else %}&mdash;{% endif %}</td>
               <td>{{ row.trial_2 }}</td>
               <td>{{ row.best_trial }}</td>
+              <td>{% if row.indv_average != None %}{{ row.indv_average|floatformat:2 }}{% else %}&mdash;{% endif %}</td>
+              <td>{% if row.group_average != None %}{{ row.group_average|floatformat:2 }}{% else %}&mdash;{% endif %}</td>
             </tr>
             {% empty %}
             <tr>

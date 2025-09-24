@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YoYo Test Results</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+    <head>
+<body>
+<h2>YoYo Test
+    
+<h2>Add YoYo Test Result</h2>
+<form method="post">
+    {% csrf_token %}
+    <label>Date:</label><input type="date" name="date" required><br>
+    <label>Player:</label>
+    <select name="player_id">
+        {% for player in players %}
+            <option value="{{ player.id }}">{{ player.name }}</option>
+        {% endfor %}
+    </select><br>
+    <label>Category:</label>
+    <select name="category">
+        {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+        {% endfor %}
+    </select><br>
+    <label>Phase:</label><input type="text" name="phase" required><br>
+    <label>YoYo Level:</label><input type="text" name="yoyo_level" required><br>
+    <label>Notes:</label><textarea name="notes"></textarea><br>
+    <label>Reported By Designation:</label><input type="text" name="reported_by_designation" required><br>
+    <input type="submit" value="Add Result">
+</form>
+
+
+   
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nomative Data</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+<h2>Nomative Data</h2>
+<table border="1">
+    <thead>
+        <tr>
+            <th>Speed Level</th>
+            <th>Shuttle No</th>
+            <th>Speed (km/h)</th>
+            <th>Speed (m/s)</th>
+            <th>Level Time</th>
+            <th>Total Distance</th>
+            <th>Approx. VO2max</th>
+            <th>Final Level</th>
+            <th>Gender (M)</th>
+            <th>Gender (F)</th>
+            <th>Rating (F)</th>
+            <th>Rating (M)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for data in datas %}
+        <tr>
+            <td>{{ data.speed_level }}</td>
+            <td>{{ data.shuttle_no }}</td>
+            <td>{{ data.speed_kmh }}</td>
+            <td>{{ data.speed_ms }}</td>
+            <td>{{ data.level_time }}</td>
+            <td>{{ data.total_distance }}</td>
+            <td>{{ data.approximately_vo2max }}</td>
+            <td>{{ data.final_level }}</td>
+            <td>{{ data.gender_m }}</td>
+            <td>{{ data.gender_f }}</td>
+            <td>{{ data.rating_f }}</td>
+            <td>{{ data.rating_m }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="14">No data available.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>

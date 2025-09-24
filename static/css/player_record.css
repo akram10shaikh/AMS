@@ -1,0 +1,363 @@
+:root {
+  /* Colors */
+  --color-primary: #0f172a;
+  --color-secondary: #007CF0;
+  --color-accent: #00DFD8;
+  --color-background: #f4f6fa;
+  --color-card-bg: #fff;
+  --color-text-dark: #1a202c;
+  --color-text-light: #fff;
+  --color-border-light: #d1d5db;
+  --color-border-dark: #e5e7eb;
+  --color-highlight: #d9f7be;
+  --color-input-bg: #f9fafb;
+  --color-dark-green: #1b4d2e;
+  --color-orange: #f59e0b;
+  --color-gray: #363636;
+  --color-light-gray: #f8fafc;
+  
+  /* Spacing */
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text-dark);
+}
+
+.welcome-section {
+  height: 260px;
+  background: linear-gradient(to right, var(--color-secondary), var(--color-accent));
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 var(--space-xl);
+}
+
+.welcome-section h1 {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+.main-card {
+  max-width: 1200px;
+  margin: -80px auto var(--space-xl) auto;
+  background-color: var(--color-card-bg);
+  border-radius: 12px;
+  padding: var(--space-xl);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 10;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.import-button {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--color-primary);
+  color: var(--color-text-light);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.import-button:hover {
+  background-color: #1e293b;
+}
+
+.upload-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: var(--space-xl);
+  background-color: var(--color-card-bg);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--color-border-dark);
+}
+
+.form-fields label {
+  font-size: 14px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.input {
+  padding: 0.75rem 1rem;
+  font-size: 15px;
+  font-weight: 500;
+  border: 1px solid var(--color-border-light);
+  border-radius: 12px;
+  background-color: var(--color-input-bg);
+  transition: all 0.2s ease-in-out;
+  color: #111827;
+}
+
+select.input {
+  width: 100%;
+}
+
+.input:focus,
+select.input:focus {
+  outline: none;
+  border-color: #2563eb;
+  background-color: var(--color-card-bg);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.date-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+input[type="date"] {
+  padding-left: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg fill='gray' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM5 20V9h14v11H5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  background-size: 18px 18px;
+}
+
+/* Hide browser's native date picker icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.custom-select {
+  appearance: none;
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  font-size: 15px;
+  font-weight: 500;
+  border: 1px solid var(--color-border-light);
+  border-radius: 12px;
+  background-color: var(--color-input-bg);
+  color: #111827;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='gray' viewBox='0 0 24 24' width='20' height='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.custom-select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  background-color: var(--color-card-bg);
+}
+
+button {
+  background-color: var(--color-primary);
+  color: var(--color-text-light);
+  font-weight: 700;
+  font-size: 15px;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+  background-color: #1e293b;
+  transform: translateY(-1px);
+}
+
+.drag-drop-container {
+  display: flex;
+  gap: var(--space-lg);
+  margin-top: var(--space-md);
+}
+
+.tests-list {
+  flex: 1;
+  min-height: 200px;
+  padding: var(--space-md);
+  background: var(--color-input-bg);
+  border-radius: 10px;
+  border: 1px solid var(--color-border-light);
+}
+
+.tests-list h3 {
+  margin-bottom: var(--space-sm);
+}
+
+.tests-list.over {
+  background: var(--color-highlight);
+}
+
+.test-card {
+  padding: 0.6rem 1rem;
+  background: var(--color-light-gray);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-light);
+  margin-bottom: var(--space-sm);
+  cursor: grab;
+  transition: background 0.2s ease;
+}
+
+.test-card.dragging {
+  opacity: 0.5;
+  background: #e3f2fd;
+}
+
+/* New Player Info Section Styles */
+.player-info-section {
+  margin-top: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  background-color: var(--color-dark-green);
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  padding: var(--space-md);
+}
+
+.player-info-title {
+  color: var(--color-text-light);
+  text-align: center;
+  font-style: italic;
+  font-weight: 700;
+  margin: 0;
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.player-info-card {
+  border-top: 15px solid var(--color-orange);
+  border-bottom: 15px solid var(--color-orange);
+  color: var(--color-text-light);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  justify-content: flex-start; /* Aligns items to the start */
+  align-items: center;
+  padding: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.player-photo {
+  background-color: var(--color-dark-green);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-height: 176px;
+  width: 170px;
+  flex-shrink: 0;
+}
+
+.player-info-table {
+  width: 20px;
+  flex-grow: 1; /* Allows the table to take up remaining space */
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--color-text-light);
+}
+
+.player-info-table th,
+.player-info-table td {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.player-info-table th {
+  font-weight: normal;
+  background-color: #114224;
+  text-align: center;
+  width: 40%;
+}
+
+.coach-name {
+  align-self: flex-start;
+  padding: var(--space-md);
+  background-color: #114224;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-width: 150px;
+  height: 145px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.coach-name strong {
+  font-weight: 700;
+}
+
+/* Chart Area Styles (Initially Hidden) */
+.chart-area {
+  display: none;
+  width: 100%;
+  background-color: #555;
+  padding: var(--space-sm);
+  border-radius: 8px;
+}
+
+.chart-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  justify-content: space-between;
+}
+
+.chart-content {
+  flex: 1 1 calc(50% - 1.5rem);
+  background-color: var(--color-gray);
+  padding: var(--space-lg);
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  box-sizing: border-box;
+}
+
+.chart-content canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .drag-drop-container,
+  .form-container,
+  .chart-container {
+    flex-direction: column;
+  }
+}

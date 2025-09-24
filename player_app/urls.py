@@ -87,4 +87,18 @@ urlpatterns = [
                   path('organization/dashboard/', views.organization_dashboard_org, name='organization_dashboard_org'),
 
                   path('teams-dashboard/', views.teams_dashboard, name='teams_dashboard'),
+
+                  path('player-record/', views.player_record, name='player_record'),
+
+                  path('player-data/', views.player_data, name='player_data'),
+                  path('player-info/<int:player_id>/<str:test>/<str:data>/', views.player_info, name='player_info'),
+
+             
+                  path('new_test_details/',views.new_test_details, name='new_test_details'),  
+                  path('new_add_test/',views.new_add_test, name='new_add_test'),
+                  path('new_edit_test/<int:id>/',views.new_edit_test, name='new_edit_test'),
+                  path('new_delete_test/<int:id>/',views.new_delete_test, name='new_delete_test'),
+                  path('nomative_data/',views.nomative_data, name='nomative_data'),
+                  path('new_test_dashboard/',views.new_test_dashboard, name='new_test_dashboard'),
+
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

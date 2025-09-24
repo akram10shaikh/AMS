@@ -1,0 +1,60 @@
+<DOCTYPE html>
+<html>
+<head>
+    <title>YoYo Test Results</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+    <head>
+<body>
+<h2>YoYo Test Results</h2>
+
+<p><a href="{% url 'new_add_test' %}">Add Test Result</a></p>
+
+<table border="1">
+    <tr>
+        <th>Date</th>
+        <th>Player Name</th>
+        <th>Category</th>
+        <th>Phase</th>
+        <th>Test Name</th>
+        <th>YoYo Level</th>
+        <th>Notes</th>
+        <th>Reported By</th>
+        <th>Designation</th>
+        <th>Actions</th>
+    </tr>
+    {% for result in results %}
+    <tr>
+        <td>{{ result.date }}</td>
+        <td>{{ result.player.name }}</td>
+        <td>{{ result.category }}</td>
+        <td>{{ result.phase }}</td>
+        <td>{{ result.test_name }}</td>
+        <td>{{ result.yoyo_level }}</td>
+        <td>{{ result.notes }}</td>
+        <td>{{ result.reported_by.username }}</td>
+        <td>{{ result.reported_by_designation }}</td>
+        <td>
+          
+            <a href="{% url 'new_edit_test' result.id %}">Edit</a> |
+            <a href="{% url 'new_delete_test' result.id %}">Delete</a>
+
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>
