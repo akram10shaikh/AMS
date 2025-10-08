@@ -89,16 +89,19 @@ urlpatterns = [
                   path('teams-dashboard/', views.teams_dashboard, name='teams_dashboard'),
 
                   path('player-record/', views.player_record, name='player_record'),
-
                   path('player-data/', views.player_data, name='player_data'),
-                  path('player-info/<int:player_id>/<str:test>/<str:data>/', views.player_info, name='player_info'),
+                  path('player-info/<int:player_id>/<str:test>/<str:start>/<str:end>/', views.player_info, name='player_info'),
+                  path('get-players-by-test/', views.get_players_by_test, name='get_players_by_test'),
+                  path('get-player-test-results/', views.get_player_test_results, name='get_player_test_results'),
 
-             
+
+
                   path('new_test_details/',views.new_test_details, name='new_test_details'),  
-                  path('new_add_test/',views.new_add_test, name='new_add_test'),
-                  path('new_edit_test/<int:id>/',views.new_edit_test, name='new_edit_test'),
-                  path('new_delete_test/<int:id>/',views.new_delete_test, name='new_delete_test'),
                   path('nomative_data/',views.nomative_data, name='nomative_data'),
                   path('new_test_dashboard/',views.new_test_dashboard, name='new_test_dashboard'),
+
+                  path('report-settings/', views.report_settings_view, name='report_settings'),
+                  path('save-report-settings/', views.save_report_settings_view, name='save_report_settings'),
+                  path('delete-session/', views.delete_session, name='delete_session'),
 
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

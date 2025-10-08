@@ -341,7 +341,7 @@ class MedicalDocumentFormN(forms.ModelForm):
 class TestAndResultForm(forms.ModelForm):
     class Meta:
         model = TestAndResult
-        fields = ['player', 'test', 'date', 'phase', 'trial','final_level', 'notes', 'reported_by','reported_by_designation', 'target']
+        fields = ['player', 'test', 'date', 'phase', 'best','notes','reported_by','reported_by_designation']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
         }

@@ -1,6 +1,7 @@
 import csv
 
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, HttpResponseForbidden
 from openpyxl import Workbook
@@ -1167,7 +1168,7 @@ def add_test_result(request):
     if request.method == 'POST':
         form = TestAndResultForm(request.POST, organization=organization)
         if form.is_valid():
-            final_level_value = form.cleaned_data.get('final_level')
+            final_level_value = form.cleaned_data.get('best')
             result_id = NomativeData.objects.get(final_level=float(final_level_value))
             result = model_to_dict(result_id)
             instance = form.save(commit=False)
@@ -2267,43 +2268,154 @@ def teams_dashboard(request):
         'camps': camps,
     }
     return render(request, 'player_app/organization/teams_dashboard.html', context)
-
+@login_required
 def player_record(request):
     user_organization = getattr(request.user, 'organization', None)
     players_in_org = Player.objects.filter(organization=user_organization)
-    tests = TestAndResult.objects.all()
-    return render(request,'player_app/organization/player_record.html',
-                  {'players': players_in_org,'tests':tests})
+    session = None
+    if 'report_settings' in request.session:
+        session = True
+    return render(request, 'player_app/organization/player_record.html', {
+        'players': players_in_org,'session': session,
+    })
 
 
+@login_required
 def player_data(request):
     if request.method == 'POST':
-        # Process the form data here
         start_date = request.POST.get('start_date')
-        end_date = request.POST.get('latestDate')
+        end_date = request.POST.get('end_date')
         player_id = request.POST.get('playerSelect')
         test = request.POST.get('testSelect')
+        date_option = request.POST.get('date_option')
+        num_tests = request.POST.get('numTestsToShow')  # Get the selected number of tests
 
-        # tests = TestAndResult.objects.filter(player_id=player_id, test=test, date__range=[start_date, end_date])
+        # Validate date range
+        if date_option == 'range':
+            if not start_date or not end_date:
+                players_in_org = Player.objects.filter(organization=getattr(request.user, 'organization', None))
+                error_message = "Please select both start and end dates for the date range."
+                return render(request, 'player_app/organization/player_record.html', {
+                    'players': players_in_org,
+                    'error_message': error_message,
+                })
 
-        return redirect('player_info', player_id=player_id,test=test,data=end_date)
-    return render(request, 'player_app/organization/player_record.html')  
+        # Defaults for start and end dates
+        if not start_date:
+            start_date = '2000-01-01'
+        if not end_date:
+            from datetime import date
+            end_date = date.today().strftime('%Y-%m-%d')
 
-def player_info(request, player_id,test,data):
+        # Pass num_tests parameter within redirect URL query string
+        return redirect(f"{reverse('player_info', kwargs={'player_id': player_id, 'test': test, 'start': start_date, 'end': end_date})}?num_tests={num_tests}")
+    else:
+        players_in_org = Player.objects.filter(organization=getattr(request.user, 'organization', None))
+        return render(request, 'player_app/organization/player_record.html', {
+            'players': players_in_org,
+        })
+    
+@login_required
+def player_info(request, player_id, test, start, end):
     player = get_object_or_404(Player, id=player_id)
-    players = Player.objects.all()
-    tests = TestAndResult.objects.filter(player_id=player_id, test=test)
-    min_value = tests.aggregate(Min('trial'))['trial__min']
-    max_value = tests.aggregate(Max('trial'))['trial__max']
-    # Individual average for this player's tests (trial field)
-    individual_avg = tests.aggregate(avg_trial=Avg('trial'))['avg_trial']
-    print(min_value,max_value)
-    # Group average for this test for all players
+    user_organization = getattr(request.user, 'organization', None)
+    players = Player.objects.filter(organization=user_organization)
+
+    num_tests = int(request.GET.get('num_tests', 5))
+
+    # Filter tests by player, test, date range
+    if start and end:
+        tests_qs = TestAndResult.objects.filter(player_id=player_id, test=test, date__range=[start, end])
+    else:
+        tests_qs = TestAndResult.objects.filter(player_id=player_id, test=test)
+
+    tests = tests_qs.order_by('-date')[:num_tests]
+
+    player_cat = player.age_category
+    category = Category.objects.filter(name=player_cat).first() if player_cat else None
+
+    target_value = None
+    if category:
+        target_obj = CategoryTarget.objects.filter(category=category).order_by('-settings__created_at').first()
+        if target_obj:
+            target_value = target_obj.target_value
+
+    # Read min/max formula and toggles from session with defaults
+    session_settings = request.session.get('report_settings', {})
+    min_max_formula = session_settings.get('min_max_formula', 'all_players')
+    min_is_better = session_settings.get('min_is_better', False)
+    grp_avg_option = session_settings.get('grp_avg_option', None)
+    print()
+    print(min_max_formula)
+    print()
+    # Calculate min and max based on formula
+    if min_max_formula == "all_players":
+        min_value = TestAndResult.objects.filter(test=test).aggregate(Min('best'))['best__min']
+        max_value = TestAndResult.objects.filter(test=test).aggregate(Max('best'))['best__max']
+        print("all_player",min_value,max_value)
+        print()
+    elif min_max_formula == "all_players_by_gender":
+        min_value = TestAndResult.objects.filter(test=test, player__gender=player.gender).aggregate(Min('best'))['best__min']
+        max_value = TestAndResult.objects.filter(test=test, player__gender=player.gender).aggregate(Max('best'))['best__max']
+        print("all_player_by_gender",min_value,max_value)
+        print()
+    elif min_max_formula == "category_based":
+        min_value = TestAndResult.objects.filter(test=test, player__age_category=player.age_category).aggregate(Min('best'))['best__min']
+        max_value = TestAndResult.objects.filter(test=test, player__age_category=player.age_category).aggregate(Max('best'))['best__max']
+        print("category_based",min_value,max_value)
+        print()
+    elif min_max_formula == "date_based":
+        group_filter = TestAndResult.objects.filter(test=test)
+        if start and end:
+            group_filter = group_filter.filter(date__range=[start, end])
+        min_value = group_filter.aggregate(Min('best'))['best__min']
+        max_value = group_filter.aggregate(Max('best'))['best__max']
+    elif min_max_formula == "manual_entry":
+        min_value = session_settings.get('manual_min', None)
+        max_value = session_settings.get('manual_max', None)
+    else:
+        min_value = tests_qs.aggregate(Min('best'))['best__min']
+        max_value = tests_qs.aggregate(Max('best'))['best__max']
+
+    # Swap min and max if "min is better"
+    if min_is_better and (min_value is not None and max_value is not None):
+        min_value, max_value = max_value, min_value
+
+    individual_avg = tests.aggregate(avg_best=Avg('best'))['avg_best']
+
+    # Group average calculation based on grp_avg_option
     group_tests = TestAndResult.objects.filter(test=test)
-    group_avg = group_tests.aggregate(avg_trial=Avg('trial'))['avg_trial']
- 
-    individual_normalized = (individual_avg - min_value) / (max_value - min_value) * 100 if max_value != min_value else 0
+
+    if grp_avg_option == "all_players_date":
+        if start and end:
+            group_tests = group_tests.filter(date__range=[start, end])
+    elif grp_avg_option == "all_players_gender_date":
+        if start and end:
+            group_tests = group_tests.filter(date__range=[start, end], player__gender=player.gender)
+        else:
+            group_tests = group_tests.filter(player__gender=player.gender)
+    elif grp_avg_option == "category_based_date":
+        if start and end:
+            group_tests = group_tests.filter(date__range=[start, end], player__age_category=player.age_category)
+        else:
+            group_tests = group_tests.filter(player__age_category=player.age_category)
+    else:
+        if start and end:
+            group_tests = group_tests.filter(date__range=[start, end])
+
+    group_avg = group_tests.aggregate(avg_best=Avg('best'))['avg_best']
+
+    individual_normalized = (
+        (individual_avg - min_value) / (max_value - min_value) * 100
+        if max_value is not None and min_value is not None and max_value != min_value else 0
+    )
+
+    session = None
+    if 'report_settings' in request.session:
+        session = True
+
     abc = "start"
+
     return render(request, 'player_app/organization/player_record.html', {
         'player': player,
         'players': players,
@@ -2314,81 +2426,70 @@ def player_info(request, player_id,test,data):
         'max_value': max_value,
         'min_value': min_value,
         'test': test,
-        'individual_normalized':individual_normalized,
+        'individual_normalized': individual_normalized,
+        'target_value': target_value,
+        'session': session,
     })
+ 
+
+
+def delete_session(request):
+    if 'report_settings' in request.session:
+        del request.session['report_settings']
+    return redirect('player_record')
+
+@login_required
+def get_players_by_test(request):
+    test = request.GET.get('test')
+    user_organization = getattr(request.user, 'organization', None)
+    if not user_organization or not test:
+        return JsonResponse({'players': []})
+
+    # Get player IDs who have done the selected test and belong to the organization
+    player_ids = TestAndResult.objects.filter(
+        test=test, player__organization=user_organization
+    ).values_list('player_id', flat=True).distinct()
+
+    players = Player.objects.filter(id__in=player_ids).values('id', 'name')
+    players_list = list(players)
+
+    return JsonResponse({'players': players_list})
+
+from django.utils.dateparse import parse_date
+@login_required
+def get_player_test_results(request):
+    player_id = request.GET.get('player_id')
+    test = request.GET.get('test')
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    limit = int(request.GET.get('limit', 5))
+
+    start_date = parse_date(start_date_str) if start_date_str else None
+    end_date = parse_date(end_date_str) if end_date_str else None
+
+    filters = {
+        'player_id': player_id,
+        'test': test
+    }
+
+    if start_date and end_date:
+        filters['date__range'] = [start_date, end_date]
+
+    qs = TestAndResult.objects.filter(**filters).order_by('-date')[:limit]
+
+    results = list(qs.values('date', 'best', 'phase'))
+    return JsonResponse({'results': results, 'count': qs.count()})
 
 def new_test_details(request):
     results = TestAndResult.objects.select_related('player').all()
     return render(request, 'player_app/organization/new_test_details.html', {'results': results})
 
-def new_add_test(request):
-    if request.method == 'POST':
-        player_id = request.POST.get('player_id')
-        player = get_object_or_404(Player, id=player_id)
-        result = TestAndResult.objects.create(
-            date=request.POST['date'],
-            player=player,
-            category=request.POST['category'],
-            phase=request.POST['phase'],
-            test_name='YoYo',
-            yoyo_level=request.POST['yoyo_level'],
-            notes=request.POST.get('notes'),
-            reported_by=request.user,
-            reported_by_designation=request.POST['reported_by_designation'],
-        )
-        # ActivityLog.objects.create(
-        #     user=request.user,
-        #     action='created',
-        #     object_id=result.id,
-        #     content_type_id=YoYoTestResult._meta.pk.value_to_string(result),
-        #     details='Added YoYo test result'
-        # )
-        return redirect('new_test_details')
-    # Fetch players and categories for the form
-    players = Player.objects.all()
-    categories = set([c.age_category for c in players])
-    return render(request, 'player_app/organization/new_add_test.html', {'players': players, 'categories': categories})
 
-def new_edit_test(request, pk):
-    result = get_object_or_404(TestAndResult, pk=pk)
-    if request.method == 'POST':
-        result.date = request.POST['date']
-        result.category = request.POST['category']
-        result.phase = request.POST['phase']
-        result.yoyo_level = request.POST['yoyo_level']
-        result.notes = request.POST.get('notes')
-        result.reported_by_designation = request.POST['reported_by_designation']
-        result.save()
-        # ActivityLog.objects.create(
-        #     user=request.user,
-        #     action='edited',
-        #     object_id=result.id,
-        #     content_type_id=YoYoTestResult._meta.pk.value_to_string(result),
-        #     details='Edited YoYo test result'
-        # )
-        return redirect('new_test_details')
-    players = Player.objects.all()
-    categories = set([c.age_category for c in players])
-    return render(request, 'player_app/organization/new_edit_test.html', {'result': result, 'players': players, 'categories': categories})
-
-def new_delete_test(request, pk):
-    result = get_object_or_404(TestAndResult, pk=pk)
-    result.delete()
-    # ActivityLog.objects.create(
-    #     user=request.user,
-    #     action='deleted',
-    #     object_id=pk,
-    #     content_type_id=YoYoTestResult._meta.pk.value_to_string(result),
-    #     details='Deleted YoYo test result'
-    # )
-    return redirect('new_test_details')
 
 from django.forms.models import model_to_dict
 def nomative_data(request):
     data = NomativeData.objects.all()
     return render(request, 'player_app/organization/nomative_data.html', {'datas': data})
-
-
 @login_required
 def new_test_dashboard(request):
     user_organization = getattr(request.user, 'organization', None)
@@ -2396,21 +2497,23 @@ def new_test_dashboard(request):
         return render(request, 'player_app/organization/test_results.html', {
             'error_message': "Your account is not linked to any organization.",
         })
-
     players_in_org = Player.objects.filter(organization=user_organization)
+
+    # Base queryset ordered by player, test and date
     qs = TestAndResult.objects.select_related('player').filter(player__in=players_in_org).order_by(
         'player__name', 'test', 'date'
     )
 
-    # Calculate group averages per test
-    group_averages = qs.values('test').annotate(group_avg=Avg('trial'))
+    # Calculate group averages per test using "best" field (one average per test)
+    group_averages = TestAndResult.objects.filter(player__in=players_in_org) \
+        .values('test').annotate(group_avg=Avg('best')).order_by('test')
     group_avg_dict = {item['test']: item['group_avg'] for item in group_averages}
 
-    # Calculate individual averages per player per test
-    indv_averages = qs.values('player', 'test').annotate(indv_avg=Avg('trial'))
+    # Calculate individual averages per player per test using "best" field
+    indv_averages = TestAndResult.objects.filter(player__in=players_in_org).values('player', 'test').annotate(indv_avg=Avg('best'))
     indv_avg_dict = {(item['player'], item['test']): item['indv_avg'] for item in indv_averages}
 
-    # Annotate each trial with averages
+    # Annotate each trial with averages for easy display in template
     trials_with_avg = []
     for trial in qs:
         trial.individual_average = indv_avg_dict.get((trial.player.id, trial.test), None)
@@ -2421,5 +2524,76 @@ def new_test_dashboard(request):
         'trials': trials_with_avg,
     }
 
-
     return render(request, 'player_app/organization/new_test_dashboard.html', context)
+
+def report_settings_view(request):
+    categories = Category.objects.all()
+
+    # Get latest targets from DB for this user (latest ReportSettings)
+    latest_settings = ReportSettings.objects.filter(user=request.user).order_by('-created_at').first()
+    targets_dict = {}
+    if latest_settings:
+        targets_dict = {ct.category_id: ct.target_value for ct in latest_settings.category_targets.all()}
+
+    # Get non-target settings from session
+    session_settings = request.session.get('report_settings', {})
+
+    # Build dummy settings for template with session data
+    settings_data = type('Settings', (), {})()
+    settings_data.min_max_formula = session_settings.get('min_max_formula', 'all_players')
+    settings_data.min_is_better = session_settings.get('min_is_better', False)
+    settings_data.indv_avg_option = session_settings.get('indv_avg_option', 'total_result')
+    settings_data.grp_avg_option = session_settings.get('grp_avg_option', 'all_players_date')
+
+    category_targets = []
+    for category in categories:
+        target_value = targets_dict.get(category.id, '')
+        category_targets.append((category, target_value))
+
+    context = {
+        'category_targets': category_targets,
+        'settings': settings_data,
+    }
+    return render(request, 'player_app/organization/report_settings.html', context)
+
+
+
+def save_report_settings_view(request):
+    if request.method != 'POST':
+        return redirect(reverse('report_settings'))
+
+    categories = Category.objects.all()
+
+    # Capture form data from POST
+    min_max_formula = request.POST.get('min_max_formula', 'all_players')
+    min_is_better = 'min_is_better' in request.POST
+    indv_avg_option = request.POST.get('indv_avg_option', 'total_result')
+    grp_avg_option = request.POST.get('grp_avg_option', 'all_players_date')
+
+    targets = {}
+    for category in categories:
+        val = request.POST.get(f'target_{category.id}', '').strip()
+        if val:
+            try:
+                targets[str(category.id)] = float(val)
+            except ValueError:
+                # Skip invalid float entries or handle as needed
+                pass
+
+    # Save all to session
+    request.session['report_settings'] = {
+        'min_max_formula': min_max_formula,
+        'min_is_better': min_is_better,
+        'indv_avg_option': indv_avg_option,
+        'grp_avg_option': grp_avg_option,
+        'targets': targets,
+    }
+
+    # Mark session as modified to ensure Django saves changes
+    request.session.modified = True
+
+    messages.success(request, 'Report settings saved to session successfully!')
+    return redirect(reverse('player_record'))
+
+
+

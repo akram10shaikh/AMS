@@ -4,31 +4,28 @@
 {% block title %}New Test Dashboard{% endblock %}
 {% block extra_head %} 
   <style>
-    :root {
-      /* Colors */
-      --color-primary: #0f172a;
-      --color-secondary: #007CF0;
-      --color-accent: #00DFD8;
-      --color-background: #f4f6fa;
-      --color-card-bg: #fff;
-      --color-text-dark: #1a202c;
-      --color-text-light: #fff;
-      --color-border-light: #d1d5db;
-      --color-border-dark: #e5e7eb;
-      --color-highlight: #d9f7be;
-      --color-input-bg: #f9fafb;
-      --color-dark-green: #1b4d2e;
-      --color-orange: #f59e0b;
-      --color-gray: #363636;
-      --color-light-gray: #f8fafc;
-
-      /* Spacing */
-      --space-sm: 0.5rem;
-      --space-md: 1rem;
-      --space-lg: 1.5rem;
-      --space-xl: 2rem;
-    }
-
+      :root {
+        /* Colors, spacing, and other styles as you provided */
+        --color-primary: #0f172a;
+        --color-secondary: #007CF0;
+        --color-accent: #00DFD8;
+        --color-background: #f4f6fa;
+        --color-card-bg: #fff;
+        --color-text-dark: #1a202c;
+        --color-text-light: #fff;
+        --color-border-light: #d1d5db;
+        --color-border-dark: #e5e7eb;
+        --color-highlight: #d9f7be;
+        --color-input-bg: #f9fafb;
+        --color-dark-green: #1b4d2e;
+        --color-orange: #f59e0b;
+        --color-gray: #363636;
+        --color-light-gray: #f8fafc;
+        --space-sm: 0.5rem;
+        --space-md: 1rem;
+        --space-lg: 1.5rem;
+        --space-xl: 2rem;
+      }
     .welcome-section {
       height: 260px;
       background: linear-gradient(to right, var(--color-secondary), var(--color-accent));
@@ -135,30 +132,7 @@
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
     }
 
-    .date-wrapper {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-    }
-
-    input[type="date"] {
-      padding-left: 2.5rem;
-      background-image: url("data:image/svg+xml,%3Csvg fill='gray' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM5 20V9h14v11H5z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: 10px center;
-      background-size: 18px 18px;
-    }
-
-    /* Hide browser's native date picker icon */
-    input[type="date"]::-webkit-calendar-picker-indicator {
-      opacity: 0;
-      position: absolute;
-      right: 0;
-      width: 100%;
-      height: 100%;
-      cursor: pointer;
-    }
-
+   
     .custom-select {
       appearance: none;
       width: 100%;
@@ -410,137 +384,115 @@
 {% endblock %}
 
 {% block content %}
-  <div class="welcome-section">
-    <h1>Welcome</h1>
+<div class="welcome-section">
+  <h1>Welcome</h1>
+</div>
+
+<main class="main-card">
+  <div class="card-header">
+    <h2>Player Records</h2>
+    {% if session %}
+      <p style="font-size:14px; color:#555;">Report Settings is updated</p>
+      <a href="{% url 'delete_session' %}" style="font-size:14px; color:#007CF0; text-decoration:underline; cursor:pointer;">Remove Settings</a>
+    {% endif %}
   </div>
-
-  <main class="main-card">
-    <div class="card-header">
-      <h2>Player Records</h2>
+  <div class="settings-button-wrapper" style="margin-bottom: 1rem;">
+    <a href="{% url 'report_settings' %}" class="import-button">
      
-    </div>
-
-    <form action="{% url 'player_data' %}" id="reportForm" class="form-container" method="POST">
-      {% csrf_token %}
-      <div class="form-fields">
-        <!-- 1. Latest Date (End Date) -->
-        <div class="date-wrapper">
-          <label for="dateInput">Latest Date (End Date):</label>
-          <input type="date" id="dateInput" name="latestDate" class="input date-input" />
+      Report Settings</a>
+  </div>
+  <form action="{% url 'player_data' %}" id="reportForm" class="form-container" method="POST">
+    {% csrf_token %}
+    <div class="form-fields">
+      <div class="date-filter-group">
+        <label>Date Option:</label><br>
+        <input type="radio" id="range" name="date_option" value="range" required onclick="toggleDateInputs('range')">
+        <label for="range">Start Date – End Date</label><br>
+        <input type="radio" id="1month" name="date_option" value="1month" onclick="toggleDateInputs('preset')">
+        <label for="1month">Last 1 Month</label><br>
+        <input type="radio" id="3months" name="date_option" value="3months" onclick="toggleDateInputs('preset')">
+        <label for="3months">Last 3 Months</label><br>
+        <input type="radio" id="6months" name="date_option" value="6months" onclick="toggleDateInputs('preset')">
+        <label for="6months">Last 6 Months</label><br>
+        <input type="radio" id="fy" name="date_option" value="fy" onclick="toggleDateInputs('preset')">
+        <label for="fy">Financial Year (Apr 1 – Mar 31)</label><br>
+        <div id="date-range-fields" style="display:none; margin-top:12px;">
+          <label for="startDateInput">Start Date:</label>
+          <input type="date" id="startDateInput" name="start_date" class="input date-input" disabled />
+          <label for="endDateInput">End Date:</label>
+          <input type="date" id="endDateInput" name="end_date" class="input date-input" disabled />
         </div>
+      </div>
 
-         <div class="select-wrapper">
-          <label for="playerSelect">Tests:</label>
-          <select id="testSelect" name="testSelect" class="custom-select" required>
-            <option value="10m">10m</option>
-            <option value="20m">20m</option>
-            <option value="40m">40m</option>
-            <option value="YoYo">YoYo</option>
-            <option value="SBJ">SBJ</option>
-            <option value="S/L Glute Bridges">S/L Glute Bridges (Sec)</
-            <option value="SL Lunge Calf Raises">SL Lunge Calf Raises</option>
-            <option value="MB Rotational Throws">MB Rotational Throws</option>
-            <option value="Copenhagen">Copenhagen (Sec)</option>
-            <option value="S/L Hop">S/L Hop</option>
-            <option value="Run A 3">Run A 3</option>
-            <option value="Run A 3x6">Run A 3×6</option>
-            <option value="1 Mile">1 Mile</option>
-            <option value="Push-ups">Push-ups</option>
-            <option value="2 KM">2 KM</option>
-            <option value="CMJ Scores">CMJ Scores</option>
-            <option value="" disabled selected>-- Select Test --</option>
-          </select>
-        </div>
+      <div class="select-wrapper">
+        <label for="testSelect">Tests:</label>
+        <select id="testSelect" name="testSelect" class="input" required>
+          <option value="" disabled selected>-- Select Test --</option>
+          <option value="10m">10m</option>
+          <option value="20m">20m</option>
+          <option value="40m">40m</option>
+          <option value="YoYo">YoYo</option>
+          <option value="SBJ">SBJ</option>
+          <option value="S/L Glute Bridges">S/L Glute Bridges (Sec)</option>
+          <option value="SL Lunge Calf Raises">SL Lunge Calf Raises</option>
+          <option value="MB Rotational Throws">MB Rotational Throws</option>
+          <option value="Copenhagen">Copenhagen (Sec)</option>
+          <option value="S/L Hop">S/L Hop</option>
+          <option value="Run A 3">Run A 3</option>
+          <option value="Run A 3x6">Run A 3×6</option>
+          <option value="1 Mile">1 Mile</option>
+          <option value="Push-ups">Push-ups</option>
+          <option value="2 KM">2 KM</option>
+          <option value="CMJ Scores">CMJ Scores</option>
+        </select>
+      </div>
 
-        <!-- 2. Select Player -->
-        <div class="select-wrapper">
-          <label for="playerSelect">Select Player:</label>
-          <select id="playerSelect" name="playerSelect" class="custom-select" required >
-            {% for player in players %}
+      <div class="select-wrapper">
+        <label for="playerSelect">Select Player:</label>
+        <select id="playerSelect" name="playerSelect" class="input" required>
+          <option value="" disabled selected>-- Select Player --</option>
+          {% for player in players %}
             <option value="{{ player.id }}">{{ player.name }}</option>
-            {% endfor %}
-            <option value="" disabled selected>-- Select Player --</option>
-          </select>
-        </div>
-
-        <!-- 5. Submit Button -->
-        <div class="button-wrapper">
-          <button type="submit" onclick="generateReport()">Fetch Report</button>
-        </div>
+          {% endfor %}
+        </select>
       </div>
 
-      <!-- Player Info Section (Always Visible) -->
-      {% if player %}
-      <div class="player-info-section">
-        <h3 class="player-info-title">
-          Individual Report - <span id="playerNameTitle">N/A</span>
-        </h3>
-        <div class="player-info-card">
-          <div class="player-photo"><img src="{{ player.image.url }}" style="width:168px;" ></div>
-          <table class="player-info-table">
-            <tr>
-              <th>Name</th>
-              <td id="playerName">{{ player.name }}</td>
-            </tr>
-            <tr>
-              <th>Gender</th>
-              <td id="playerGender"> {{ player.gender }}</td>
-            </tr>
-            <tr>
-              <th>Age</th>
-              <td id="playerAge">{{ player.age_category }}</td>
-            </tr>
-            <tr>
-              <th>Handedness</th>
-              <td id="playerHandedness"> {{ player.handedness }}</td>
-            </tr>
-            <tr>
-              <th>Role</th>
-              <td id="playerRole">{{ player.role }}</td>
-            </tr>
-            <tr>
-              <th>Test</th>
-              <td id="playerTest">{{ test }}</td>
-            </tr>
-            <tr>
-              <th>Min</th>
-              <td id="playerMin">{{ min_value }}</td>
-            </tr>
-            <tr>
-              <th>Max</th>
-              <td id="PlayerMax">{{ max_value }}</td>
-            </tr>
-            <tr>
-              <th>Individual Normalized</th>
-              <td id="PlayerIndividualNormalized">{{ individual_normalized }}</td>
-            </tr>
-          </table>
-          <div class="coach-name">
-            <p><strong>Coach Name:</strong> <span id="coachName"></span></p>
-          </div>
-        </div>
+      <div class="select-wrapper">
+        <label for="numTestsToShow">Show Last N Tests:</label>
+        <select id="numTestsToShow" name="numTestsToShow" class="input"></select>
       </div>
-      {% endif %}
-      <!-- Chart Area (Fetched after form submission) -->
-      <div class="chart-area" id="chartArea">
-        <div class="chart-container">
-          <div class="chart-content">
-            <canvas id="chartCanvas1"></canvas>
-          </div>
-          <div class="chart-content">
-            <canvas id="chartCanvas2"></canvas>
-          </div>
-          <div class="chart-content">
-            <canvas id="chartCanvas3"></canvas>
-          </div>
-          <div class="chart-content">
-            <canvas id="chartCanvas4"></canvas>
-          </div>
-        </div>
+      <div class="button-wrapper">
+        <button type="submit">Fetch Report</button>
       </div>
-    </form>
+    </div>
+  </form>
 
-    
+  {% if player %}
+  <div class="player-info-section">
+    <h3 class="player-info-title">Individual Report - <span id="playerNameTitle">{{ player.name }}</span></h3>
+    <div class="player-info-card">
+      <div class="player-photo"><img src="{{ player.image.url }}" style="width:168px;"></div>
+      <table class="player-info-table">
+        <tr><th>Name</th><td>{{ player.name }}</td></tr>
+        <tr><th>Gender</th><td>{{ player.gender }}</td></tr>
+        <tr><th>Age</th><td>{{ player.age_category }}</td></tr>
+        <tr><th>Handedness</th><td>{{ player.handedness }}</td></tr>
+        <tr><th>Role</th><td>{{ player.role }}</td></tr>
+        <tr><th>Test</th><td>{{ test }}</td></tr>
+        <tr><th>Min</th><td>{{ min_value }}</td></tr>
+        <tr><th>Max</th><td>{{ max_value }}</td></tr>
+        <tr><th>Individual Average</th><td>{{ individual_avg|floatformat:2 }}</td></tr>
+        <tr><th>Group Average</th><td>{{ group_avg|floatformat:2 }}</td></tr>
+        <tr><th>Individual Normalized</th><td>{{ individual_normalized|floatformat:2}}</td></tr>
+        <tr><th>Target</th><td>{{ target_value }}</td></tr>
+      </table>
+      <div class="coach-name">
+        <p><strong>Coach Name:</strong> <span id="coachName"></span></p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
     <div class="table-container">
       {% if abc %}
       <table class="stats-table" style="margin-bottom: 2rem;">
@@ -550,12 +502,12 @@
                   <th>Date</th>
                   <th>Phase</th>
                   <th>Test</th>
-                  <th>Final Level</th>
+                  <th>Best</th>
                   <th>Distance Covered</th>
                   <th>Predicted VO2max</th>
-                  <th>Individual Average</th>
+                  {% comment %} <th>Individual Average</th>
                   <th>Group Average</th>
-                  <th>Target</th>
+                  <th>Target</th> {% endcomment %}
               </tr>
           </thead>
           <tbody>
@@ -565,12 +517,12 @@
                   <td>{{ test.date }}</td>
                   <td>{{ test.phase }}</td>
                   <td>{{ test.test }}</td>
-                  <td>{{ test.final_level }}</td>
+                  <td>{{ test.best }}</td>
                   <td class="right-align">{{ test.distance_covered|floatformat:2 }}</td>
                   <td class="right-align">{{ test.predicted_vo2max|floatformat:2 }}</td>
-                  <td class="right-align">{{ individual_avg|floatformat:2 }}</td>
+                  {% comment %} <td class="right-align">{{ individual_avg|floatformat:2 }}</td>
                   <td class="right-align">{{ group_avg|floatformat:2 }}</td>
-                  <td class="right-align">{{ test.target }}</td>
+                  <td class="right-align">{{ test.target }}</td> {% endcomment %}
               </tr>
               {% empty %}
               <tr>
@@ -581,6 +533,141 @@
       </table>
       {% endif %}
     </div>
-
     </main>
+
+
+<script>
+  // Toggle fields based on date option radio selection
+  function toggleDateInputs(selectedOption) {
+    const fields = document.getElementById('date-range-fields');
+    const startInput = document.getElementById('startDateInput');
+    const endInput = document.getElementById('endDateInput');
+    if (selectedOption === 'range') {
+      fields.style.display = 'block';
+      startInput.disabled = false;
+      endInput.disabled = false;
+      startInput.required = true;
+      endInput.required = true;
+      startInput.addEventListener('change', () => {
+        endInput.min = startInput.value;
+        if (endInput.value < startInput.value) {
+          endInput.value = startInput.value;
+        }
+      });
+    } else {
+      fields.style.display = 'none';
+      startInput.value = '';
+      endInput.value = '';
+      startInput.disabled = true;
+      endInput.disabled = true;
+      startInput.required = false;
+      endInput.required = false;
+    }
+  }
+
+  // Update the number-of-tests dropdown
+  function updateNumTestsDropdown(count) {
+    const numTestsDropdown = document.getElementById('numTestsToShow');
+    numTestsDropdown.innerHTML = '';
+    for (let i = 1; i <= count; i++) {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = i;
+      numTestsDropdown.appendChild(option);
+    }
+  }
+
+  // Fetch test count for dropdown population
+  function fetchPlayerTestResults(updateDropdownOnly = true) {
+    const playerId = document.getElementById('playerSelect').value;
+    const test = document.getElementById('testSelect').value;
+    const startDate = document.getElementById('startDateInput').value;
+    const endDate = document.getElementById('endDateInput').value;
+    if (!playerId || !test) return;
+    fetch(`/player_app/get-player-test-results/?player_id=${playerId}&test=${test}&start_date=${startDate}&end_date=${endDate}`)
+      .then(resp => resp.json())
+      .then(data => {
+        updateNumTestsDropdown(data.count);
+        if (!updateDropdownOnly) {
+          displayTestResults(data.results);
+        }
+      });
+  }
+
+  // Fetch players for the selected test
+  document.getElementById('testSelect').addEventListener('change', function() {
+    const selectedTest = this.value;
+    const playerSelect = document.getElementById('playerSelect');
+    playerSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+    fetch(`/player_app/get-players-by-test/?test=${encodeURIComponent(selectedTest)}`)
+      .then(response => response.json())
+      .then(data => {
+        playerSelect.innerHTML = '<option value="" disabled selected>-- Select Player --</option>';
+        data.players.forEach(player => {
+          const option = document.createElement('option');
+          option.value = player.id;
+          option.textContent = player.name;
+          playerSelect.appendChild(option);
+        });
+      })
+      .catch(error => {
+        playerSelect.innerHTML = '<option value="" disabled selected>Error loading players</option>';
+        console.error('Error fetching players:', error);
+      });
+  });
+
+  // Update dropdown when player, test, or dates change
+  document.getElementById('playerSelect').addEventListener('change', () => fetchPlayerTestResults(true));
+  document.getElementById('testSelect').addEventListener('change', () => fetchPlayerTestResults(true));
+  document.getElementById('startDateInput').addEventListener('change', () => fetchPlayerTestResults(true));
+  document.getElementById('endDateInput').addEventListener('change', () => fetchPlayerTestResults(true));
+
+  // Fetch and display test results when N dropdown changes
+  document.getElementById('numTestsToShow').addEventListener('change', function() {
+    const playerId = document.getElementById('playerSelect').value;
+    const test = document.getElementById('testSelect').value;
+    const numTests = this.value;
+    const startDate = document.getElementById('startDateInput').value;
+    const endDate = document.getElementById('endDateInput').value;
+    if (!playerId || !test || !numTests) return;
+    fetch(`/player_app/get-player-test-results/?player_id=${playerId}&test=${test}&limit=${numTests}&start_date=${startDate}&end_date=${endDate}`)
+      .then(resp => resp.json())
+      .then(data => {
+        displayTestResults(data.results, numTests);
+      });
+  });
+
+  // Display test results and retain selection in dropdown
+  function displayTestResults(results, selectedValue = null) {
+    const numTestsDropdown = document.getElementById('numTestsToShow');
+    if (!numTestsDropdown) {
+      console.error('Dropdown with id "numTestsToShow" not found');
+      return;
+    }
+    numTestsDropdown.innerHTML = '';
+
+    if (!results || results.length === 0) {
+      const option = document.createElement('option');
+      option.textContent = 'No tests found';
+      option.disabled = true;
+      numTestsDropdown.appendChild(option);
+      return;
+    }
+
+    for (let i = 1; i <= results.length; i++) {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = i;
+      if (selectedValue && +selectedValue === i) {
+        option.selected = true;
+      }
+      numTestsDropdown.appendChild(option);
+    }
+
+    if (!selectedValue) {
+      numTestsDropdown.value = 1;
+    }
+  }
+</script>
+
 {% endblock %}

@@ -1,0 +1,171 @@
+{% extends "player_app/organization/base.html" %}
+{% block title %}Report Settings{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Basic reset and body padding */
+  body, html {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+
+  /* Main container to allow scrolling */
+  .settings-container {
+    max-width: 760px;
+    margin: 2rem auto 3rem;
+    padding: 2rem 2rem 3rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow-y: auto; /* Enable vertical scroll if needed */
+    max-height: 90vh; /* Prevent page overflow */
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 1.8rem;
+    color: #333;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+
+  fieldset {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    background: #fff;
+  }
+
+  legend {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #005A9C;
+    padding: 0 8px;
+  }
+
+  label {
+    display: flex;
+    align-items: center;
+    margin: 0.6rem 0;
+    font-size: 0.95rem;
+    color: #222;
+  }
+
+  label input[type="radio"],
+  label input[type="checkbox"] {
+    margin-right: 0.6rem;
+  }
+
+  select, input[type="number"] {
+    font-size: 1rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    flex-grow: 1;
+    max-width: 220px;
+  }
+
+  /* Align input next to label text, spacing */
+  label > input[type="number"] {
+    margin-left: 1rem;
+    max-width: 160px;
+  }
+
+  /* Button styling */
+  button[type="submit"] {
+    align-self: center;
+    padding: 0.75rem 2.2rem;
+    font-size: 1rem;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.25s ease-in-out;
+  }
+  button[type="submit"]:hover {
+    background-color: #0056b3;
+  }
+
+  /* Responsive: smaller devices */
+  @media (max-width: 480px) {
+    .settings-container {
+      margin: 1rem;
+      padding: 1rem;
+    }
+    fieldset {
+      padding: 1rem 1rem;
+    }
+    label, select, input[type="number"] {
+      font-size: 0.9rem;
+    }
+    label > input[type="number"] {
+      margin-left: 0.5rem;
+      max-width: 100px;
+    }
+    button[type="submit"] {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+  <h1>Report Settings</h1>
+
+  <form method="post" action="{% url 'save_report_settings' %}">
+    {% csrf_token %}
+
+    <fieldset>
+      <legend>Min and Max Formula</legend>
+      <label><input type="radio" name="min_max_formula" value="all_players"
+        {% if settings and settings.min_max_formula == "all_players" %}checked{% endif %}> All Players</label>
+      <label><input type="radio" name="min_max_formula" value="all_players_by_gender"
+        {% if settings and settings.min_max_formula == "all_players_by_gender" %}checked{% endif %}> All Players by Gender</label>
+      <label><input type="radio" name="min_max_formula" value="category_based"
+        {% if settings and settings.min_max_formula == "category_based" %}checked{% endif %}> Category-based</label>
+    </fieldset>
+
+    <fieldset>
+        <legend>Min and Max Swaping</legend>
+      <label><input type="checkbox" name="min_is_better" value="1"
+        {% if settings and settings.min_is_better %}checked{% endif %}> Min is Better (swap min and max)</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Individual Average</legend>
+      <label><input type="radio" name="indv_avg_option" value="total_result"
+        {% if settings and settings.indv_avg_option == "total_result" %}checked{% endif %}> Total Result</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Group Average</legend>
+      <select name="grp_avg_option" required>
+        <option value="all_players_date" {% if settings and settings.grp_avg_option == "all_players_date" %}selected{% endif %}>Average all players (date range)</option>
+        <option value="all_players_gender_date" {% if settings and settings.grp_avg_option == "all_players_gender_date" %}selected{% endif %}>Average by gender (date range)</option>
+        <option value="category_based_date" {% if settings and settings.grp_avg_option == "category_based_date" %}selected{% endif %}>Average by category (date range)</option>
+      </select>
+    </fieldset>
+
+    <fieldset>
+      <legend>Targets per Category (Age Categories)</legend>
+      {% for category, target_value in category_targets %}
+        <label for="target_{{ category.id }}">
+          {{ category.name }}:
+          <input type="number" step="any" name="target_{{ category.id }}" id="target_{{ category.id }}" value="{{ target_value }}" placeholder="Enter target">
+        </label>
+      {% empty %}
+        <p>No categories available.</p>
+      {% endfor %}
+    </fieldset>
+
+    <button type="submit">Save Settings</button>
+  </form>
+</div>
+{% endblock %}

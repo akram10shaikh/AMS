@@ -4,89 +4,88 @@
 {% block title %}New Test Dashboard{% endblock %}
 
 {% block extra_head %}
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
-            color: #333;
-            margin: 20px;
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+        color: #333;
+        margin: 20px;
+    }
+    h2 {
+        text-align: center;
+        color: #102a43;
+        margin-bottom: 20px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #ffffffcc;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    th, td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ccc;
+    }
+    th {
+        background-color: #243b53;
+        color: #f0f4f8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    tr:nth-child(even) {
+        background-color: #f4f7fb;
+    }
+    tr:hover {
+        background-color: #d1e2ff;
+    }
+    @media (max-width: 768px) {
+        table, thead, tbody, th, td, tr {
+            display: block;
         }
-        h2 {
-            text-align: center;
-            color: #102a43;
-            margin-bottom: 20px;
+        thead tr {
+            display: none;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #ffffffcc;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
+        tr {
+            margin-bottom: 15px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 6px;
+            padding: 10px;
         }
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ccc;
+        td {
+            border: none;
+            padding: 10px 5px;
+            position: relative;
+            padding-left: 50%;
         }
-        th {
-            background-color: #243b53;
-            color: #f0f4f8;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+        td::before {
+            position: absolute;
+            left: 15px;
+            top: 10px;
+            font-weight: bold;
+            white-space: nowrap;
         }
-        tr:nth-child(even) {
-            background-color: #f4f7fb;
-        }
-        tr:hover {
-            background-color: #d1e2ff;
-        }
-        @media (max-width: 768px) {
-            table, thead, tbody, th, td, tr {
-                display: block;
-            }
-            thead tr {
-                display: none;
-            }
-            tr {
-                margin-bottom: 15px;
-                background-color: #ffffff;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                border-radius: 6px;
-                padding: 10px;
-            }
-            td {
-                border: none;
-                padding: 10px 5px;
-                position: relative;
-                padding-left: 50%;
-            }
-            td::before {
-                position: absolute;
-                left: 15px;
-                top: 10px;
-                font-weight: bold;
-                white-space: nowrap;
-            }
-            td:nth-of-type(1)::before { content: "Player"; }
-            td:nth-of-type(2)::before { content: "Test"; }
-            td:nth-of-type(3)::before { content: "Date"; }
-            td:nth-of-type(4)::before { content: "Phase"; }
-            td:nth-of-type(5)::before { content: "Trial"; }
-            td:nth-of-type(6)::before { content: "Level"; }
-            td:nth-of-type(7)::before { content: "Notes"; }
-            td:nth-of-type(8)::before { content: "Reported By"; }
-            td:nth-of-type(9)::before { content: "Designation"; }
-            td:nth-of-type(10)::before { content: "Target"; }
-        }
-    </style>
+        td:nth-of-type(1)::before { content: "Player"; }
+        td:nth-of-type(2)::before { content: "Test"; }
+        td:nth-of-type(3)::before { content: "Date"; }
+        td:nth-of-type(4)::before { content: "Phase"; }
+        td:nth-of-type(5)::before { content: "Level"; }
+        td:nth-of-type(6)::before { content: "Distance Covered"; }
+        td:nth-of-type(7)::before { content: "Predicted VO2max"; }
+        td:nth-of-type(8)::before { content: "Individual Average"; }
+        td:nth-of-type(9)::before { content: "Group Average"; }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <h2>Test Results Dashboard</h2>
 <a href="{% url 'add_test_result' %}" class="btn btn-primary" aria-label="Add New Test Result">Add New Test Result</a>
 <a href="{% url 'player_record' %}" class="btn btn-secondary" aria-label="View Player Records">View Player Records</a>
-<a href="{% url 'nomative_data' %}" class="btn btn-secondary" aria-label="View Nomative Data">View Nomative Data</a>
+<a href="{% url 'nomative_data' %}" class="btn btn-secondary" aria-label="View Normative Data">View Normative Data</a>
 <table>
     <thead>
         <tr>
@@ -94,7 +93,6 @@
             <th>Test</th>
             <th>Date</th>
             <th>Phase</th>
-            <th>Trial</th>
             <th>Level</th>
             <th>Distance Covered</th>
             <th>Predicted VO2max</th>
@@ -109,8 +107,7 @@
             <td>{{ trial.get_test_display }}</td>
             <td>{{ trial.date|date:"Y-m-d" }}</td>
             <td>{{ trial.phase }}</td>
-            <td>{{ trial.trial }}</td>
-            <td>{{ trial.final_level }}</td>
+            <td>{{ trial.best }}</td>
             <td>{{ trial.distance_covered|floatformat:2 }}</td>
             <td>{{ trial.predicted_vo2max|floatformat:2 }}</td>
             <td>{{ trial.individual_average|floatformat:2 }}</td>
@@ -118,12 +115,10 @@
         </tr>
         {% empty %}
         <tr>
-            <td colspan="7">No test trials available.</td>
+            <td colspan="9" style="text-align:center;">No test trials available.</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
-
 {% endblock %}
-

@@ -5,7 +5,9 @@ from django.db import models
 from accounts.models import Organization,Staff
 from django.conf import settings
 from django.contrib.auth import get_user_model
-
+from django.db.models import Avg
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 
 # Group model
 class Player_Group(models.Model):
@@ -25,6 +27,11 @@ class Player(models.Model):
         ('boys_under-19', 'Boys under 19'),
         ('men_under-23', 'Men Under 23'),
         ('men_senior', 'Men Senior'),
+        ('girls_under-15','Girls under 15'),
+        ('girls_under-19','Girls under 19'),
+        ('women_under-23','Women Under 23'),
+        ('women_senior','Women Senior'),
+
     ]
     organization = models.ForeignKey(
         Organization, on_delete=models.SET_NULL, null=True, blank=True, related_name="users"
@@ -347,35 +354,110 @@ class TestAndResult(models.Model):
         ('2 KM', '2 KM'),
         ('CMJ Scores', 'CMJ Scores'),
     ]
-    test = models.CharField(max_length=32, choices=TEST_CHOICES,null=True)
+    test = models.CharField(max_length=32, choices=TEST_CHOICES, null=True)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     date = models.DateField(null=True)
-    phase = models.CharField(max_length=128,null=True)
-    trial = models.FloatField()
-    final_level = models.CharField(max_length=32,null=True)
+    phase = models.CharField(max_length=128, null=True)
+    best = models.FloatField(null=True, blank=True)
     notes = models.TextField(blank=True, null=True)
     distance_covered = models.FloatField(null=True, blank=True)
     predicted_vo2max = models.FloatField(null=True, blank=True)
-    reported_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='yoyo_reports'
-    )
-    reported_by_designation = models.CharField(max_length=100,null=True)
+    reported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='yoyo_reports')
+    indv_average = models.FloatField(null=True, blank=True)
+    reported_by_designation = models.CharField(max_length=100, null=True)
     target = models.FloatField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True,null=True)
-    updated_at = models.DateTimeField(auto_now=True,null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
+    def save(self, *args, **kwargs):
+        # Compute individual average of all 'best' values for this player and test
+        if self.player_id and self.test and self.best is not None:
+            qs = TestAndResult.objects.filter(
+                player=self.player,
+                test=self.test
+            ).exclude(id=self.id)
+            avg = qs.aggregate(avg_best=Avg('best'))['avg_best']
+            count = qs.count()
 
+            if avg is not None and count > 0:
+                self.indv_average = (avg * count + self.best) / (count + 1)
+            else:
+                self.indv_average = self.best
+        else:
+            self.indv_average = None
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.player} - {self.test} ({self.date}) Trial: {self.trial}"
-  
+        return f"{self.player} - {self.test} ({self.date}) "
+
+
+class PlayerAggregate(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    test = models.CharField(max_length=32, choices=TestAndResult.TEST_CHOICES)
+    individual_average = models.FloatField(null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class GenderAggregate(models.Model):
+    gender = models.CharField(max_length=10)  # e.g., Male, Female
+    test = models.CharField(max_length=32, choices=TestAndResult.TEST_CHOICES)
+    average = models.FloatField(null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class CategoryAggregate(models.Model):
+    category = models.CharField(max_length=64)
+    test = models.CharField(max_length=32, choices=TestAndResult.TEST_CHOICES)
+    average = models.FloatField(null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+# Signal receiver outside the model class
+@receiver(post_save, sender=TestAndResult)
+def update_aggregates(sender, instance, **kwargs):
+    player = instance.player
+    test = instance.test
+
+    # Update PlayerAggregate
+    avg = TestAndResult.objects.filter(player=player, test=test).aggregate(avg_best=Avg('best'))['avg_best']
+    PlayerAggregate.objects.update_or_create(
+        player=player,
+        test=test,
+        defaults={'individual_average': avg}
+    )
+
+    # Update GenderAggregate
+    gender = getattr(player, 'gender', None)  # Adjust if Player has gender attribute
+    if gender:
+        gender_avg = TestAndResult.objects.filter(player__gender=gender, test=test).aggregate(avg_best=Avg('best'))['avg_best']
+        GenderAggregate.objects.update_or_create(
+            gender=gender,
+            test=test,
+            defaults={'average': gender_avg}
+        )
+
+    # Update CategoryAggregate
+    category = getattr(player, 'category', None)  # Adjust if Player has category attribute
+    if category:
+        cat_avg = TestAndResult.objects.filter(player__category=category, test=test).aggregate(avg_best=Avg('best'))['avg_best']
+        CategoryAggregate.objects.update_or_create(
+            category=category,
+            test=test,
+            defaults={'average': cat_avg}
+        )
 
 class Team(models.Model):
     category_choices = [
         ('boys_under-15', 'Boys under 15'),
         ('boys_under-19', 'Boys under 19'),
         ('men_under-23', 'Men Under 23'),
-        ('men_senior', 'Men Senior')
+        ('men_senior', 'Men Senior'),
+        ('girls_under-15','Girls under 15'),
+        ('girls_under-19','Girls under 19'),
+        ('women_under-23','Women Under 23'),
+        ('women_senior','Women Senior'),
+
     ]
     name = models.CharField(max_length=150)
     images = models.ImageField(upload_to='team_images/', null=True, blank=True,)
@@ -412,3 +494,56 @@ class NomativeData(models.Model):
     def __str__(self):
         return f"Level: {self.speed_level}, Shuttle: {self.shuttle_no}"
     
+class Category(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+    
+class ReportSettings(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='report_settings')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    MIN_MAX_CHOICES = [
+        ("all_players", "All Players"),
+        ("all_players_by_gender", "All Players by Gender"),
+        ("category_based", "Category-based"),
+        ("date_based", "Date-based (dynamic)"),
+        ("manual_entry", "Manual Entry"),
+    ]
+    min_max_formula = models.CharField(max_length=30, choices=MIN_MAX_CHOICES, default="all_players")
+    min_is_better = models.BooleanField(default=False)
+
+    INDV_AVG_CHOICES = [
+        ("total_result", "Total Result"),
+        ("date_based", "Date Based"),
+    ]
+    indv_avg_option = models.CharField(max_length=20, choices=INDV_AVG_CHOICES, default="total_result")
+
+    GRP_AVG_CHOICES = [
+        ("all_players_date", "Average All Players in Date Range"),
+        ("all_players_gender_date", "Average by Gender in Date Range"),
+        ("all_players_stored", "Average All Players Stored"),
+        ("gender_stored", "Average by Gender Stored"),
+        ("category_stored", "Average by Category Stored"),
+    ]
+    grp_avg_option = models.CharField(max_length=30, choices=GRP_AVG_CHOICES, default="all_players_date")
+
+    categories = models.ManyToManyField(Category, through='CategoryTarget')
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Settings by {self.user.username} at {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+class CategoryTarget(models.Model):
+    settings = models.ForeignKey(ReportSettings, on_delete=models.CASCADE, related_name='category_targets')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    target_value = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('settings', 'category')
+
+    def __str__(self):
+        return f"{self.category.name}: {self.target_value}"
