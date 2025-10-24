@@ -4,7 +4,6 @@
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-/* Your existing CSS here (copied from your provided code) */
 .injury-dashboard-banner {
   display: flex;
   align-items: flex-end;
@@ -112,15 +111,14 @@
   margin: 40px auto; background: #fff; border-radius: 14px; box-shadow: 0 2px 24px 0 #0001;
   padding: 36px 26px 30px 26px; max-width: 98vw;
 }
+.injury-table { min-width: 1200px; border-collapse: collapse; }
 .injury-table thead th {
   font-weight: bold; color: #eb5700; background: #fff4ea; border-bottom: 2.5px solid #ffecd1;
 }
 .injury-table td, .injury-table th {
   vertical-align: middle;
 }
-.table-responsive {
-  overflow-x: auto;
-}
+.table-responsive { overflow-x: auto; width: 100%; }
 .table-striped tbody tr:nth-of-type(odd) {
   background: #fff9f3;
 }
@@ -129,15 +127,19 @@
 }
 .filter-popover {
   display: none;
-  position: absolute;
-  z-index: 99;
-  min-width: 320px;
-  padding: 22px 18px 14px 18px;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 1050;
   background: #fafafd;
   border-radius: 11px;
-  box-shadow: 0 2px 22px #0002;
-  top: 56px;
-  left: 0;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  min-width: 320px;
+  padding: 22px 18px 14px 18px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 .show-filters {
   display: block !important;
@@ -155,6 +157,17 @@
 .filter-remove-x {
   color:#c13a3a; margin-left:7px; cursor:pointer;
 }
+.daterange-container input {
+ width: 130px; margin-right: 5px; 
+}
+.modal-backdrop-blue {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,255,0.15);
+  z-index: 1040;
+  display: none;
+}
+.modal-backdrop-blue.show { display: block; }
 </style>
 {% endblock %}
 
@@ -166,254 +179,241 @@
       <div class="injury-count-label">Total Injuries</div>
     </div>
     <div class="injury-spark-boxes">
-      <div class="injury-spark spark-active">
-        <span class="spark-label">Active Injuries</span>
-        <span class="spark-value">{{ injury_open }}</span>
-      </div>
-      <div class="injury-spark spark-recovered">
-        <span class="spark-label">Recovered</span>
-        <span class="spark-value">{{ injury_closed }}</span>
-      </div>
+      <div class="injury-spark spark-active"><span class="spark-label">Active Injuries</span><span class="spark-value">{{ injury_open }}</span></div>
+      <div class="injury-spark spark-recovered"><span class="spark-label">Recovered</span><span class="spark-value">{{ injury_closed }}</span></div>
     </div>
   </div>
+  <div class="injury-spark-boxes" style="gap: 20px; margin-top: 15px;">
+  <div class="injury-spark" style="border-left-color: #238823;">
+    <span class="spark-label">Full Participation</span>
+    <span class="spark-value" style="color: #238823;">{{ full_participation_count }}</span>
+  </div>
+  <div class="injury-spark" style="border-left-color: #ff8c00;">
+    <span class="spark-label">Limited Participation</span>
+    <span class="spark-value" style="color: #ff8c00;">{{ limited_participation_count }}</span>
+  </div>
+  <div class="injury-spark" style="border-left-color: #d43030;">
+    <span class="spark-label">No Participation</span>
+    <span class="spark-value" style="color: #d43030;">{{ no_participation_count }}</span>
+  </div>
+  </div>
+
 </div>
+
+<div id="modalBackdrop" class="modal-backdrop-blue"></div>
 
 <div class="player-table-card position-relative">
   <h3 class="mb-3 text-center" style="color:#cf2e04; font-weight:600;">Injury List</h3>
-  <div class="d-flex align-items-center flex-wrap mb-2" style="position:relative;">
-    <button type="button" class="btn btn-primary btn-sm filter-dropdown-btn" id="filterBtn">
-      <i class="fa fa-filter"></i> Filter
-      {% if filters_count %}<span class="badge badge-warning ml-1">{{ filters_count }}</span>{% endif %}
-    </button>
-    <button type="button" class="btn btn-success btn-sm" id="downloadExcelBtn" style="margin-left:8px;">
-      <i class="fa fa-file-excel"></i> Export
-    </button>
-    <button type="button" class="btn btn-secondary btn-sm" id="columnSelectBtn" style="margin-left:8px;">
-      <i class="fa fa-columns"></i> Columns
-    </button>
-    {% if filters_count %}
-      <a class="btn btn-light btn-sm ml-2" href="{% url 'organization_injury_list' %}">Clear All</a>
-    {% endif %}
+
+  <div class="d-flex align-items-center flex-wrap mb-2 justify-content-between">
+
+    <input id="playerSearch" type="text" placeholder="Search player name..." class="form-control form-control-sm" style="min-width:250px;" value="{{ active_filters.name }}">
+
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+
+      <select id="dateFilterSelect" class="form-control form-control-sm" style="width: 180px;">
+        <option value="">Select Date Filter</option>
+        <option value="current_month" {% if not filter_range and not filter_month and not filter_season and not start_date %}selected{% endif %}>Current Month</option>
+        <option value="last3" {% if filter_range == "last3" %}selected{% endif %}>Last 3 Months</option>
+        <option value="last6" {% if filter_range == "last6" %}selected{% endif %}>Last 6 Months</option>
+        <option value="season" {% if filter_season %}selected{% endif %}>Season Wise</option>
+        <option value="daterange" {% if start_date and end_date %}selected{% endif %}>Start - End Dates</option>
+        <option value="monthyear" {% if filter_month and filter_year %}selected{% endif %}>Month & Year</option>
+      </select>
+
+      <select id="seasonSelect" class="form-control form-control-sm" style="width: 150px; display:none;">
+        <option value="">-- Select Season --</option>
+        {% for s in season_choices %}
+          <option value="{{ s }}" {% if filter_season == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+
+      <div class="daterange-container" style="display:none;">
+        <input type="date" id="startDate" class="form-control form-control-sm" placeholder="Start Date" value="{{ start_date|default:'' }}">
+        <input type="date" id="endDate" class="form-control form-control-sm" placeholder="End Date" value="{{ end_date|default:'' }}">
+      </div>
+
+      <div id="monthYearInputs" style="display:none;">
+        <select id="monthSelect" class="form-control form-control-sm" style="width: 120px;">
+          <option value="">-- Month --</option>
+          {% for num, name in MONTH_CHOICES %}
+            <option value="{{ num }}" {% if filter_month|stringformat:"i" == num|stringformat:"i" %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+        <input type="number" id="yearInput" class="form-control form-control-sm" style="width: 90px;" min="2020" max="2100" value="{{ filter_year|default:today.year }}">
+      </div>
+
+      <button id="applyDateFilterBtn" class="btn btn-primary btn-sm">Apply</button>
+      <button id="clearDateFilterBtn" class="btn btn-light btn-sm">Clear</button>
+
+      <button type="button" class="btn btn-primary btn-sm filter-dropdown-btn" id="filterBtn">
+        <i class="fa fa-filter"></i> Filters
+        {% if filters_count %}<span class="badge badge-warning ml-1">{{ filters_count }}</span>{% endif %}
+      </button>
+
+      <button type="button" class="btn btn-success btn-sm" id="downloadExcelBtn" style="margin-left:8px;">
+        <i class="fa fa-file-excel"></i> Export
+      </button>
+
+      {% if filters_count %}
+        <a class="btn btn-light btn-sm ml-2" href="{% url 'organization_injury_list' %}">Clear All</a>
+      {% endif %}
+    </div>
   </div>
 
-  <!-- Filter Popover -->
+  {% if filters_count %}
+  <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+    <strong>Active Filters:</strong>
+    {% if active_filters.name %}
+      <span class="filter-active-badge">
+        Search Player: {{ active_filters.name }}
+        <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'name' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove search filter">&#10005;</a>
+      </span>
+    {% endif %}
+    {% if active_filters.range %}
+      <span class="filter-active-badge">
+        Quick Range:
+        {% if active_filters.range == 'last3' %}Last 3 Months{% elif active_filters.range == 'last6' %}Last 6 Months{% endif %}
+        <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'range' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove range filter">&#10005;</a>
+      </span>
+    {% endif %}
+    {% if active_filters.season %}
+      <span class="filter-active-badge">
+        Season: {{ active_filters.season }}
+        <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'season' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove season filter">&#10005;</a>
+      </span>
+    {% endif %}
+    {% if active_filters.start_date or active_filters.end_date %}
+      <span class="filter-active-badge">
+        Date Range: {{ active_filters.start_date|default:"Any" }} - {{ active_filters.end_date|default:"Any" }}
+        <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'start_date' and k != 'end_date' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove date range filter">&#10005;</a>
+      </span>
+    {% endif %}
+    {% if active_filters.month and active_filters.year %}
+      <span class="filter-active-badge">
+        Month-Year:
+        {% for num, name in MONTH_CHOICES %}
+          {% if num|stringformat:"i" == active_filters.month|stringformat:"i" %}{{ name }}{% endif %}
+        {% endfor %} - {{ active_filters.year }}
+        <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'month' and k != 'year' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove month/year filter">&#10005;</a>
+      </span>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <div class="filter-popover" id="filterPopover">
     <form method="get" class="w-100" id="filterFormPopover" autocomplete="off">
-      <button class="btn-close-filter" type="button" id="closeFilterBtn">&times;</button>
+      <button class="btn-close-filter" type="button" id="closeFilterBtn" style="font-size: 30px;">&times;</button>
 
-      <!-- Month & Year Filter -->
-      <div class="form-group">
-        <label><b>Month/Year</b></label>
-        <div class="d-flex gap-2 mb-2">
-          <select name="month" class="form-control form-control-sm" style="width:90px">
-            <option value="">--</option>
-            {% for m in month_choices %}
-              <option value="{{ m }}" {% if filter_month == m|stringformat:"s" %}selected{% endif %}>{{ m|date:"M" }}</option>
-            {% endfor %}
-          </select>
-          <input type="number" name="year" class="form-control form-control-sm" style="width:100px" min="2020" max="2100"
-            value="{{ filter_year|default:today.year }}">
-        </div>
-      </div>
-
-      <!-- Range Filter -->
-      <div class="form-group">
-        <label><b>Quick Range</b></label><br>
-        <label><input type="radio" name="range" value="" {% if not filter_range %}checked{% endif %}> None</label>
-        <label><input type="radio" name="range" value="last3" {% if filter_range == "last3" %}checked{% endif %}> Last 3 Months</label>
-        <label><input type="radio" name="range" value="last6" {% if filter_range == "last6" %}checked{% endif %}> Last 6 Months</label>
-      </div>
-
-      <!-- Season Filter -->
-      <div class="form-group">
-        <label><b>Season</b></label>
-        <select name="season" class="form-control form-control-sm">
-          <option value="">-- Season --</option>
-          {% for s in season_choices %}
-          <option value="{{ s }}" {% if filter_season == s %}selected{% endif %}>{{ s }}</option>
-          {% endfor %}
-        </select>
-        <small class="text-muted">April 1 to March 31</small>
-      </div>
-
-      <!-- Category Filter -->
-      <div class="form-group">
-        <label><b>Categories</b></label>
-        <select name="category" class="form-control form-control-sm" multiple>
-          {% for cat in CATEGORY_CHOICES %}
-          <option value="{{ cat }}" {% if cat in filter_categories %}selected{% endif %}>{{ cat }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <!-- Severity Filter -->
       <div class="form-group">
         <label><b>Severity</b></label>
         <select multiple name="severity" class="form-control form-control-sm">
           {% for val, label in SEVERITY_CHOICES %}
-          <option value="{{ val }}" {% if val in active_filters.severity %}selected{% endif %}>{{ label }}</option>
+            <option value="{{ val }}" {% if val in active_filters.severity %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </div>
-
-      <!-- Status Filter -->
       <div class="form-group">
         <label><b>Status</b></label>
         <select multiple name="status" class="form-control form-control-sm">
           {% for val, label in STATUS_CHOICES %}
-          <option value="{{ val }}" {% if val in active_filters.status %}selected{% endif %}>{{ label }}</option>
+            <option value="{{ val }}" {% if val in active_filters.status %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label><b>Categories</b></label>
+        <select multiple name="category" class="form-control form-control-sm">
+          {% for cat in CATEGORY_CHOICES %}
+            <option value="{{ cat }}" {% if cat in filter_categories %}selected{% endif %}>{{ cat }}</option>
           {% endfor %}
         </select>
       </div>
 
-      <!-- Body Region Filter -->
-      <div class="form-group">
-        <label><b>Body Region</b></label>
-        <select multiple name="body_region" class="form-control form-control-sm">
-          {% for val, label in BODY_PART_CHOICES %}
-          <option value="{{ val }}" {% if val in active_filters.body_region %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <!-- Player Filter -->
-      <div class="form-group">
-        <label><b>Player</b></label>
-        <select multiple name="player_id" class="form-control form-control-sm">
-          {% for id, name in PLAYER_CHOICES %}
-          <option value="{{ id }}" {% if id|stringformat:"s" in active_filters.player_id %}selected{% endif %}>{{ name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <!-- Injury Title Filter -->
-      <div class="form-group">
-        <label><b>Injury Title</b></label>
-        <input type="text" name="name" class="form-control form-control-sm" value="{{ active_filters.name }}">
-      </div>
-
-      <div class="text-right mt-3">
-        <button class="btn btn-primary btn-sm" type="submit">Apply</button>
-      </div>
+      <div class="text-right mt-3"><button class="btn btn-primary btn-sm" type="submit">Apply</button></div>
     </form>
   </div>
-
-  <!-- Column Selection Popover -->
-  <div class="filter-popover" style="min-width:240px;" id="columnPopover">
-    <button class="btn-close-filter" type="button" id="closeColumnBtn">&times;</button>
-    <form id="columnFormPopover" class="w-100 px-2 py-1" autocomplete="off">
-      <label class="mb-2"><b>Select additional columns (choose up to 4)</b></label>
-      <div style="max-height:350px;overflow:auto;">
-        <label><input type="checkbox" checked disabled> S.No (fixed)</label><br>
-        <label><input type="checkbox" checked disabled> Player Name (fixed)</label><br>
-        <label><input type="checkbox" checked disabled> Title (fixed)</label><br>
-        <label><input type="checkbox" class="col-toggle" value="col-type"> Type</label><br>
-        <label><input type="checkbox" class="col-toggle" value="col-severity"> Severity</label><br>
-        <label><input type="checkbox" class="col-toggle" value="col-date"> Date</label><br>
-        <label><input type="checkbox" class="col-toggle" value="col-return"> Expected Return</label><br>
-        <label><input type="checkbox" class="col-toggle" value="col-status"> Status</label><br>
-        <label><input type="checkbox" class="col-toggle" value="col-reported"> Reported By</label><br>
-        <label><input type="checkbox" class="col-toggle" value="col-region"> Body Region</label><br>
-        <label><input type="checkbox" class="col-toggle" value="col-segment"> Body Segment</label><br>
-        <label><input type="checkbox" class="col-toggle" value="col-venue"> Venue</label><br>
-        <label><input type="checkbox" class="col-toggle" value="col-notes"> Notes</label><br>
-      </div>
-      <div class="text-right mt-2">
-        <button type="button" class="btn btn-primary btn-sm" id="applyColumnsBtn">Apply</button>
-      </div>
-    </form>
-  </div>
-
-  {% if filters_count %}
-  <div class="mb-2 d-flex align-items-center flex-wrap">
-    {% for val in active_filters.severity %}
-      <span class="filter-active-badge">Severity: {{ SEVERITY_CHOICES|get_label_from_choice:val }}
-        <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'severity' or v != val %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove">&#10005;</a>
-      </span>
-    {% endfor %}
-    {% for val in active_filters.status %}
-      <span class="filter-active-badge">Status: {{ STATUS_CHOICES|get_label_from_choice:val }}
-        <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'status' or v != val %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove">&#10005;</a>
-      </span>
-    {% endfor %}
-    {% for val in active_filters.body_region %}
-      <span class="filter-active-badge">Region: {{ val|title }}
-        <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'body_region' or v != val %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove">&#10005;</a>
-      </span>
-    {% endfor %}
-    {% for val in active_filters.player_id %}
-      <span class="filter-active-badge">Player: {{ PLAYER_CHOICES|get_label_from_choice:val }}
-        <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'player_id' or v != val %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove">&#10005;</a>
-      </span>
-    {% endfor %}
-    {% if active_filters.name %}
-      <span class="filter-active-badge">Title: {{ active_filters.name }}
-        <a href="?{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'name' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}{% endfor %}" class="filter-remove-x" title="Remove">&#10005;</a>
-      </span>
-    {% endif %}
-    <span class="text-info ml-2">Filters applied: {{ filters_count }}</span>
-  </div>
-  {% endif %}
 
   <div class="table-responsive">
-    <table class="table table-striped injury-table align-middle">
-      <thead>
-        <tr>
-          <th class="col-serial">S.No</th>
-          <th class="col-player">Player</th>
-          <th class="col-title">Title</th>
-          <th class="col-type">Type</th>
-          <th class="col-severity">Severity <a href="?sort=severity{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'sort' %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}{% endfor %}" title="Sort"><i class="fa fa-sort"></i></a></th>
-          <th class="col-date">Date <a href="?sort=date{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'sort' %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}{% endfor %}" title="Sort"><i class="fa fa-sort"></i></a></th>
-          <th class="col-return">Expected Return</th>
-          <th class="col-status">Status <a href="?sort=status{% for k, v_list in request_getlist.items %}{% for v in v_list %}{% if k != 'sort' %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}{% endfor %}" title="Sort"><i class="fa fa-sort"></i></a></th>
-          <th class="col-reported">Reported By</th>
-          <th class="col-region">Body Region</th>
-          <th class="col-segment">Body Segment</th>
-          <th class="col-venue">Venue</th>
-          <th class="col-notes">Notes</th>
-          <th class="col-actions">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for injury in injuries %}
-        <tr>
-          <td class="col-serial">{{ forloop.counter }}</td>
-          <td class="col-player" style="font-weight:600; color:#cb6a01;">{{ injury.player.name }}</td>
-          <td class="col-title">{{ injury.name }}</td>
-          <td class="col-type">{{ injury.injury_type }}</td>
-          <td class="col-severity">{{ injury.get_severity_display }}</td>
-          <td class="col-date">{% if injury.injury_date %}{{ injury.injury_date|date:"d M Y" }}{% endif %}</td>
-          <td class="col-return">{% if injury.expected_date_of_return %}{{ injury.expected_date_of_return|date:"d M Y" }}{% endif %}</td>
-          <td class="col-status">{{ injury.get_status_display }}</td>
-          <td class="col-reported">{% if injury.reported_by %}{{ injury.reported_by.name }}{% endif %}</td>
-          <td class="col-region">{{ injury.affected_body_part|title }}</td>
-          <td class="col-segment">{{ injury.body_segment }}</td>
-          <td class="col-venue">{{ injury.venue }}</td>
-          <td class="col-notes">
-            {% if injury.notes %}<span title="{{ injury.notes }}">{{ injury.notes|truncatechars:30 }}</span>{% endif %}
-          </td>
-          <td class="col-actions table-actions">
-            <a href="{% url 'organization_injury_detail' injury.id %}" title="Details"><i class="fa fa-eye"></i></a>
-            <a href="{% url 'organization_injury_edit' injury.id %}" title="Edit"><i class="fa fa-pen"></i></a>
-            <a href="{% url 'organization_injury_delete' injury.id %}" title="Delete" onclick="return confirm('Delete injury {{ injury }}?')"><i class="fa fa-trash"></i></a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="14" class="text-center text-muted">No injuries found.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  <table class="table table-striped injury-table align-middle">
+    <thead>
+      <tr>
+        <th>S.No</th>
+        <th>Player</th>
+        <th>Title</th>
+        <th>Nature Type</th>
+        <th>Severity</th>
+        <th>Date</th>
+        <th>Expected Return</th>
+        <th>Injury Status</th>
+        <th>Reported By</th>
+        <th>Player Status</th>
+        <th>Body Region</th>
+        <th>Venue</th>
+        <th>Notes</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for injury in injuries %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td style="font-weight:600; color:#cb6a01;">{{ injury.player.name }}</td>
+        <td>{{ injury.name }}</td>
+        <td>{{ injury.nature_of_injury }}</td>
+        <td>{{ injury.get_severity_display }}</td>
+        <td>{% if injury.injury_date %}{{ injury.injury_date|date:"d M Y" }}{% endif %}</td>
+        <td>
+          {% if injury.expected_date_of_return %}
+            {{ injury.expected_date_of_return|date:"d M Y" }}
+          {% elif injury.unknown_injury_date %}
+            Unknown
+          {% else %}
+            Not Available
+          {% endif %}
+        </td>
+        <td>{{ injury.get_status_display }}</td>
+        <td>{% if injury.reported_by %}{{ injury.reported_by.name }}{% endif %}</td>
+        <td>{{ injury.player_status|title }}</td>
+        <td>{{ injury.affected_body_part|title }}</td>
+        
+        <td>{{ injury.venue }}</td>
+        <td>{% if injury.notes %}<span title="{{ injury.notes }}">{{ injury.notes|truncatechars:30 }}</span>{% endif %}</td>
+        <td>
+          <a href="{% url 'organization_injury_detail' injury.id %}" title="Details"><i class="fa fa-eye"></i></a>
+          <a href="{% url 'organization_injury_edit' injury.id %}" title="Edit"><i class="fa fa-pen"></i></a>
+          <a href="{% url 'organization_injury_delete' injury.id %}" title="Delete" onclick="return confirm('Delete injury {{ injury }}?')"><i class="fa fa-trash"></i></a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="14" class="text-center text-muted">No injuries found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
+
+</div>
+
 
 <script>
 // Filter popover toggle
 const filterBtn = document.getElementById("filterBtn");
 const filterPopover = document.getElementById("filterPopover");
 const closeFilterBtn = document.getElementById("closeFilterBtn");
+const modalBackdrop = document.getElementById("modalBackdrop");
+
+filterBtn.addEventListener("click", () => {
+  filterPopover.style.display = "block";
+  modalBackdrop.style.display = "block";
+});
+closeFilterBtn.addEventListener("click", () => {
+  filterPopover.style.display = "none";
+  modalBackdrop.style.display = "none";
+});
+modalBackdrop.addEventListener("click", () => {
+  filterPopover.style.display = "none";
+  modalBackdrop.style.display = "none";
+});
 
 document.addEventListener('click', function(e) {
   if (filterBtn && filterPopover) {
@@ -514,5 +514,180 @@ document.getElementById("downloadExcelBtn").onclick = function() {
   let params = new URLSearchParams(window.location.search);
   window.location.href = url + (params.toString() ? ("?" + params.toString()) : "");
 };
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const dateFilterSelect = document.getElementById('dateFilterSelect');
+  const seasonSelect = document.getElementById('seasonSelect');
+  const startDateInput = document.getElementById('startDate');
+  const endDateInput = document.getElementById('endDate');
+  const monthSelect = document.getElementById('monthSelect');
+  const yearInput = document.getElementById('yearInput');
+  const applyBtn = document.getElementById('applyDateFilterBtn');
+  const clearBtn = document.getElementById('clearDateFilterBtn');
+  const playerSearch = document.getElementById('playerSearch');
+
+  const seasonInput = seasonSelect.parentElement;
+  const dateRangeInputs = startDateInput.parentElement;
+  const monthYearInputs = monthSelect.parentElement;
+
+  let debounceTimeout = null;
+
+  function hideAllDateInputs() {
+    seasonInput.style.display = 'none';
+    dateRangeInputs.style.display = 'none';
+    monthYearInputs.style.display = 'none';
+  }
+
+  function showInputByType(type) {
+    hideAllDateInputs();
+    switch (type) {
+      case 'season':
+        seasonInput.style.display = 'inline-block';
+        break;
+      case 'daterange':
+        dateRangeInputs.style.display = 'inline-flex';
+        break;
+      case 'monthyear':
+        monthYearInputs.style.display = 'inline-flex';
+        break;
+    }
+  }
+
+  // On dropdown change
+  dateFilterSelect.addEventListener('change', () => {
+    showInputByType(dateFilterSelect.value);
+  });
+
+  // Initialize visibility on page load
+  showInputByType(dateFilterSelect.value);
+
+  function updateUrl(params) {
+    let url = new URL(window.location.href);
+    url.search = params.toString();
+    window.location.href = url.toString();
+  }
+
+  applyBtn.addEventListener('click', () => {
+    let params = new URLSearchParams(window.location.search);
+
+    // Clear filters except search
+    ['range', 'season', 'start_date', 'end_date', 'month', 'year', 'name'].forEach(k => params.delete(k));
+
+    // If player search is non-empty, only search by player name
+    if (playerSearch.value.trim() !== '') {
+      params.set('name', playerSearch.value.trim());
+    } else {
+      // Apply selected date filter
+      switch (dateFilterSelect.value) {
+        case 'current_month': {
+          const now = new Date();
+          params.set('month', now.getMonth() + 1); // JS month 0-based
+          params.set('year', now.getFullYear());
+          break;
+        }
+        case 'last3':
+        case 'last6':
+          params.set('range', dateFilterSelect.value);
+          break;
+        case 'season':
+          if (seasonSelect.value) params.set('season', seasonSelect.value);
+          break;
+        case 'daterange':
+          if (startDateInput.value) params.set('start_date', startDateInput.value);
+          if (endDateInput.value) params.set('end_date', endDateInput.value);
+          break;
+        case 'monthyear':
+          if (monthSelect.value) params.set('month', monthSelect.value);
+          if (yearInput.value) params.set('year', yearInput.value);
+          break;
+      }
+    }
+    updateUrl(params);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    playerSearch.value = '';
+    dateFilterSelect.value = '';
+    hideAllDateInputs();
+
+    let params = new URLSearchParams(window.location.search);
+    ['range', 'season', 'start_date', 'end_date', 'month', 'year', 'name'].forEach(k => params.delete(k));
+    updateUrl(params);
+  });
+
+  playerSearch.addEventListener('input', () => {
+    if (debounceTimeout) clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+      let params = new URLSearchParams(window.location.search);
+      if (playerSearch.value.trim().length > 0) {
+        // Clear all filters except search
+        ['range', 'season', 'start_date', 'end_date', 'month', 'year'].forEach(k => params.delete(k));
+        params.set('name', playerSearch.value.trim());
+      } else {
+        params.delete('name');
+      }
+      window.location.search = params.toString();
+    }, 500);
+  });
+
+  // Modal center and blue overlay logic for filter modal
+  const filterBtn = document.getElementById("filterBtn");
+  const filterPopover = document.getElementById("filterPopover");
+  const closeFilterBtn = document.getElementById("closeFilterBtn");
+
+  // Create blue overlay div dynamically if not present
+  let modalBackdrop = document.getElementById("modalBackdrop");
+  if (!modalBackdrop) {
+    modalBackdrop = document.createElement("div");
+    modalBackdrop.id = "modalBackdrop";
+    modalBackdrop.style.position = "fixed";
+    modalBackdrop.style.top = 0;
+    modalBackdrop.style.left = 0;
+    modalBackdrop.style.right = 0;
+    modalBackdrop.style.bottom = 0;
+    modalBackdrop.style.backgroundColor = "rgba(0,0,255,0.2)";
+    modalBackdrop.style.zIndex = 1040;
+    modalBackdrop.style.display = "none";
+    document.body.appendChild(modalBackdrop);
+  }
+
+  // Styles for modal centering defined via JS to avoid CSS conflicts
+  filterPopover.style.position = "fixed";
+  filterPopover.style.top = "50%";
+  filterPopover.style.left = "50%";
+  filterPopover.style.transform = "translate(-50%, -50%)";
+  filterPopover.style.zIndex = 1050;
+  filterPopover.style.backgroundColor = "white";
+  filterPopover.style.borderRadius = "10px";
+  filterPopover.style.boxShadow = "0 4px 15px rgba(0,0,0,0.3)";
+  filterPopover.style.padding = "20px";
+  filterPopover.style.minWidth = "400px";
+  filterPopover.style.maxWidth = "90vw";
+  filterPopover.style.maxHeight = "80vh";
+  filterPopover.style.overflowY = "auto";
+  filterPopover.style.display = "none";
+
+  filterBtn.addEventListener("click", () => {
+    const isShown = filterPopover.style.display === "block";
+    if (isShown) {
+      filterPopover.style.display = "none";
+      modalBackdrop.style.display = "none";
+    } else {
+      filterPopover.style.display = "block";
+      modalBackdrop.style.display = "block";
+    }
+  });
+
+  closeFilterBtn.addEventListener("click", () => {
+    filterPopover.style.display = "none";
+    modalBackdrop.style.display = "none";
+  });
+
+  modalBackdrop.addEventListener("click", () => {
+    filterPopover.style.display = "none";
+    modalBackdrop.style.display = "none";
+  });
+});
 </script>
 {% endblock %}

@@ -144,7 +144,7 @@ class UploadFileForm(forms.Form):
 class InjuryForm(forms.ModelForm):
     class Meta:
         model = Injury
-        fields = ['player', 'injury_type', 'affected_body_part', 'severity', 'injury_date', 'status', 'notes']
+        fields = ['player', 'affected_body_part', 'severity', 'injury_date', 'status', 'notes']
         widgets = {
             'injury_date': forms.DateInput(attrs={'type': 'date'}),
         }
@@ -230,9 +230,9 @@ class InjuryForm(forms.ModelForm):
         model = Injury
         fields = [
             'player', 'reported_by', 'name', 'injury_date',
-            'venue', 'team', 'type_of_activity', 'injury_type',
+            'venue', 'team', 'type_of_activity',
             'cause_of_injury', 'nature_of_injury', 'expected_date_of_return',
-            'notes', 'affected_body_part', 'body_segment', 'severity', 
+            'notes', 'affected_body_part', 'severity', 'player_status','unknown_injury_date',
         ]
         widgets = {
             'player': forms.Select(attrs={'class': 'form-control'}),
@@ -241,12 +241,12 @@ class InjuryForm(forms.ModelForm):
             'venue': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Venue'}),
             'team': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Team'}),
             'type_of_activity': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Type of activity at time of injury'}),
-            'injury_type': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Type of injury'}),
+            
             'cause_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cause of injury'}),
             'nature_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nature of injury'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Notes', 'rows':2}),
             'affected_body_part': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Body region injured'}),
-            'body_segment': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Body segment'}),
+            'player_status': forms.Select(attrs={'class': 'form-control'}),
             'severity': forms.Select(attrs={'class': 'form-control'}),
         }
 
@@ -272,9 +272,9 @@ class InjuryFormUpdate(forms.ModelForm):
         model = Injury
         fields = [
             'player', 'reported_by', 'name', 'injury_date',
-            'venue', 'team', 'type_of_activity', 'injury_type',
+            'venue', 'team', 'type_of_activity','player_status','unknown_injury_date',
             'cause_of_injury', 'nature_of_injury', 'expected_date_of_return',
-            'notes', 'affected_body_part', 'body_segment', 'severity','status',
+            'notes', 'affected_body_part', 'severity','status',
         ]
         widgets = {
             'player': forms.Select(attrs={'class': 'form-control'}),
@@ -283,12 +283,10 @@ class InjuryFormUpdate(forms.ModelForm):
             'venue': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Venue'}),
             'team': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Team'}),
             'type_of_activity': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Type of activity at time of injury'}),
-            'injury_type': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Type of injury'}),
             'cause_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cause of injury'}),
             'nature_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nature of injury'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Notes', 'rows':2}),
             'affected_body_part': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Body region injured'}),
-            'body_segment': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Body segment'}),
             'severity': forms.Select(attrs={'class': 'form-control'}),
         }
 

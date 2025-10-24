@@ -238,6 +238,11 @@ class Injury(models.Model):
         ('open', 'Open'),
         ('closed', 'Closed'),
     ]
+    PLAYERS_STATAUS = [
+        ('full participation', 'Full Participation'),
+        ('limited participation', 'Limited Participation'),
+        ('no participation', 'No Participation'),
+    ]
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='injuries')
     reported_by = models.ForeignKey(Staff, on_delete=models.CASCADE, null=True, blank=True, related_name='reported_injuries')
     name = models.CharField(max_length=100,null=True)
@@ -245,7 +250,7 @@ class Injury(models.Model):
     venue = models.CharField(max_length=100, blank=True)
     team = models.CharField(max_length=100, blank=True)
     type_of_activity = models.CharField(max_length=100, blank=True)
-    injury_type = models.CharField(max_length=255,null=True)
+    player_status = models.CharField(max_length=40, choices=PLAYERS_STATAUS,null=True)
     cause_of_injury = models.CharField(max_length=100,null=True)
     nature_of_injury = models.CharField(max_length=100,null=True)
     expected_date_of_return = models.DateField(blank=True, null=True)
@@ -254,10 +259,11 @@ class Injury(models.Model):
     severity = models.CharField(max_length=10, choices=SEVERITY_CHOICES,null=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='open') 
     updated_at = models.DateTimeField(auto_now=True,null=True)
-    body_segment = models.CharField(max_length=100, blank=True,null=True)
+    created_at = models.DateTimeField(auto_now_add=True,null=True)
+    unknown_injury_date = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.player.name} - {self.injury_type} ({self.severity})"
+        return f"{self.player.name} - {self.nature_of_injury} ({self.severity})"
     
 class MedicalDocument(models.Model):
     VIEW_CHOICES = [

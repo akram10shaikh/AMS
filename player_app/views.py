@@ -501,98 +501,136 @@ from django.views.decorators.http import require_GET
 
 
 from datetime import date, timedelta
+from datetime import date, timedelta
 from django.shortcuts import render, get_object_or_404
+from django.db.models import Count
+from player_app.models import Injury, Organization, Player
+
+from datetime import date, timedelta
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Count
+from .models import Injury, Organization, Player
 
 def organization_injury_list(request):
-    # Determine organization based on user role
+    # Identify organization
     if request.user.role == "Staff":
         org = request.user.staff.organization
     elif request.user.role == "OrganizationAdmin":
         org = get_object_or_404(Organization, user=request.user)
+    else:
+        org = None
 
     injuries = Injury.objects.filter(player__organization=org).select_related("player", "reported_by")
+    today = date.today()
 
-    # Existing filters
+    # Filters from GET
     severity_vals = request.GET.getlist('severity')
     status_vals = request.GET.getlist('status')
     body_parts = request.GET.getlist('body_region')
     player_ids = request.GET.getlist('player_id')
-    search_name = request.GET.get('name', '')
+    search_name = request.GET.get('name', '').strip()
     sort = request.GET.get('sort', '')
 
-    # New filters: date and injury_type
     month = request.GET.get('month')
     year = request.GET.get('year')
-    range_filter = request.GET.get('range')    # 'last3' or 'last6'
+    range_filter = request.GET.get('range', '')
     season = request.GET.get('season')
-    categories = request.GET.getlist('category')  # injury_type filter
+    categories = request.GET.getlist('category')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
 
-    today = date.today()
+    MONTH_CHOICES = [
+        (1, "January"), (2, "February"), (3, "March"), (4, "April"),
+        (5, "May"), (6, "June"), (7, "July"), (8, "August"),
+        (9, "September"), (10, "October"), (11, "November"), (12, "December")
+    ]
 
-    # Apply date range filters with mutual exclusion logic
-    if range_filter == "last3":
-        min_date = today - timedelta(days=90)
-        injuries = injuries.filter(injury_date__gte=min_date)
-    elif range_filter == "last6":
-        min_date = today - timedelta(days=182)
-        injuries = injuries.filter(injury_date__gte=min_date)
-    elif month and year:
-        injuries = injuries.filter(injury_date__month=int(month), injury_date__year=int(year))
-    elif season:
-        sy, ey = map(int, season.split('-'))
-        start = date(sy, 4, 1)
-        end = date(ey, 3, 31)
-        injuries = injuries.filter(injury_date__gte=start, injury_date__lte=end)
-    else:
-        injuries = injuries.filter(injury_date__year=today.year, injury_date__month=today.month)
+    # Generate seasons last 10 years (e.g. 2025-2026)
+    current_season_start = today.year if today.month >= 4 else today.year - 1
+    season_choices = [f"{y}-{y+1}" for y in range(current_season_start, current_season_start - 10, -1)]
 
-    # Filter by injury_type (used as category)
-    if categories:
-        injuries = injuries.filter(injury_type__in=categories)
-
-    # Apply other filters
-    if severity_vals:
-        injuries = injuries.filter(severity__in=severity_vals)
-    if status_vals:
-        injuries = injuries.filter(status__in=status_vals)
-    if body_parts:
-        injuries = injuries.filter(affected_body_part__in=body_parts)
-    if player_ids:
-        injuries = injuries.filter(player__id__in=player_ids)
+    # Filtering logic
     if search_name:
-        injuries = injuries.filter(name__icontains=search_name)
+        injuries = injuries.filter(player__name__icontains=search_name)
+    else:
+        if start_date and end_date:
+            injuries = injuries.filter(injury_date__range=[start_date, end_date])
+        elif range_filter == "last3":
+            min_date = today - timedelta(days=90)
+            injuries = injuries.filter(injury_date__gte=min_date)
+        elif range_filter == "last6":
+            min_date = today - timedelta(days=182)
+            injuries = injuries.filter(injury_date__gte=min_date)
+        elif month and year:
+            injuries = injuries.filter(injury_date__month=int(month), injury_date__year=int(year))
+        elif season and year:
+            try:
+                year_val = int(year)
+                sy, ey = map(int, season.split('-'))
+                start = date(sy, 4, 1)
+                end = date(ey, 3, 31)
+                injuries = injuries.filter(injury_date__gte=start, injury_date__lte=end, injury_date__year=year_val)
+            except Exception:
+                pass
+        elif season:
+            try:
+                sy, ey = map(int, season.split('-'))
+                start = date(sy, 4, 1)
+                end = date(ey, 3, 31)
+                injuries = injuries.filter(injury_date__gte=start, injury_date__lte=end)
+            except Exception:
+                pass
 
-    # Stats for dashboard cards
+        if categories:
+            injuries = injuries.filter(nature_of_injury__in=categories)
+        if severity_vals:
+            injuries = injuries.filter(severity__in=severity_vals)
+        if status_vals:
+            injuries = injuries.filter(status__in=status_vals)
+        if body_parts:
+            injuries = injuries.filter(affected_body_part__in=body_parts)
+        if player_ids:
+            injuries = injuries.filter(player__id__in=player_ids)
+
+    # Sorting
+    if sort == 'severity':
+        injuries = injuries.order_by('severity')
+    elif sort == 'date':
+        injuries = injuries.order_by('injury_date')
+    elif sort == 'status':
+        injuries = injuries.order_by('status')
+
+    # Stats counts
     injury_total = injuries.count()
     injury_open = injuries.filter(status='open').count()
     injury_closed = injuries.filter(status='closed').count()
 
-    # Choices (for filters dropdown)
     SEVERITY_CHOICES = Injury.SEVERITY_CHOICES
     STATUS_CHOICES = Injury.STATUS_CHOICES
-    BODY_PART_CHOICES = list(Injury.objects.filter(player__organization=org)
-                             .values_list('affected_body_part', flat=True).distinct()
-                             .exclude(affected_body_part__isnull=True)
-                             .exclude(affected_body_part__exact=''))
-    BODY_PART_CHOICES = [(val, val.title()) for val in BODY_PART_CHOICES if val]
+    BODY_PART_CHOICES = list(
+        Injury.objects.filter(player__organization=org)
+        .values_list('affected_body_part', flat=True)
+        .distinct()
+        .exclude(affected_body_part__isnull=True)
+        .exclude(affected_body_part__exact='')
+    )
+    BODY_PART_CHOICES = [(bp, bp.title()) for bp in BODY_PART_CHOICES if bp]
+
     PLAYER_CHOICES = Player.objects.filter(organization=org).values_list('id', 'name')
 
-    CATEGORY_CHOICES = (Injury.objects.filter(player__organization=org)
-                        .exclude(injury_type__isnull=True)
-                        .exclude(injury_type='')
-                        .values_list('injury_type', flat=True).distinct())
+    CATEGORY_CHOICES = (
+        Player.objects.filter(organization=org)
+        .exclude(age_category__isnull=True)
+        .exclude(age_category='')
+        .values_list('age_category', flat=True)
+        .distinct()
+    )
 
-    # Season choices for last 2 seasons
-    this_year = today.year
-    curr_april = date(this_year, 4, 1)
-    if today >= curr_april:
-        season_choices = [f"{this_year}-{this_year+1}", f"{this_year-1}-{this_year}"]
-    else:
-        season_choices = [f"{this_year-1}-{this_year}", f"{this_year-2}-{this_year-1}"]
-
-    # Filters count
-    filters_count = (len(severity_vals) + len(status_vals) + len(body_parts) +
-                     len(player_ids) + len(categories))
+    # Count active filters
+    filters_count = (
+        len(severity_vals) + len(status_vals) + len(body_parts) +
+        len(player_ids) + len(categories)
+    )
     if search_name:
         filters_count += 1
     if month or year:
@@ -601,8 +639,19 @@ def organization_injury_list(request):
         filters_count += 1
     if season:
         filters_count += 1
+    if start_date or end_date:
+        filters_count += 1
+
+    # Player participation stats
+    player_status_counts = injuries.values('player_status').annotate(count=Count('player_status'))
+    status_map = {"full participation": 0, "limited participation": 0, "no participation": 0}
+    for ps in player_status_counts:
+        key = ps['player_status']
+        if key in status_map:
+            status_map[key] = ps['count']
 
     context = {
+        'year_choices': list(range(2020, today.year + 1)),
         'injuries': injuries,
         'SEVERITY_CHOICES': SEVERITY_CHOICES,
         'STATUS_CHOICES': STATUS_CHOICES,
@@ -610,10 +659,22 @@ def organization_injury_list(request):
         'PLAYER_CHOICES': PLAYER_CHOICES,
         'CATEGORY_CHOICES': CATEGORY_CHOICES,
         'season_choices': season_choices,
+        'MONTH_CHOICES': MONTH_CHOICES,
         'injury_total': injury_total,
         'injury_open': injury_open,
         'injury_closed': injury_closed,
         'filters_count': filters_count,
+        'today': today,
+        'start_date': start_date,
+        'end_date': end_date,
+        'filter_month': month,
+        'filter_year': year,
+        'filter_range': range_filter,
+        'filter_season': season,
+        'filter_categories': categories,
+        'full_participation_count': status_map["full participation"],
+        'limited_participation_count': status_map["limited participation"],
+        'no_participation_count': status_map["no participation"],
         'active_filters': {
             'severity': severity_vals,
             'status': status_vals,
@@ -625,22 +686,16 @@ def organization_injury_list(request):
             'year': year,
             'range': range_filter,
             'season': season,
+            'start_date': start_date,
+            'end_date': end_date,
         },
-        'filter_month': month,
-        'filter_year': year,
-        'filter_range': range_filter,
-        'filter_season': season,
-        'filter_categories': categories,
-        'today': today,
         'request_getlist': {k: request.GET.getlist(k) for k in request.GET},
-        'request_obj': request,
         'sort': sort,
     }
-    return render(
-        request,
-        "player_app/organization/organization_injury_list.html",
-        context
-    )
+
+    return render(request, "player_app/organization/organization_injury_list.html", context)
+
+
 
 @login_required
 def activity_log_combined_view(request):
@@ -764,13 +819,15 @@ def organization_injury_edit(request, pk):
     # Store original values for fields you want to track (add more fields as needed)
     original_data = {
         "name": injury.name,
-        "injury_type": injury.injury_type,
+        # "injury_type": injury.injury_type,
         "severity": injury.severity,
         "status": injury.status,
         "injury_date": injury.injury_date,
         "expected_date_of_return": injury.expected_date_of_return,
         "affected_body_part": injury.affected_body_part,
-        "body_segment": injury.body_segment,
+        "nature_of_injury": injury.nature_of_injury,
+        # "body_segment": injury.body_segment,
+        "player_status": injury.player_status,
         "venue": injury.venue,
         "notes": injury.notes,
         "reported_by_id": injury.reported_by_id,

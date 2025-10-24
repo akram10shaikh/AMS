@@ -149,10 +149,10 @@ body { background: var(--soft-bg); }
           <label for="{{ form.team.id_for_label }}">Team</label>
           {{ form.team }}
         </div>
-        <div class="form-group">
-          <label for="{{ form.injury_type.id_for_label }}">Type of injury</label>
-          {{ form.injury_type }}
-        </div>
+        {% comment %} <div class="form-group">
+          <label for="">Nature Type</label>
+          {{ form.nature_type }}
+        </div> {% endcomment %}
         <div class="form-group">
           <label for="{{ form.type_of_activity.id_for_label }}">Type of activity at time of injury</label>
           {{ form.type_of_activity }}
@@ -173,9 +173,13 @@ body { background: var(--soft-bg); }
           <label for="{{ form.expected_date_of_return.id_for_label }}">Expected Date of Return</label>
           {{ form.expected_date_of_return }}
         </div>
-        <div class="form-group">
+        {% comment %} <div class="form-group">
           <label for="{{ form.body_segment.id_for_label }}">Body segment</label>
           {{ form.body_segment }}
+        </div> {% endcomment %}
+        <div class="form-group">
+          <label for="">Player Status</label>
+          {{ form.player_status }}
         </div>
         <div class="form-group">
           <label for="{{ form.affected_body_part.id_for_label }}">Body region injured *</label>

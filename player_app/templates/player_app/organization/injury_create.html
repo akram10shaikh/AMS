@@ -115,10 +115,6 @@
                     {{ form.team }}
                 </div>
                 <div class="form-group">
-                    <label for="{{ form.injury_type.id_for_label }}">Type of injury</label>
-                    {{ form.injury_type }}
-                </div>
-                <div class="form-group">
                     <label for="{{ form.type_of_activity.id_for_label }}">Type of activity at time of injury</label>
                     {{ form.type_of_activity }}
                 </div>
@@ -135,12 +131,20 @@
                     {{ form.notes }}
                 </div>
                 <div class="form-group">
-                    <label for="{{ form.expected_date_of_return.id_for_label }}">Expected Date of Return</label>
-                    {{ form.expected_date_of_return }}
+                <label for="{{ form.unknown_injury_date.id_for_label }}">Expected Unknown Date</label>
+                <span>
+                    {{ form.unknown_injury_date }} The Injury recovery date is unknown
+                </span>
                 </div>
+
                 <div class="form-group">
-                    <label for="{{ form.body_segment.id_for_label }}">Body segment</label>
-                    {{ form.body_segment }}
+                <label for="{{ form.expected_date_of_return.id_for_label }}">Expected Date of Return</label>
+                {{ form.expected_date_of_return }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.player_status.id_for_label }}">Player Status</label>
+                    {{ form.player_status }}
                 </div>
                  <div class="form-group">
                      <label for="part-select">Body part effected</label><br>
@@ -165,7 +169,7 @@
 
                     </div>
 
-            <button type="submit" class="submit-btn">Submit</button>
+            <button type="submit" class="submit-btn" style="margin-bottom:50px;">Submit</button>
         </form>
     </div>
 </div>
@@ -262,4 +266,24 @@ document.addEventListener('DOMContentLoaded', function () {
     partSelect.addEventListener('change', updateMarkers);
   </script>
 
+  <script>
+  // wait until DOM is loaded
+  document.addEventListener('DOMContentLoaded', function () {
+    const unknownCheckbox = document.getElementById('{{ form.unknown_injury_date.id_for_label }}');
+    const expectedDateInput = document.getElementById('{{ form.expected_date_of_return.id_for_label }}');
+
+    if (unknownCheckbox && expectedDateInput) {
+      // toggle state initially
+      expectedDateInput.disabled = unknownCheckbox.checked;
+
+      // listen for checkbox change
+      unknownCheckbox.addEventListener('change', function () {
+        expectedDateInput.disabled = this.checked;
+        if (this.checked) {
+          expectedDateInput.value = ''; // optional: clear input
+        }
+      });
+    }
+  });
+</script>
 {% endblock %}
