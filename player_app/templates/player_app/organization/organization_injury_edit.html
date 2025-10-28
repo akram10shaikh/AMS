@@ -177,18 +177,18 @@ body { background: var(--soft-bg); }
           <label for="{{ form.body_segment.id_for_label }}">Body segment</label>
           {{ form.body_segment }}
         </div> {% endcomment %}
-        <div class="form-group">
+        {% comment %} <div class="form-group">
           <label for="">Player Status</label>
           {{ form.player_status }}
-        </div>
+        </div> {% endcomment %}
         <div class="form-group">
           <label for="{{ form.affected_body_part.id_for_label }}">Body region injured *</label>
           {{ form.affected_body_part }}
         </div>
-        <div class="form-group">
+        {% comment %} <div class="form-group">
           <label for="{{ form.status.id_for_label }}">Status</label>
           {{ form.status }}
-        </div>
+        </div> {% endcomment %}
       </div>
       <!-- -------- End form fields -------- -->
 

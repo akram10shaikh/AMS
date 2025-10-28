@@ -45,11 +45,10 @@ body { background: var(--soft-bg); }
 }
 @media(max-width: 600px){ .header-modern {font-size: 1.3em; padding-left:4px;} }
 .section-grid {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 36px;
   width: 100%;
-  align-items: stretch;
 }
 @media(max-width: 1000px){
   .section-grid { grid-template-columns: 1fr; gap:20px;}
@@ -213,6 +212,24 @@ body { background: var(--soft-bg); }
   .card-glass, .timeline-activity-modern {padding:11px 3vw 16px 4vw;}
   .section-actions{margin:15px 5vw;}
 }
+.btn1{
+   background: linear-gradient(85deg, #6e9bfc 80%, #6efce3 120%);
+  color:#412c76; font-weight:700;
+  border-radius: 8px; box-shadow:0 2px 7px #78d3e033;
+  padding:9px 27px;
+  font-size:1.08em;
+  margin-top: 12px;
+  border:none;
+  transition: background .19s, color .11s;
+}
+.btn1:hover { background: #48c6ef; color:#fff; }
+.marker {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.marker:hover {
+  transform: scale(1.3);
+}
 </style>
 {% endblock %}
 
@@ -262,20 +279,44 @@ body { background: var(--soft-bg); }
         <span class="section-label">Injury Information</span>
         <table class="injury-details-table">
           <tr><th>Title:</th><td>{{ injury.name }}</td></tr>
-          <tr><th>Type:</th><td>{{ injury.injury_type }}</td></tr>
+          <tr><th>Type:</th><td>{{ injury.nature_of_injury }}</td></tr>
           <tr><th>Severity:</th><td>{{ injury.get_severity_display }}</td></tr>
           <tr><th>Status:</th><td>{{ injury.get_status_display }}</td></tr>
           <tr><th>Date:</th><td>{{ injury.injury_date }}</td></tr>
-          <tr><th>Expected Return:</th><td>{{ injury.expected_date_of_return }}</td></tr>
+          <tr><th>Expected Return Date:</th><td>{% if injury.expected_date_of_return  %} 
+                                                  {{ injury.expected_date_of_return }} 
+                                           {% else  %} 
+                                                  Unknown 
+                                           {% endif %}</td></tr>
           <tr><th>Body Region:</th><td>{{ injury.affected_body_part }}</td></tr>
-          <tr><th>Body Segment:</th><td>{{ injury.body_segment }}</td></tr>
+          {% comment %} <tr><th>Body Segment:</th><td>{{ injury.body_segment }}</td></tr> {% endcomment %}
           <tr><th>Venue:</th><td>{{ injury.venue }}</td></tr>
           <tr><th>Notes:</th><td>{{ injury.notes }}</td></tr>
           <tr><th>Reported By:</th><td>{% if injury.reported_by %}{{ injury.reported_by.name }}{% endif %}</td></tr>
         </table>
       </div>
 
-    </div> <!-- end section-grid -->
+      <div class="card-glass">
+        <span class="section-label">Affected Body Parts</span>
+        <div class="body-container" style="position: relative; width: 300px; max-width: 100%;">
+          <img id="body-diagram" src="{% static 'image.jpg' %}" alt="Body Diagram" style="width: 100%;">
+        </div>
+      </div>
+
+      <form method="post" style="margin-bottom:18px;">
+        {% csrf_token %}
+        <div class="card-glass">
+          <span class="section-label">Current Availability</span>
+          <label for="{{ availability_form.status.id_for_label }}">Player Status</label>
+          {{ availability_form.status }}
+      
+          <label for="{{ availability_form.player_status.id_for_label }}">Participation Status</label>
+          {{ availability_form.player_status }}
+        
+        <button type="submit" class="btn1"  style="margin-top:20px;" name="availability_submit" >Save</button>
+        </div>
+      </form>
+<!-- end section-grid -->
 
     <!-- Medical Documents Card -->
     <div class="card-glass">
@@ -339,20 +380,52 @@ body { background: var(--soft-bg); }
 
     <!-- Activity Timeline -->
     <div class="timeline-activity-modern">
-      <div class="timeline-title">Activity Log</div>
-      <ul class="activity-list">
-        {% for log in activity_logs %}
-        <li>
-          <span class="atime">{{ log.created_at|date:"d M Y, H:i" }}</span>
-          <span class="actor">{% if log.actor %}{{ log.actor }}{% endif %}</span>
-          <span class="action">{{ log.action|title }}</span>
-          {% if log.details %}<span class="text-muted">{{ log.details }}</span>{% endif %}
-        </li>
-        {% empty %}
-        <li><span class="timeline-empty">No activity log entries found.</span></li>
-        {% endfor %}
-      </ul>
-    </div>
+  <div class="timeline-title">Activity Log</div>
+
+  {% if activity_logs %}
+  <table class="injury-details-table" style="width: 100%; border-collapse: separate; border-spacing: 0 8px;">
+    <thead>
+      <tr>
+        <th style="width: 140px;">Date</th>
+        <th>Actor</th>
+        <th>Activity</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in activity_logs %}
+      <tr>
+        <td>
+          {% if log.created_at %}
+            {{ log.created_at|date:"d M Y, H:i" }}
+          {% elif log.timestamp %}
+            {{ log.timestamp|date:"d M Y, H:i" }}
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td>
+          {% if log.actor %}{{ log.actor }}{% elif log.user %}{{ log.user }}{% else %}-{% endif %}
+        </td>
+        <td>
+          {% if log.action %}{{ log.action|title }}
+          {% elif log.activity_type %}{{ log.activity_type|title }}
+          {% else %}-{% endif %}
+        </td>
+        <td>
+          {% if log.details %}{{ log.details }}
+          {% elif log.description %}{{ log.description }}
+          {% else %}-{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="timeline-empty" style="color: #bbb6c7;">No activity log entries found.</p>
+  {% endif %}
+</div>
+
 
     <!-- Actions Footer -->
     <div class="section-actions">
@@ -362,4 +435,49 @@ body { background: var(--soft-bg); }
 
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const bodyParts = {
+    "head":     {x: 145,  y: 250},
+    "neck":     {x: 230,  y: 40},
+    "chest":    {x: 60,  y: 70},
+    "back":     {x: 230, y: 70},
+    "abdomen"  :  {x: 60,  y: 100},
+    'left-arm':  {x: 20,  y: 110},
+    'right-arm': {x: 110, y: 110},
+    'left-hand': {x: 10,  y: 145},
+    'right-hand':{x: 120, y: 145},
+    'left-leg':  {x: 40,  y: 215},
+    'right-leg': {x: 80,  y: 215},
+    'left-foot': {x: 40,  y: 260},
+    'right-foot':{x: 75,  y: 260}
+  };
+
+  const bodyContainer = document.querySelector('.body-container');
+  if (!bodyContainer) return;
+
+  const affectedPartsStr = "{{ injury.affected_body_part|default:'' }}";
+  console.log('Affected Parts String:', affectedPartsStr);
+  const affectedParts = affectedPartsStr.split(',').map(s => s.trim()).filter(Boolean);
+
+  affectedParts.forEach(part => {
+    if (bodyParts[part]) {
+      const mk = document.createElement('div');
+      mk.className = 'marker';
+      mk.style.position = 'absolute';
+      mk.style.left = bodyParts[part].x + 'px';
+      mk.style.top = bodyParts[part].y + 'px';
+      mk.style.width = '14px';
+      mk.style.height = '14px';
+      mk.style.borderRadius = '50%';
+      mk.style.backgroundColor = '#fe0707ff';
+      mk.style.border = '2px solid #fff';
+      mk.style.boxShadow = '0 0 5px #fc0000b4';
+      bodyContainer.appendChild(mk);
+    }
+  });
+});
+</script>
+
 {% endblock %}

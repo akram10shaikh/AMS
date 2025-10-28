@@ -259,6 +259,22 @@ class InjuryForm(forms.ModelForm):
         if physios_qs is not None:
             self.fields['reported_by'].queryset = physios_qs
 
+BODY_PART_CHOICES = [
+    ('head', 'Head'),
+    ('neck', 'Neck'),
+    ('chest', 'Chest'),
+    ('back', 'Back'),
+    ('abdomen', 'Abdomen'),
+    ('left-arm', 'Left Arm'),
+    ('right-arm', 'Right Arm'),
+    ('left-hand', 'Left Hand'),
+    ('right-hand', 'Right Hand'),
+    ('left-leg', 'Left Leg'),
+    ('right-leg', 'Right Leg'),
+    ('left-foot', 'Left Foot'),
+    ('right-foot', 'Right Foot'),
+]
+
 class InjuryFormUpdate(forms.ModelForm):
     injury_date = forms.DateField(
         widget=forms.DateInput(attrs={'type': 'date', 'placeholder': 'Injury Date'})
@@ -268,13 +284,24 @@ class InjuryFormUpdate(forms.ModelForm):
         widget=forms.DateInput(attrs={'type': 'date', 'placeholder': 'Expected Date of Return'})
     )
 
+    affected_body_part = forms.MultipleChoiceField(
+        required=False,
+        choices=BODY_PART_CHOICES,
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-control',
+            'size': '12',
+            'id': 'part-select'
+        }),
+        label='Affected Body Parts',
+    )
+
     class Meta:
         model = Injury
         fields = [
             'player', 'reported_by', 'name', 'injury_date',
-            'venue', 'team', 'type_of_activity','player_status','unknown_injury_date',
+            'venue', 'team', 'type_of_activity', 'unknown_injury_date',
             'cause_of_injury', 'nature_of_injury', 'expected_date_of_return',
-            'notes', 'affected_body_part', 'severity','status',
+            'notes', 'affected_body_part', 'severity', 
         ]
         widgets = {
             'player': forms.Select(attrs={'class': 'form-control'}),
@@ -285,9 +312,9 @@ class InjuryFormUpdate(forms.ModelForm):
             'type_of_activity': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Type of activity at time of injury'}),
             'cause_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cause of injury'}),
             'nature_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nature of injury'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Notes', 'rows':2}),
-            'affected_body_part': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Body region injured'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Notes', 'rows': 2}),
             'severity': forms.Select(attrs={'class': 'form-control'}),
+            
         }
 
     def __init__(self, *args, **kwargs):
@@ -298,6 +325,28 @@ class InjuryFormUpdate(forms.ModelForm):
             self.fields['player'].queryset = players_qs
         if physios_qs is not None:
             self.fields['reported_by'].queryset = physios_qs
+
+        # Initialize multiple select field with list if instance value exists
+        if self.instance and self.instance.affected_body_part:
+            self.initial['affected_body_part'] = self.instance.affected_body_part.split(',')
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Join list from form multiple select to comma-separated string for storage
+        instance.affected_body_part = ','.join(self.cleaned_data.get('affected_body_part', []))
+        if commit:
+            instance.save()
+        return instance
+
+# Player Availability Form
+class PlayerAvailabilityForm(forms.ModelForm):
+    class Meta:
+        model = Injury
+        fields = ['status', 'player_status']
+        widgets = {
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'player_status': forms.Select(attrs={'class': 'form-control'}),
+        }
 
 
 from django import forms
@@ -364,3 +413,5 @@ class TestSummaryFilterForm(forms.Form):
         choices=[('', 'All Tests')] + TestAndResult.TEST_CHOICES,
         required=False
     )
+
+

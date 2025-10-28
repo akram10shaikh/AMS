@@ -868,35 +868,78 @@ def organization_injury_edit(request, pk):
         form = InjuryFormUpdate(instance=injury, players_qs=players_qs, physios_qs=physios_qs)
     return render(request, "player_app/organization/organization_injury_edit.html", {"form": form, "injury": injury})
 
+from itertools import chain
+from operator import attrgetter
 @login_required
 def organization_injury_detail(request, pk):
     organization = get_object_or_404(Organization, user=request.user)
     injury = get_object_or_404(Injury, pk=pk, player__organization=organization)
     player = get_object_or_404(Player, pk=injury.player.pk, organization=organization)
-    activity_logs = injury.activity_logs.select_related('actor').order_by('-created_at')
-    
-    # Fetch related medical documents for this injury, order by latest first
+
+    # Fetch medical documents related to this injury
     medical_document = injury.documents.select_related('user').order_by('-date', '-uploaded_at')
-    medical_documents = medical_document.filter(view_option__in=["injury_profile", "injury_only"])  # Only show documents meant for injury profile
-    # Form handling
-    if request.method == "POST":
-        form = MedicalDocumentFormN(request.POST, request.FILES, injury=injury)
-        if form.is_valid():
-            doc = form.save(commit=False)
-            doc.injury = injury
-            doc.player = player
-            doc.user = request.user
-            doc.save()
-            # === Create medical activity log ===
-            MedicalActivityLog.objects.create(
-                player=player,
-                document=doc,
-                user=request.user,
-                activity_type='UPLOAD',
-                description=f"Uploaded document '{doc.title}'"
-            )
-            # Optionally: messages.success(request, "Medical document uploaded successfully.")
-            return redirect('organization_injury_detail', pk=injury.pk)
+    medical_documents = medical_document.filter(view_option__in=["injury_profile", "injury_only"])
+
+    availability_form = PlayerAvailabilityForm(instance=injury)
+
+    # Fetch activity logs: injury logs and medical logs combined and sorted by their date fields
+    injury_logs = injury.activity_logs.select_related('actor').all()
+    medical_logs = player.activity_logs.select_related('user', 'document').all()
+    combined_logs = sorted(
+        chain(injury_logs, medical_logs),
+        key=lambda log: getattr(log, 'created_at', getattr(log, 'timestamp', None)),
+        reverse=True
+    )
+    old_injury_status = injury.status
+    old_player_statuss = injury.player_status
+    
+    # print(f"Initial Injury Status: {old_injury_status}, Player Status: {old_player_status}")
+    if request.method == 'POST':    
+        if "availability_submit" in request.POST:
+            availability_form = PlayerAvailabilityForm(request.POST, instance=injury)
+            if availability_form.is_valid():
+                old_status = injury.status
+                old_player_status = injury.player_status
+                availability_form.save()
+                injury.refresh_from_db()  # <- refresh injury instance to get updated values
+                new_status = injury.status
+                new_player_status = injury.player_status
+            
+                status_changed = old_injury_status != new_status
+                player_status_changed = old_player_statuss != new_player_status
+                
+                # Then build your message_parts and create log based on these refreshed values
+                message_parts = []
+                
+                if status_changed:
+                    message_parts.append(f"Status changed from '{old_injury_status}' to '{new_status}'")
+                if player_status_changed:
+                    message_parts.append(f"Participation changed from '{old_player_statuss}' to '{new_player_status}'")
+                if message_parts:
+                    InjuryActivityLog.objects.create(
+                        injury=injury,
+                        actor=request.user,
+                        action="updated availability",
+                        details='; '.join(message_parts)
+                    )
+                return redirect('organization_injury_detail', pk=injury.pk)
+
+        else:
+            form = MedicalDocumentFormN(request.POST, request.FILES, injury=injury)
+            if form.is_valid():
+                doc = form.save(commit=False)
+                doc.injury = injury
+                doc.player = player
+                doc.user = request.user
+                doc.save()
+                MedicalActivityLog.objects.create(
+                    player=player,
+                    document=doc,
+                    user=request.user,
+                    activity_type='UPLOAD',
+                    description=f"Uploaded document '{doc.title}'"
+                )
+                return redirect('organization_injury_detail', pk=injury.pk)
     else:
         form = MedicalDocumentFormN(injury=injury)
 
@@ -905,12 +948,14 @@ def organization_injury_detail(request, pk):
         "player_app/organization/organization_injury_detail.html",
         {
             "injury": injury,
-            "activity_logs": activity_logs,
+            "activity_logs": combined_logs,
             "player": player,
             "medical_documents": medical_documents,
             "form": form,
+            "availability_form": availability_form,
         }
     )
+
 
 
 @login_required
