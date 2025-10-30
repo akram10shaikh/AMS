@@ -33,6 +33,12 @@ class Player(models.Model):
         ('women_senior','Women Senior'),
 
     ]
+    ROLE_CHOICES = [
+        ('Batter','Batter'),
+        ('Bowler','Bowler'),
+        ('All-rounder','All-rounder'),
+        ('Wicket-keeper','Wicket-keeper'),
+    ]
     organization = models.ForeignKey(
         Organization, on_delete=models.SET_NULL, null=True, blank=True, related_name="users"
     )
@@ -101,7 +107,7 @@ class Player(models.Model):
 
     state = models.CharField(max_length=40, choices=STATES, blank=True, null=True)
     district = models.CharField(max_length=100, blank=True, null=True)
-    role = models.CharField(max_length=100, blank=True, null=True)
+    role = models.CharField(max_length=100, choices=ROLE_CHOICES ,blank=True, null=True)
 
     # Sports Related Information
     batting_style = models.CharField(max_length=100, blank=True, null=True)

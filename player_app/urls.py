@@ -61,6 +61,9 @@ urlpatterns = [
                   path('organization/player/<int:pk>/detail/', views.organization_player_detail, name='organization_player_detail'),
                   path('organization/player_export/', views.organization_player_export, name='organization_player_export'),
 
+                  path('player/create/', views.player_create_view, name='player_create_view'),
+
+
                #   Organization injury management URLs
                   path('organization/injuries_list/', views.organization_injury_list, name='organization_injury_list'),  
                   path('organization/injuries/', views.organization_create_injury, name='organization_create_injury'),

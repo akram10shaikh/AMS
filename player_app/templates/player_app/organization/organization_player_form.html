@@ -1,8 +1,9 @@
-{% extends 'player_app/organization/base.html' %}
+{% extends "player_app/organization/base.html" %}
+{% load static %}
 {% block extra_head %}
 <style>
     .container { margin-left: 50px; padding: 32px 40px;  }
-    .form-card { background: #fff; border-radius: 18px; box-shadow: 0 2px 12px #eff0f6; padding: 2.2rem 2.2rem 1.5rem 2.2rem;  margin: auto; }
+    .form-card { background: #fff; border-radius: 18px; box-shadow: 0 2px 12px #eff0f6; padding: 2.2rem 2.2rem 1.5rem 2.2rem;  margin: auto; max-width: 800px;}
     .form-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 28px; color: #232733; }
     form { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 42px; }
     .form-group { display: flex; flex-direction: column; margin-bottom: 0; }
@@ -58,148 +59,378 @@
 </style>
 {% endblock %}
 
+
 {% block content %}
+
 <div class="container">
   <div class="form-card">
-    <div class="form-title">{{ title }}</div>
-    <form method="post" enctype="multipart/form-data" autocomplete="off">
+    <div class="form-title">Player Form</div>
+    <form method="POST" action="{% url 'player_create_view' %}" enctype="multipart/form-data" autocomplete="off">
       {% csrf_token %}
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input id="name" name="name" type="text" placeholder="Enter player name" required />
+      </div>
 
-      {# Display form-wide (non-field) errors at top #}
-      {% if form.non_field_errors %}
-        <div class="alert alert-danger">
-          {% for error in form.non_field_errors %}
-            {{ error }}<br>
+      <div class="form-group">
+        <label for="image">Image</label>
+        <input id="image" name="image" type="file" accept="image/*" />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="Enter email" required />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="Enter password" />
+      </div>
+
+      <div class="form-group">
+        <label for="date_of_birth">Date of Birth</label>
+        <input id="date_of_birth" name="date_of_birth" type="date" />
+      </div>
+
+      <div class="form-group">
+        <label for="primary_contact_number">Primary Contact Number</label>
+        <input id="primary_contact_number" name="primary_contact_number" type="text" />
+      </div>
+
+      <div class="form-group">
+        <label for="secondary_contact_number">Secondary Contact Number</label>
+        <input id="secondary_contact_number" name="secondary_contact_number" type="text" />
+      </div>
+
+      <div class="form-group">
+        <label for="gender">Gender</label>
+        <select id="gender" name="gender">
+          <option value="">Select gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="state">State</label>
+        <select name="state" id="id_state" required>
+          <option value="">Select state</option>
+          <option value="Andhra Pradesh">Andhra Pradesh</option>
+          <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+          <option value="Assam">Assam</option>
+          <option value="Bihar">Bihar</option>
+          <option value="Chandigarh">Chandigarh</option>
+          <option value="Chhattisgarh">Chhattisgarh</option>
+          <option value="Delhi">Delhi</option>
+          <option value="Goa">Goa</option>
+          <option value="Gujarat">Gujarat</option>
+          <option value="Haryana">Haryana</option>
+          <option value="Himachal Pradesh">Himachal Pradesh</option>
+          <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+          <option value="Jharkhand">Jharkhand</option>
+          <option value="Karnataka">Karnataka</option>
+          <option value="Kerala">Kerala</option>
+          <option value="Ladakh">Ladakh</option>
+          <option value="Madhya Pradesh">Madhya Pradesh</option>
+          <option value="Maharashtra">Maharashtra</option>
+          <option value="Manipur">Manipur</option>
+          <option value="Meghalaya">Meghalaya</option>
+          <option value="Mizoram">Mizoram</option>
+          <option value="Nagaland">Nagaland</option>
+          <option value="Odisha">Odisha</option>
+          <option value="Puducherry">Puducherry</option>
+          <option value="Punjab">Punjab</option>
+          <option value="Rajasthan">Rajasthan</option>
+          <option value="Sikkim">Sikkim</option>
+          <option value="Tamil Nadu">Tamil Nadu</option>
+          <option value="Telangana">Telangana</option>
+          <option value="Tripura">Tripura</option>
+          <option value="Uttar Pradesh">Uttar Pradesh</option>
+          <option value="Uttarakhand">Uttarakhand</option>
+          <option value="West Bengal">West Bengal</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="district-container">
+        <label for="id_district">District</label>
+        <input type="text" name="district" id="id_district" required placeholder="Enter district" />
+      </div>
+
+      <div class="form-group">
+        <label for="role">Role</label>
+        <select id="id_role" name="role" required>
+          <option value="">Select Role</option>
+          <option value="Batter">Batter</option>
+          <option value="Bowler">Bowler</option>
+          <option value="All-rounder">All-rounder</option>
+          <option value="Wicket-Keeper">Wicket-Keeper</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="sub-category-container" >
+        <label for="id_sub_category">Sub Category</label>
+        <select id="id_sub_category" name="sub_category" >
+          <!-- options will be dynamically added -->
+        </select>
+      </div>
+
+      <div class="form-group" id="bowling-style-container">
+        <label for="bowling_style">Bowling Style</label>
+        <input id="bowling_style" name="bowling_style" type="text" />
+      </div>
+
+      <div class="form-group">
+        <label for="batting_style">Batting Style</label>
+        <input id="batting_style" name="batting_style" type="text" />
+      </div>
+
+      <div class="form-group">
+        <label for="handedness">Handedness</label>
+        <select id="handedness" name="handedness"  required>
+          <option value="">Select Age Category</option>
+          <option value="R">Right-handed</option>
+          <option value="L">Left-handed</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="age_category">Age Category</label>
+        <select id="age_category" name="age_category"  required>
+          <option value="">Select Age Category</option>
+          {% for key, value in age_category_choices %}
+            <option value="{{ key }}">{{ value }}</option>
           {% endfor %}
-        </div>
-      {% endif %}
+        </select>
+      </div>
 
-      {# Only include the fields you allowed in your form - organization_player_form #}
       <div class="form-group">
-        {{ form.name.label_tag }}
-        {{ form.name }}
-        {% for error in form.name.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
+        <label for="guardian_name">Guardian Name</label>
+        <input id="guardian_name" name="guardian_name" type="text" />
       </div>
+
       <div class="form-group">
-        {{ form.image.label_tag }}
-        {{ form.image }}
-        {% for error in form.image.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
+        <label for="relation">Relation</label>
+        <input id="relation" name="relation" type="text" />
       </div>
+
       <div class="form-group">
-        {{ form.email.label_tag }}
-        {{ form.email }}
-        {% for error in form.email.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
+        <label for="guardian_mobile_number">Guardian Mobile Number</label>
+        <input id="guardian_mobile_number" name="guardian_mobile_number" type="text" />
       </div>
-      <div class="form-group">
-        {{ form.password.label_tag }}
-        {{ form.password }}
-        {% for error in form.password.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      <div class="form-group">
-        {{ form.date_of_birth.label_tag }}
-        {{ form.date_of_birth }}
-        {% for error in form.date_of_birth.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      <div class="form-group">
-        {{ form.primary_contact_number.label_tag }}
-        {{ form.primary_contact_number }}
-        {% for error in form.primary_contact_number.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      <div class="form-group">
-        {{ form.secondary_contact_number.label_tag }}
-        {{ form.secondary_contact_number }}
-        {% for error in form.secondary_contact_number.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      <div class="form-group">
-        {{ form.gender.label_tag }}
-        {{ form.gender }}
-        {% for error in form.gender.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      <div class="form-group">
-        {{ form.state.label_tag }}
-        {{ form.state }}
-        {% for error in form.state.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      <div class="form-group">
-        {{ form.role.label_tag }}
-        {{ form.role }}
-        {% for error in form.role.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      <div class="form-group">
-        {{ form.batting_style.label_tag }}
-        {{ form.batting_style }}
-        {% for error in form.batting_style.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      <div class="form-group">
-        {{ form.bowling_style.label_tag }}
-        {{ form.bowling_style }}
-        {% for error in form.bowling_style.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      <div class="form-group">
-        {{ form.handedness.label_tag }}
-        {{ form.handedness }}
-        {% for error in form.handedness.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      <div class="form-group">
-        {{ form.age_category.label_tag }}
-        {{ form.age_category }}
-        {% for error in form.age_category.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      <div class="form-group">
-        {{ form.guardian_name.label_tag }}
-        {{ form.guardian_name }}
-        {% for error in form.guardian_name.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      <div class="form-group">
-        {{ form.relation.label_tag }}
-        {{ form.relation }}
-        {% for error in form.relation.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      <div class="form-group">
-        {{ form.guardian_mobile_number.label_tag }}
-        {{ form.guardian_mobile_number }}
-        {% for error in form.guardian_mobile_number.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-      </div>
-      
+
       <div class="form-group full-width" style="padding-bottom:100px;">
-        <button class="btn-submit" type="submit">Save</button>
+        <input class="btn-submit" type="submit" value="Save" />
       </div>
-
     </form>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const keralaDistricts = [
+      "Thiruvananthapuram",
+      "Kollam",
+      "Pathanamthitta",
+      "Alappuzha",
+      "Kottayam",
+      "Idukki",
+      "Ernakulam",
+      "Thrissur",
+      "Palakkad",
+      "Malappuram",
+      "Kozhikode",
+      "Wayanad",
+      "Kannur",
+      "Kasaragod"
+    ];
+
+    const stateSelect = document.getElementById('id_state');
+    const districtContainer = document.getElementById('district-container');
+
+    function createSelectField() {
+      const select = document.createElement('select');
+      select.name = 'district';
+      select.id = 'id_district';
+      select.required = true;
+
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = 'Select district';
+      select.appendChild(defaultOption);
+
+      keralaDistricts.forEach(function(district) {
+        const option = document.createElement('option');
+        option.value = district;
+        option.textContent = district;
+        select.appendChild(option);
+      });
+
+      return select;
+    }
+
+    function createInputField() {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.name = 'district';
+      input.id = 'id_district';
+      input.placeholder = 'Enter district';
+      input.required = true;
+
+      return input;
+    }
+
+    function updateDistrictField() {
+      // Remove previous district input/select
+      while (districtContainer.firstChild) {
+        districtContainer.removeChild(districtContainer.firstChild);
+      }
+      // Append label
+      const label = document.createElement('label');
+      label.setAttribute('for', 'id_district');
+      label.textContent = 'District';
+      districtContainer.appendChild(label);
+
+      if (stateSelect.value === 'Kerala') {
+        districtContainer.appendChild(createSelectField());
+      } else {
+        districtContainer.appendChild(createInputField());
+      }
+    }
+
+    stateSelect.addEventListener('change', updateDistrictField);
+    updateDistrictField();  // Run once on page load
+  });
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const roleSelect = document.getElementById('id_role');
+  const subCategoryContainer = document.getElementById('sub-category-container');
+  const subCategorySelect = document.getElementById('id_sub_category');
+
+  const subCategories = {
+    'Bowler': [
+      {value: 'Spinner', label: 'Spinner'},
+      {value: 'Fast Bowler', label: 'Fast Bowler'}
+    ],
+    'All-rounder': [
+      {value: 'Spin Bowling All-rounder', label: 'Spin Bowling All-rounder'},
+      {value: 'Fast Bowler All-rounder', label: 'Fast Bowler All-rounder'}
+    ]
+  };
+
+  function updateSubCategoryOptions() {
+    const selectedRole = roleSelect.value;
+
+    // Clear previous options
+    subCategorySelect.innerHTML = '';
+
+    if (subCategories[selectedRole]) {
+      subCategoryContainer.style.display = 'block';
+      // Add a default option
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = 'Select Sub Category';
+      subCategorySelect.appendChild(defaultOpt);
+
+      subCategories[selectedRole].forEach(function(opt) {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        subCategorySelect.appendChild(option);
+      });
+    } else {
+      // Hide sub category if role isn't Bowler or All-rounder
+      subCategoryContainer.style.display = 'none';
+    }
+  }
+
+  roleSelect.addEventListener('change', updateSubCategoryOptions);
+
+  // Init on page load
+  updateSubCategoryOptions();
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const subCategorySelect = document.getElementById('id_sub_category');
+  const bowlingStyleContainer = document.getElementById('bowling-style-container');
+
+  const spinnerOptions = [
+    "Right-arm off-spin",
+    "Left-arm orthodox spin",
+    "Right-arm leg-spin (leg break)",
+    "Left-arm unorthodox spin (chinaman)",
+    "Other (Specify)"
+  ];
+
+  const fastBowlerOptions = [
+    "Right-arm fast",
+    "Left-arm fast",
+    "Right-arm fast-medium",
+    "Left-arm fast-medium",
+    "Right-arm medium",
+    "Left-arm medium",
+    "Other (Specify)"
+  ];
+
+  function createSelect(options) {
+    const select = document.createElement('select');
+    select.id = 'bowling_style';
+    select.name = 'bowling_style';
+    select.required = true;
+
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Select Bowling Style';
+    select.appendChild(defaultOption);
+
+    options.forEach(opt => {
+      const option = document.createElement('option');
+      option.value = opt;
+      option.textContent = opt;
+      select.appendChild(option);
+    });
+
+    return select;
+  }
+
+  function createInput() {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'bowling_style';
+    input.name = 'bowling_style';
+    input.placeholder = 'Enter bowling style';
+    input.required = true;
+    return input;
+  }
+
+  function updateBowlingStyle() {
+    while (bowlingStyleContainer.firstChild) {
+      bowlingStyleContainer.removeChild(bowlingStyleContainer.firstChild);
+    }
+    const label = document.createElement('label');
+    label.setAttribute('for', 'bowling_style');
+    label.textContent = 'Bowling Style';
+    bowlingStyleContainer.appendChild(label);
+
+    const val = subCategorySelect.value;
+
+    if (val === "Spinner" || val === "Spin Bowling All-rounder") {
+      bowlingStyleContainer.appendChild(createSelect(spinnerOptions));
+    } else if (val === "Fast Bowler" || val === "Fast Bowler All-rounder") {
+      bowlingStyleContainer.appendChild(createSelect(fastBowlerOptions));
+    } else {
+      bowlingStyleContainer.appendChild(createInput());
+    }
+  }
+
+  subCategorySelect.addEventListener('change', updateBowlingStyle);
+  updateBowlingStyle(); // initialize on page load
+});
+</script>
 {% endblock %}

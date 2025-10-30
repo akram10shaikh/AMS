@@ -239,44 +239,94 @@ def organization_player_list(request):
 
 @login_required
 def organization_player_add(request):
+    age_category_choices = getattr(Player, "Age_category_choices", [])
+    return render(request, 'player_app/organization/organization_player_form.html', {'age_category_choices':age_category_choices})
+
+@login_required
+def player_create_view(request):
     if request.method == 'POST':
-        form = OrganizationPlayerForm(request.POST, request.FILES)
-        if form.is_valid():
-            ins = form.save(commit=False)
+        # Extract fields manually from request.POST and request.FILES
+        name = request.POST.get('name')
+        image = request.FILES.get('image')  # File input
+        email = request.POST.get('email')
+        date_of_birth = request.POST.get('date_of_birth')
+        primary_contact_number = request.POST.get('primary_contact_number')
+        secondary_contact_number = request.POST.get('secondary_contact_number')
+        gender = request.POST.get('gender')
+        state = request.POST.get('state')
+        district = request.POST.get('district')
+        role = request.POST.get('role')
+        batting_style = request.POST.get('batting_style')
+        bowling_style = request.POST.get('bowling_style')
+        handedness = request.POST.get('handedness')
+        age_category = request.POST.get('age_category')
+        guardian_name = request.POST.get('guardian_name')
+        relation = request.POST.get('relation')
+        guardian_mobile_number = request.POST.get('guardian_mobile_number')
+        password = "admin"  # Or generate/set your own logic
 
-            # Assign organization if user is OrganizationAdmin or Staff
-            if hasattr(request.user, 'role') and request.user.role == "OrganizationAdmin":
-                organization = get_object_or_404(Organization, user=request.user)
-                ins.organization = organization
-            elif hasattr(request.user, 'role') and request.user.role == "Staff":
-                staff = get_object_or_404(Staff, user=request.user)
-                ins.organization = staff.organization
+        # Create Player/user instances and link
+        User = get_user_model()
 
-            email = form.cleaned_data['email']
-            firstname = form.cleaned_data['name'].split(" ")[0]
-            password = "admin"
-            User = get_user_model()
-            user = User.objects.create(username=email, email=email, first_name=firstname)
-            user.set_password(password)
-            user.is_super_admin = False
-            user.role = "Player"
-            user.save()
-            ins.user = user
-            ins.save()
-            form.save_m2m()
-            PlayerActivityLog.objects.create(
-                player=ins,
-                actor=request.user,
-                action='created',
-                details=f"Player '{ins.name}' was created."
-            )
-            messages.success(request, 'Player created successfully!')
-            return redirect('organization_player_list')
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = OrganizationPlayerForm()
-    return render(request, 'player_app/organization/organization_player_form.html', {'form': form, 'title': 'Create Player'})
+        # Basic Email uniqueness check to avoid duplicate users
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'Email already exists.')
+            return render(request, 'player_app/organization/organization_player_form.html', {'title': 'Create Player'})
+
+        user = User.objects.create(username=email, email=email, first_name=name.split(' ')[0])
+        user.set_password(password)
+        user.is_super_admin = False
+        user.role = "Player"
+        user.save()
+
+        player = Player(
+            name=name,
+            email=email,
+            date_of_birth=date_of_birth or None,
+            primary_contact_number=primary_contact_number,
+            secondary_contact_number=secondary_contact_number,
+            gender=gender,
+            state=state,
+            district=district,
+            role=role,
+            batting_style=batting_style,
+            bowling_style=bowling_style,
+            handedness=handedness,
+            age_category=age_category,
+            guardian_name=guardian_name,
+            relation=relation,
+            guardian_mobile_number=guardian_mobile_number,
+            user=user,
+        )
+
+        if image:
+            player.image = image
+
+        # Assign organization from user role as in your original logic
+        if hasattr(request.user, 'role') and request.user.role == "OrganizationAdmin":
+            organization = get_object_or_404(Organization, user=request.user)
+            player.organization = organization
+        elif hasattr(request.user, 'role') and request.user.role == "Staff":
+            staff = get_object_or_404(Staff, user=request.user)
+            player.organization = staff.organization
+
+        player.save()
+
+        # If you have M2M fields, handle here like player.m2mfield.set([...])
+
+        PlayerActivityLog.objects.create(
+            player=player,
+            actor=request.user,
+            action='created',
+            details=f"Player '{player.name}' was created."
+        )
+
+        messages.success(request, 'Player created successfully!')
+        return redirect('organization_player_list')
+
+    
+    # return render(request, 'player_app/organization/organization_player_form.html', {'title': 'Create Player'})
+
 
 from django.utils.timezone import now
 

@@ -193,7 +193,7 @@ class OrganizationPlayerForm(forms.ModelForm):
         fields = [
             'name', 'image', 'email', 'date_of_birth',
             'primary_contact_number', 'secondary_contact_number', 'gender','state',
-            'role', 'batting_style', 'bowling_style', 'handedness', 'age_category', 
+            'role','district','batting_style', 'bowling_style', 'handedness', 'age_category', 
             'guardian_name', 'relation', 'guardian_mobile_number',
         ]
         widgets = {
