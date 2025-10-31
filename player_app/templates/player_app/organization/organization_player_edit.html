@@ -153,6 +153,10 @@ form {
         {% for error in form.bowling_style.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
       </div>
       <div class="form-group">
+        {{ form.player_status.label_tag }}{{ form.player_status }}
+        {% for error in form.player_status.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
         {{ form.handedness.label_tag }}{{ form.handedness }}
         {% for error in form.handedness.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
       </div>

@@ -43,6 +43,20 @@
 
 {% block content %}
 <div class="player-table-card position-relative">
+    <div style="display:flex; justify-content: space-around; margin-bottom:20px;">
+    <div id="fullParticipationCard" style="background:#d4edda; color:#155724; padding:15px; border-radius:8px; width:30%; text-align:center;">
+        <h4>Full Participation</h4>
+        <p id="fullParticipationCount">0</p>
+    </div>
+    <div id="limitedParticipationCard" style="background:#fff3cd; color:#856404; padding:15px; border-radius:8px; width:30%; text-align:center;">
+        <h4>Limited Participation</h4>
+        <p id="limitedParticipationCount">0</p>
+    </div>
+    <div id="noParticipationCard" style="background:#f8d7da; color:#721c24; padding:15px; border-radius:8px; width:30%; text-align:center;">
+        <h4>No Participation</h4>
+        <p id="noParticipationCount">0</p>
+    </div>
+</div>
     <h3 class="mb-3 text-center" style="color:#6200ee; font-weight:600;">Player List</h3>
 
 <div class="d-flex align-items-center flex-wrap mb-2" style="position:relative;">
@@ -53,6 +67,9 @@
     <button type="button" class="btn btn-success btn-sm" id="downloadExcelBtn" style="margin-left:8px;">
         <i class="fa fa-file-excel"></i> Export
     </button>
+    <input type="text" id="playerSearchInput" class="form-control form-control-sm"
+    style="width:220px; display:inline-block; margin-left:8px;" placeholder="Search by name ..." autocomplete="off">
+
     {% comment %} <button type="button" class="btn btn-secondary btn-sm" id="columnSelectBtn" style="margin-left:8px;">
         <i class="fa fa-columns"></i> Columns
     </button> {% endcomment %}
@@ -91,6 +108,14 @@
                 {% endfor %}
             </select>
         </div>
+        <div class="form-group">
+            <label for="id_player_status"><b>Player Status</b></label>
+            <select multiple name="player_status" class="form-control form-control-sm" id="id_player_status">
+                <option value="full participation" {% if "Full Participation" in active_filters.player_status %}selected{% endif %}>Full Participation</option>
+                <option value="limited participation" {% if "Limited Participation" in active_filters.player_status %}selected{% endif %}>Limited Participation</option>
+                <option value="no participation" {% if "No Participation" in active_filters.player_status %}selected{% endif %}>No Participation</option>
+            </select>
+        </div>
         <div class="text-right mt-3">
             <button class="btn btn-primary btn-sm" type="submit">Apply</button>
         </div>
@@ -114,7 +139,9 @@
             <label><input type="checkbox" class="col-toggle" value="col-gender" checked> Gender</label><br>
             <label><input type="checkbox" class="col-toggle" value="col-state" checked> State</label><br>
             <label><input type="checkbox" class="col-toggle" value="col-role" checked> Role</label><br>
+            <label><input type="checkbox" class="col-toggle" value="col-player-status" checked> Player Status</label><br>
             <label><input type="checkbox" class="col-toggle" value="col-batting" checked> Batting Style</label><br>
+            
             <label><input type="checkbox" class="col-toggle" value="col-bowling" checked> Bowling Style</label><br>
             <label><input type="checkbox" class="col-toggle" value="col-handedness" checked> Handedness</label><br>
             <label><input type="checkbox" class="col-toggle" value="col-age" checked> Age Category</label><br>
@@ -169,18 +196,21 @@
                 <th class="col-serial">S.No</th>
                 <th class="col-id">Player ID</th>
                 <th class="col-name">Name</th>
-                <th class="col-email">Email</th>
-                <th class="col-dob">D.O.B</th>
-                <th class="col-contact">Primary Contact</th>
-                <th class="col-contact2">Secondary Contact</th>
-                <th class="col-gender">Gender</th>
-                <th class="col-state">State</th>
-                <th class="col-role">District</th>
                 <th class="col-role">Role</th>
+                <th class="col-player-status">Player Status</th>
                 <th class="col-batting">Batting Style</th>
                 <th class="col-bowling">Bowling Style</th>
                 <th class="col-handedness">Handedness</th>
                 <th class="col-age">Age Category</th>
+                <th class="col-email">Email</th>
+                <th class="col-dob">D.O.B</th>
+                
+                <th class="col-gender">Gender</th>
+                <th class="col-state">State</th>
+                <th class="col-role">District</th>
+
+                <th class="col-contact">Primary Contact</th>
+                <th class="col-contact2">Secondary Contact</th>
                 {% comment %} <th class="col-guardian">Guardian Name</th>
                 <th class="col-relation">Relation</th>
                 <th class="col-guardian-mob">Guardian Mobile</th> {% endcomment %}
@@ -193,18 +223,21 @@
                 <td class="col-serial">{{ forloop.counter }}</td>
                 <td class="col-id">{{ player.id }}</td>
                 <td class="col-name" style="font-weight:600; color:#222f5a;">{{ player.name }}</td>
-                <td class="col-email">{{ player.email }}</td>
-                <td class="col-dob">{% if player.date_of_birth %}{{ player.date_of_birth|date:"d M Y" }}{% endif %}</td>
-                <td class="col-contact">{{ player.primary_contact_number }}</td>
-                <td class="col-contact2">{{ player.secondary_contact_number }}</td>
-                <td class="col-gender">{{ player.get_gender_display }}</td>
-                <td class="col-state">{{ player.state }}</td>
-                <td class="col-role">{{ player.district }}</td>
-                <td class="col-role">{{ player.role }}</td>
+                 <td class="col-role">{{ player.role }}</td>
+                <td class="col-player-status">{{ player.player_status }}</td>
                 <td class="col-batting">{{ player.batting_style }}</td>
                 <td class="col-bowling">{{ player.bowling_style }}</td>
                 <td class="col-handedness">{{ player.get_handedness_display }}</td>
                 <td class="col-age">{% if player.age_category %}{{ player.get_age_category_display }}{% endif %}</td>
+                <td class="col-email">{{ player.email }}</td>
+                <td class="col-dob">{% if player.date_of_birth %}{{ player.date_of_birth|date:"d M Y" }}{% endif %}</td>
+               
+                <td class="col-gender">{{ player.get_gender_display }}</td>
+                <td class="col-state">{{ player.state }}</td>
+                <td class="col-role">{{ player.district }}</td>
+               
+                <td class="col-contact">{{ player.primary_contact_number }}</td>
+                <td class="col-contact2">{{ player.secondary_contact_number }}</td>
                 {% comment %} <td class="col-guardian">{{ player.guardian_name }}</td>
                 <td class="col-relation">{{ player.relation }}</td>
                 <td class="col-guardian-mob">{{ player.guardian_mobile_number }}</td> {% endcomment %}
@@ -247,7 +280,7 @@ if (closeFilterBtn && filterPopover) {
     };
 }
 
-// Column selection popover logic
+// Column selection popover logic remains unchanged
 const columnBtn = document.getElementById("columnSelectBtn");
 const columnPopover = document.getElementById("columnPopover");
 const closeColumnBtn = document.getElementById("closeColumnBtn");
@@ -338,5 +371,71 @@ document.getElementById("downloadExcelBtn").onclick = function() {
     let params = new URLSearchParams(window.location.search);
     window.location.href = url + (params.toString() ? ("?" + params.toString()) : "");
 };
+</script>
+<script>
+    const searchInput = document.getElementById("playerSearchInput");
+const playerTable = document.querySelector(".player-table tbody");
+
+searchInput.addEventListener("input", function() {
+    const filter = searchInput.value.trim().toLowerCase();
+
+    // If empty, show all rows (clear search)
+    if (!filter) {
+        [...playerTable.rows].forEach(row => {
+            row.style.display = "";  // show row
+        });
+        return;
+    }
+
+    // Loop through table rows and hide those that don't match name or role
+    [...playerTable.rows].forEach(row => {
+        const nameCell = row.querySelector(".col-name");
+        const roleCell = row.querySelector(".col-role");
+
+        // Defensive checks
+        const nameText = nameCell ? nameCell.textContent.toLowerCase() : "";
+        const roleText = roleCell ? roleCell.textContent.toLowerCase() : "";
+
+        if (nameText.includes(filter) || roleText.includes(filter)) {
+            row.style.display = "";  // show matching row
+        } else {
+            row.style.display = "none";  // hide non-matching
+        }
+    });
+});
+
+</script>
+
+// Player participation summary script
+<script>
+    function updateParticipationCards() {
+    let fullCount = 0;
+    let limitedCount = 0;
+    let noCount = 0;
+
+    // Loop through all player status cells
+    document.querySelectorAll(".player-table tbody tr").forEach(row => {
+        const statusCell = row.querySelector(".col-player-status");
+        if (statusCell) {
+            const statusText = statusCell.textContent.trim().toLowerCase();
+            if (statusText === "full participation") {
+                fullCount++;
+            } else if (statusText === "limited participation") {
+                limitedCount++;
+            } else if (statusText === "no participation") {
+                noCount++;
+            }
+        }
+    });
+
+    // Update the DOM
+    document.getElementById("fullParticipationCount").textContent = fullCount;
+    document.getElementById("limitedParticipationCount").textContent = limitedCount;
+    document.getElementById("noParticipationCount").textContent = noCount;
+}
+
+// Call this after the table rows are rendered
+updateParticipationCards();
+
 </script>
 {% endblock %}

@@ -39,6 +39,11 @@ class Player(models.Model):
         ('All-rounder','All-rounder'),
         ('Wicket-keeper','Wicket-keeper'),
     ]
+    PLAYERS_STATAUS = [
+        ('full participation', 'Full Participation'),
+        ('limited participation', 'Limited Participation'),
+        ('no participation', 'No Participation'),
+    ]
     organization = models.ForeignKey(
         Organization, on_delete=models.SET_NULL, null=True, blank=True, related_name="users"
     )
@@ -149,6 +154,8 @@ class Player(models.Model):
     players_in_groups = models.ManyToManyField(Player_Group, blank=True)
     user_role = models.CharField(max_length=20, default='Player')
     password = models.CharField(max_length=100, default=False)
+
+    player_status = models.CharField(max_length=40, choices=PLAYERS_STATAUS,null=True)
 
     def __str__(self):
         return self.name

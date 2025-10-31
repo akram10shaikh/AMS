@@ -201,16 +201,35 @@ class OrganizationPlayerForm(forms.ModelForm):
         }
 
 class OrganizationPlayerFormUpdate(forms.ModelForm):
+    BOWLING_CHOICES = [
+        ('None','None'),
+        ('Spinner','Spinner'),
+        ('Spin Bowling All-rounder','Spin Bowling All-rounder'),
+        ('Right-arm fast', 'Spin Bowling All-rounder'),
+        ('Right-arm fast-medium', 'Right-arm fast-medium'),
+        ('Right-arm medium', 'Right-arm medium'),
+        ('Right-arm off-spin', 'Right-arm off-spin'),
+        ('Right-arm leg-spin (leg break)', 'Right-arm leg-spin (leg break)'),
+        ('Fast Bowler','Fast Bowler'),
+        ('Fast Bowler All-rounder','Fast Bowler All-rounder'),
+        ('Left-arm fast','Left-arm fast'),
+        ('Left-arm fast-medium','Left-arm fast-medium'),
+        ('Left-arm medium','Left-arm medium'),
+        ('Left-arm orthodox spin','Left-arm orthodox spin'),
+        ('Left-arm unorthodox spin (chinaman)','Left-arm unorthodox spin (chinaman)'),
+        ('Other (Specify)','Other (Specify)'),
+    ]
     new_password = forms.CharField(
         label="Set New Password", required=False,
         widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'})
     )
+    bowling_style = forms.ChoiceField(choices=BOWLING_CHOICES, required=False)
     class Meta:
         model = Player
         fields = [
             'name', 'image', 'email', 'date_of_birth',
             'primary_contact_number', 'secondary_contact_number', 'gender','state',
-            'role', 'batting_style', 'bowling_style', 'handedness', 'age_category',
+            'role', 'batting_style', 'bowling_style','player_status','handedness', 'age_category',
             'guardian_name', 'relation', 'guardian_mobile_number',
         ]
         widgets = {'date_of_birth': forms.DateInput(attrs={'type': 'date'})}
@@ -224,6 +243,13 @@ class InjuryForm(forms.ModelForm):
     expected_date_of_return = forms.DateField(
         required=False,
         widget=forms.DateInput(attrs={'type': 'date', 'placeholder': 'Expected Date of Return'})
+    )
+
+    from player_app.models import Player  # import Player model
+
+    player_status = forms.ChoiceField(
+        choices=Player._meta.get_field('player_status').choices,
+        widget=forms.Select(attrs={'class': 'form-control'})
     )
 
     class Meta:
@@ -246,7 +272,7 @@ class InjuryForm(forms.ModelForm):
             'nature_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nature of injury'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Notes', 'rows':2}),
             'affected_body_part': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Body region injured'}),
-            'player_status': forms.Select(attrs={'class': 'form-control'}),
+            # 'player_status': forms.Select(attrs={'class': 'form-control'}),
             'severity': forms.Select(attrs={'class': 'form-control'}),
         }
 
@@ -338,16 +364,36 @@ class InjuryFormUpdate(forms.ModelForm):
             instance.save()
         return instance
 
-# Player Availability Form
+from player_app.models import Player
 class PlayerAvailabilityForm(forms.ModelForm):
+    player_status = forms.ChoiceField(
+        choices=Player._meta.get_field('player_status').choices,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
     class Meta:
         model = Injury
-        fields = ['status', 'player_status']
+        fields = ['status']  # Remove 'player_status' here since handled manually
+
         widgets = {
             'status': forms.Select(attrs={'class': 'form-control'}),
-            'player_status': forms.Select(attrs={'class': 'form-control'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set initial value of player_status from related player
+        if self.instance and self.instance.pk:
+            self.fields['player_status'].initial = self.instance.player.player_status
+
+    def save(self, commit=True):
+        # Save injury status normally
+        injury = super().save(commit=commit)
+        # Save player_status to the related player
+        player_status = self.cleaned_data.get('player_status')
+        if player_status and injury.player.player_status != player_status:
+            injury.player.player_status = player_status
+            injury.player.save()
+        return injury
 
 from django import forms
 from .models import MedicalDocument, Injury

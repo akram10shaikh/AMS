@@ -186,15 +186,15 @@
   <div class="injury-spark-boxes" style="gap: 20px; margin-top: 15px;">
   <div class="injury-spark" style="border-left-color: #238823;">
     <span class="spark-label">Full Participation</span>
-    <span class="spark-value" style="color: #238823;">{{ full_participation_count }}</span>
+    <span class="spark-value" style="color: #238823;">0</span>
   </div>
   <div class="injury-spark" style="border-left-color: #ff8c00;">
     <span class="spark-label">Limited Participation</span>
-    <span class="spark-value" style="color: #ff8c00;">{{ limited_participation_count }}</span>
+    <span class="spark-value" style="color: #ff8c00;">0</span>
   </div>
   <div class="injury-spark" style="border-left-color: #d43030;">
     <span class="spark-label">No Participation</span>
-    <span class="spark-value" style="color: #d43030;">{{ no_participation_count }}</span>
+    <span class="spark-value" style="color: #d43030;">0</span>
   </div>
   </div>
 
@@ -374,7 +374,7 @@
         </td>
         <td>{{ injury.get_status_display }}</td>
         <td>{% if injury.reported_by %}{{ injury.reported_by.name }}{% endif %}</td>
-        <td>{{ injury.player_status|title }}</td>
+        <td>{{ injury.player.player_status|title }}</td>
         <td>{{ injury.affected_body_part|title }}</td>
         
         <td>{{ injury.venue }}</td>
@@ -688,6 +688,36 @@ document.addEventListener('DOMContentLoaded', function() {
     filterPopover.style.display = "none";
     modalBackdrop.style.display = "none";
   });
+});
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const fullParticipationCard = document.querySelector('.injury-spark:nth-child(1) .spark-value');
+    const limitedParticipationCard = document.querySelector('.injury-spark:nth-child(2) .spark-value');
+    const noParticipationCard = document.querySelector('.injury-spark:nth-child(3) .spark-value');
+
+    // Initialize counters
+    let fullCount = 0;
+    let limitedCount = 0;
+    let noCount = 0;
+
+    // Loop through all player_status cells in the injury table
+    document.querySelectorAll('table.injury-table tbody tr td:nth-child(10)').forEach(td => {
+        const status = td.textContent.trim().toLowerCase();
+
+        if (status === "full participation") {
+            fullCount++;
+        } else if (status === "limited participation") {
+            limitedCount++;
+        } else if (status === "no participation") {
+            noCount++;
+        }
+    });
+
+    // Update the counts in the cards
+    if (fullParticipationCard) fullParticipationCard.textContent = fullCount;
+    if (limitedParticipationCard) limitedParticipationCard.textContent = limitedCount;
+    if (noParticipationCard) noParticipationCard.textContent = noCount;
 });
 </script>
 {% endblock %}

@@ -174,17 +174,18 @@ def player_delete(request, pk):
 
 def organization_player_list(request):
     if request.user.role == "Staff":
-            org = request.user.staff.organization
+        org = request.user.staff.organization
 
     if request.user.role == "OrganizationAdmin":
-           org = get_object_or_404(Organization, user=request.user)
-    
+        org = get_object_or_404(Organization, user=request.user)
+
     players = Player.objects.filter(organization=org)
 
     # Collect filter params
     age_categories = request.GET.getlist('age_category')
     handednesses = request.GET.getlist('handedness')
     roles = request.GET.getlist('role')
+    player_statuses = request.GET.getlist('player_status')
     sort_gender = request.GET.get('sort') == 'gender'
 
     # Filtering logic
@@ -194,8 +195,11 @@ def organization_player_list(request):
         players = players.filter(handedness__in=handednesses)
     if roles:
         players = players.filter(role__in=roles)
+    if player_statuses:
+        players = players.filter(player_status__in=player_statuses)
 
-    filters_count = len(age_categories) + len(handednesses) + len(roles)
+    # Calculate filters count including player_statuses
+    filters_count = len(age_categories) + len(handednesses) + len(roles) + len(player_statuses)
 
     # Use your actual lowercase class attribute names for choices
     AGE_CHOICES = getattr(Player, "Age_category_choices", [])
@@ -229,6 +233,7 @@ def organization_player_list(request):
             'age_category': age_categories,
             'handedness': handednesses,
             'role': roles,
+            'player_status': player_statuses,
         },
         'filters_count': filters_count,
         'sort_gender': sort_gender,
@@ -325,7 +330,7 @@ def player_create_view(request):
         return redirect('organization_player_list')
 
     
-    # return render(request, 'player_app/organization/organization_player_form.html', {'title': 'Create Player'})
+    return render(request, 'player_app/organization/organization_player_form.html', {'title': 'Create Player'})
 
 
 from django.utils.timezone import now
@@ -693,12 +698,12 @@ def organization_injury_list(request):
         filters_count += 1
 
     # Player participation stats
-    player_status_counts = injuries.values('player_status').annotate(count=Count('player_status'))
-    status_map = {"full participation": 0, "limited participation": 0, "no participation": 0}
-    for ps in player_status_counts:
-        key = ps['player_status']
-        if key in status_map:
-            status_map[key] = ps['count']
+    # player_status_counts = injuries.values('player_status').annotate(count=Count('player_status'))
+    # status_map = {"full participation": 0, "limited participation": 0, "no participation": 0}
+    # for ps in player_status_counts:
+    #     key = ps['player_status']
+    #     if key in status_map:
+    #         status_map[key] = ps['count']
 
     context = {
         'year_choices': list(range(2020, today.year + 1)),
@@ -722,9 +727,7 @@ def organization_injury_list(request):
         'filter_range': range_filter,
         'filter_season': season,
         'filter_categories': categories,
-        'full_participation_count': status_map["full participation"],
-        'limited_participation_count': status_map["limited participation"],
-        'no_participation_count': status_map["no participation"],
+       
         'active_filters': {
             'severity': severity_vals,
             'status': status_vals,
@@ -941,8 +944,9 @@ def organization_injury_detail(request, pk):
         reverse=True
     )
     old_injury_status = injury.status
-    old_player_statuss = injury.player_status
-    
+    old_player_statuss = injury.player.player_status
+    oldabc = injury.player_status
+
     # print(f"Initial Injury Status: {old_injury_status}, Player Status: {old_player_status}")
     if request.method == 'POST':    
         if "availability_submit" in request.POST:
@@ -953,8 +957,8 @@ def organization_injury_detail(request, pk):
                 availability_form.save()
                 injury.refresh_from_db()  # <- refresh injury instance to get updated values
                 new_status = injury.status
-                new_player_status = injury.player_status
-            
+                new_player_status = injury.player.player_status
+                
                 status_changed = old_injury_status != new_status
                 player_status_changed = old_player_statuss != new_player_status
                 
