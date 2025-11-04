@@ -212,6 +212,29 @@
 
 {% block content %}
 
+<!-- Category Summary Cards (Dashboard Top Section) -->
+<div style="background:white;padding:35px 0 25px 0;">
+  <div class="cards" style="gap: 18px; justify-content:center; flex-wrap:wrap;">
+    {% for cat in category_cards %}
+      <div style="background:#36a9e1;border-radius:7px;width:170px;display:inline-block;padding:17px 10px 9px 10px;margin:0 7px;">
+        <div style="font-size:21px;color:#fff;font-weight:700;margin-bottom:7px;text-align:center;letter-spacing:1px;">
+          {{ cat.label }}
+        </div>
+        <div style="font-size:40px;color:#fff;font-weight:900;margin-bottom:10px;text-align:center;">
+          {{ cat.total }}
+        </div>
+        <div style="display:flex;justify-content:center;gap:7px;margin-bottom:8px;">
+          <div style="background:#36e156;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">{{ cat.full }}</div>
+          <div style="background:#ffe346;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">{{ cat.limited }}</div>
+          <div style="background:#ff3939;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">{{ cat.none }}</div>
+        </div>
+        <div style="color:#fff;font-size:1em;text-align:center;">Active Injury: <b style="color:#fff;">{{ cat.active_injury }}</b></div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+
 <h3 style="font-size:35px;">Organization Dashboard</h3>
 
 <!-- Filters Form -->
@@ -273,7 +296,7 @@
       <tr>
         <th scope="col">Player</th>
         <th scope="col">Injury Name</th>
-        <th scope="col">Severity</th>
+        <th scope="col">Severity Rating</th>
         <th scope="col">Status</th>
         <th scope="col">Injury Date</th>
       </tr>
@@ -283,7 +306,7 @@
       <tr data-category="{{ injury.player.age_category|default:'none' }}" data-gender="{{ injury.player.gender|default:'none' }}">
         <td class="player-name">{{ injury.player.name }}</td>
         <td class="injury-name">{{ injury.name }}</td>
-        <td>{{ injury.severity|default:"-" }}</td>
+        <td>{{ injury.severity_rating|default:"-" }}</td>
         <td>{{ injury.status|default:"-" }}</td>
         <td>{{ injury.injury_date }}</td>
       </tr>

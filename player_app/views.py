@@ -1342,6 +1342,9 @@ from django.db.models import Count, Q
 from .models import Player, Injury, Staff
 from django.contrib.auth.decorators import login_required
 from itertools import chain
+from collections import OrderedDict
+from itertools import chain
+from django.db.models import Count, Q
 
 @login_required
 def organization_dashboard_org(request):
@@ -1349,16 +1352,61 @@ def organization_dashboard_org(request):
     selected_category = request.GET.get('category', 'all')
     selected_gender = request.GET.get('gender', 'all')
 
+    # Determine organization based on user role
     if request.user.role == "Staff":
-           organization = request.user.staff.organization
+        organization = request.user.staff.organization
+    elif request.user.role == "OrganizationAdmin":
+        organization = get_object_or_404(Organization, user=request.user)
 
-    if request.user.role == "OrganizationAdmin":
-           organization= get_object_or_404(Organization, user=request.user)
+        # Base queryset for players and injuries (unfiltered for cards)
+    all_players = Player.objects.filter(organization=organization)
+    all_injuries = Injury.objects.filter(player__organization=organization)
+
+    # Cards definitions aligned with your Age_category_choices and Player model
+    CATEGORY_CARDS = OrderedDict([
+        ("B - U14",    {'gender': 'M', 'age_category': 'boys_under-15',    'label': "B - U14"}),
+        ("B - U16",    {'gender': 'M', 'age_category': 'boys_under-16',    'label': "B - U16"}),  # Add to your model choices if missing
+        ("B - U19",    {'gender': 'M', 'age_category': 'boys_under-19',    'label': "B - U19"}),
+        ("M - U23",    {'gender': 'M', 'age_category': 'men_under-23',     'label': "M - U23"}),
+        ("M - SENIOR", {'gender': 'M', 'age_category': 'men_senior',       'label': "M - SENIOR"}),
+        ("W - U15",    {'gender': 'F', 'age_category': 'girls_under-15',   'label': "W - U15"}),
+        ("G - U19",    {'gender': 'F', 'age_category': 'girls_under-19',   'label': "G - U19"}),
+        ("W - U23",    {'gender': 'F', 'age_category': 'women_under-23',   'label': "W - U23"}),
+        ("W - SENIOR", {'gender': 'F', 'age_category': 'women_senior',     'label': "W - SENIOR"}),
+    ])
+
+    category_cards = []
+    for key, card_cat in CATEGORY_CARDS.items():
+        players_qs = all_players.filter(
+            gender=card_cat['gender'],
+            age_category=card_cat['age_category']
+        ).distinct()
+
+        total_players = players_qs.values('id').distinct().count()
+        full_participation = players_qs.filter(player_status__iexact="full participation").values('id').distinct().count()
+        limited_participation = players_qs.filter(player_status__iexact="limited participation").values('id').distinct().count()
+        no_participation = players_qs.filter(player_status__iexact="no participation").values('id').distinct().count()
+        active_injury = all_injuries.filter(player__in=players_qs, status='open').values('player_id').distinct().count()
+
+        
+        category_cards.append({
+            'label': card_cat['label'],
+            'total': total_players,
+            'full': full_participation,
+            'limited': limited_participation,
+            'none': no_participation,
+            'active_injury': active_injury,
+        })
+    
+    test_org = Player.objects.filter(organization=organization)
+    print("Mens Senior Players in Org:")
+    test_filter = Player.objects.filter(player_status__iexact="full participation",age_category="men_senior" ,organization=organization).count()
+    print(test_filter)
 
 
-    # Base queryset for players and injuries
-    players = Player.objects.filter(organization=organization)
-    injuries = Injury.objects.filter(player__organization=organization).select_related('player', 'reported_by')
+    # --- Dashboard filter (all other data below can use the filtered players/injuries) ---
+    players = all_players
+    injuries = all_injuries.select_related('player', 'reported_by')
 
     # Filter by category if selected
     if selected_category != 'all':
@@ -1370,44 +1418,39 @@ def organization_dashboard_org(request):
         players = players.filter(gender=selected_gender)
         injuries = injuries.filter(player__gender=selected_gender)
 
-    # Total injuries count (consider all)
+    # Total injuries and active injuries (filtered)
     total_injuries_count = injuries.count()
-
-    # Active injuries count (status=open)
     active_injuries = injuries.filter(status='open')
     active_injuries_count = active_injuries.count()
 
-    # Participation type counts with View More URLs
+    # Participation types (filtered)
     participation_counts = CampTournament.objects.filter(
-        participants__in=players).annotate(
+        participants__in=players
+    ).annotate(
         player_count=Count('participants', filter=Q(participants__in=players), distinct=True)
-        ).order_by('-player_count')
-    
-    # ---- REMOVE NOTES PREFETCH ----
-    # No need for Prefetch or prefetch_related for notes!
+    ).order_by('-player_count')
 
-    # If you want players with their injuries (and their notes):
-    # You could prefetch injuries (which include notes as a field)
+    # Prefetch injuries (with notes)
     players = players.prefetch_related('injuries__reported_by')
 
+    # Activity log setup
     medical_logs = MedicalActivityLog.objects.filter(player__in=players).select_related('player', 'user', 'document')
     injury_logs = InjuryActivityLog.objects.filter(injury__in=injuries).select_related('injury', 'actor')
     player_logs = PlayerActivityLog.objects.filter(player__in=players).select_related('player', 'actor')
-
-    # Add log_type attribute to each log (no model changes required)
     for log in medical_logs:
         log.log_type = 'medical'
     for log in injury_logs:
         log.log_type = 'injury'
     for log in player_logs:
         log.log_type = 'player'
-
-    # Sort combined logs by descending timestamp
+    
     combined_logs = sorted(
         chain(medical_logs, injury_logs, player_logs),
         key=lambda log: getattr(log, 'timestamp', getattr(log, 'created_at', None)),
         reverse=True
     )
+
+    print(category_cards)
 
     context = {
         'selected_category': selected_category,
@@ -1418,8 +1461,8 @@ def organization_dashboard_org(request):
         'active_injuries': active_injuries,
         'participation_counts': participation_counts,
         'activity_logs': combined_logs,
+        'category_cards': category_cards,  # <-- ADD THIS LINE
     }
-
     return render(request, 'player_app/organization/organization_dashboard.html', context)
 
 def logout_user(request):

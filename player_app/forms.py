@@ -258,7 +258,7 @@ class InjuryForm(forms.ModelForm):
             'player', 'reported_by', 'name', 'injury_date',
             'venue', 'team', 'type_of_activity',
             'cause_of_injury', 'nature_of_injury', 'expected_date_of_return',
-            'notes', 'affected_body_part', 'severity', 'player_status','unknown_injury_date',
+            'notes', 'affected_body_part', 'severity','severity_rating', 'player_status','unknown_injury_date',
         ]
         widgets = {
             'player': forms.Select(attrs={'class': 'form-control'}),
@@ -274,6 +274,7 @@ class InjuryForm(forms.ModelForm):
             'affected_body_part': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Body region injured'}),
             # 'player_status': forms.Select(attrs={'class': 'form-control'}),
             'severity': forms.Select(attrs={'class': 'form-control'}),
+            'severity_rating': forms.NumberInput(attrs={'class': 'form-control','placeholder': 'Severity Rating','min': 1,'max': 10,}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -284,6 +285,13 @@ class InjuryForm(forms.ModelForm):
             self.fields['player'].queryset = players_qs
         if physios_qs is not None:
             self.fields['reported_by'].queryset = physios_qs
+    def clean_severity_rating(self):
+        value = self.cleaned_data.get('severity_rating')
+        if value is None:
+            raise forms.ValidationError("Severity rating is required.")
+        if not (1 <= value <= 10):
+            raise forms.ValidationError("Severity rating must be between 1 and 10.")
+        return value
 
 BODY_PART_CHOICES = [
     ('head', 'Head'),
@@ -327,7 +335,7 @@ class InjuryFormUpdate(forms.ModelForm):
             'player', 'reported_by', 'name', 'injury_date',
             'venue', 'team', 'type_of_activity', 'unknown_injury_date',
             'cause_of_injury', 'nature_of_injury', 'expected_date_of_return',
-            'notes', 'affected_body_part', 'severity', 
+            'notes', 'affected_body_part', 'severity_rating', 
         ]
         widgets = {
             'player': forms.Select(attrs={'class': 'form-control'}),
@@ -339,9 +347,10 @@ class InjuryFormUpdate(forms.ModelForm):
             'cause_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cause of injury'}),
             'nature_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nature of injury'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Notes', 'rows': 2}),
-            'severity': forms.Select(attrs={'class': 'form-control'}),
             
-        }
+            'severity_rating': forms.NumberInput(attrs={'class': 'form-control','placeholder': 'Severity Rating','min': 1,'max': 10,}),
+
+            }
 
     def __init__(self, *args, **kwargs):
         players_qs = kwargs.pop('players_qs', None)
@@ -355,6 +364,14 @@ class InjuryFormUpdate(forms.ModelForm):
         # Initialize multiple select field with list if instance value exists
         if self.instance and self.instance.affected_body_part:
             self.initial['affected_body_part'] = self.instance.affected_body_part.split(',')
+    
+    def clean_severity_rating(self):
+        value = self.cleaned_data.get('severity_rating')
+        if value is None:
+            raise forms.ValidationError("Severity rating is required.")
+        if not (1 <= value <= 10):
+            raise forms.ValidationError("Severity rating must be between 1 and 10.")
+        return value
 
     def save(self, commit=True):
         instance = super().save(commit=False)
