@@ -4,7 +4,7 @@
 {% block title %}Create Camp/Tournament{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+{% comment %} <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"> {% endcomment %}
 <style>
   /* Body and basic text left untouched as per your request */
 
@@ -13,12 +13,12 @@
     max-width: 600px;
     margin: 40px auto;
     padding: 25px 30px;
-    background-color: #121212; /* dark card background */
+    background-color: #fefefeff; /* dark card background */
     border-radius: 12px;
     box-shadow:
       0 4px 15px rgba(0, 0, 0, 0.9),
       0 0 6px #0d6efd44; /* subtle glow blue */
-    color: #e0e0e0;
+    color: #060606ff;
   }
 
   h1 {
@@ -41,7 +41,7 @@
   .form-control {
     background-color: #222533;
     border: 1.8px solid #414770;
-    color: #cfd8ff;
+    color: #f6f6f6ff;
     font-size: 1rem;
     padding: 10px 13px;
     border-radius: 8px;
@@ -125,15 +125,31 @@
             </select>
         </div>
 
+   <div class="form-group">
+        <label for="gender_type">Gender:</label>
+        <select name="gender_type" id="gender_type" class="form-control" required>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+        </select>
+    </div>
+
+    <!-- Age Category selection -->
+    <div class="form-group">
+        <label for="age_category">Age Category:</label>
+        <select name="age_category" id="age_category" class="form-control" required>
+            <!-- Options dynamically populated -->
+        </select>
+    </div>
+
         <div class="form-group">
             <label for="start_date">Start Date:</label>
             <input type="date" name="start_date" id="start_date" class="form-control" required>
         </div>
 
-        <div class="form-group">
+        {% comment %} <div class="form-group">
             <label for="end_date">End Date:</label>
             <input type="date" name="end_date" id="end_date" class="form-control" placeholder="Optional">
-        </div>
+        </div> {% endcomment %}
 
         <div class="form-group">
             <label for="venue">Venue:</label>
@@ -156,7 +172,7 @@
             <input type="hidden" name="organization" id="organization" value="{{ request.user.organization.id }}">
         {% endif %}
 
-        <div class="form-group">
+        {% comment %} <div class="form-group">
             <label for="participants">Select Participants:</label>
             <select name="participants" id="participants" class="form-control" multiple>
                 {% for player in players %}
@@ -168,9 +184,16 @@
                 {% endfor %}
             </select>
             <small class="form-text text-muted">Hold "Ctrl" (Windows) or "Cmd" (Mac) to select multiple participants.</small>
-        </div>
+        </div>  {% endcomment %}
+        <div class="form-group">
+        <label for="participants">Select Participants:</label>
+        <select name="participants" id="participants" class="form-control" multiple size="10" required>
+            <!-- Options dynamically populated -->
+        </select>
+        <small class="form-text text-muted">Hold "Ctrl" (Windows) or "Cmd" (Mac) to select multiple participants.</small>
+    </div>
 
-        <button type="submit" class="btn btn-success mt-3">Create</button>
+        <button type="submit" class="btn btn-success mt-3" style="margin-bottom:60px;">Create</button>
     </form>
 </div>
 
@@ -209,4 +232,79 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 </script>
+<script>
+    // Parse JSON data passed from Django view into JS object
+    const playersGrouped = {{ players_grouped_json|safe }};
+
+    // Define age categories for each gender code (must match your Player model choices)
+    const ageCategoriesByGender = {
+        'M': [
+            'men_senior',
+            'men_under-23',
+            'boys_under-19',
+            'boys_under-16',
+            'boys_under-14'
+        ],
+        'F': [
+            'women_senior',
+            'women_under-23',
+            'girls_under-19',
+            'girls_under-15'
+        ]
+    };
+
+    // Get DOM elements for selects
+    const genderSelect = document.getElementById('gender_type');
+    const ageCategorySelect = document.getElementById('age_category');
+    const participantsSelect = document.getElementById('participants');
+
+    // Utility: prettify age category string (replace underscores and capitalize words)
+    function prettifyAgeCategory(str) {
+        return str.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    // Fill age category dropdown options based on gender
+    function fillAgeCategories(gender) {
+        ageCategorySelect.innerHTML = '';
+        const categories = ageCategoriesByGender[gender] || [];
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = prettifyAgeCategory(cat);
+            ageCategorySelect.appendChild(option);
+        });
+        // Select first category by default and update participants list
+        if (categories.length > 0) {
+            ageCategorySelect.value = categories[0];
+            fillParticipants(gender, categories[0]);
+        }
+    }
+
+    // Fill participants multi-select based on gender and age category
+    function fillParticipants(gender, ageCategory) {
+        participantsSelect.innerHTML = '';
+        const players = (playersGrouped[gender] && playersGrouped[gender][ageCategory]) || [];
+        players.forEach(player => {
+            const option = document.createElement('option');
+            option.value = player.id;
+            option.textContent = player.name;
+            participantsSelect.appendChild(option);
+        });
+    }
+
+    // Initialize selects on page load
+    fillAgeCategories(genderSelect.value);
+
+    // Event listener: when gender changes, update age categories & participants
+    genderSelect.addEventListener('change', (event) => {
+        const selectedGender = event.target.value;
+        fillAgeCategories(selectedGender);
+    });
+
+    // Event listener: when age category changes, update participants
+    ageCategorySelect.addEventListener('change', (event) => {
+        fillParticipants(genderSelect.value, event.target.value);
+    });
+</script>
+
 {% endblock %}

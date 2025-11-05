@@ -258,7 +258,7 @@ class InjuryForm(forms.ModelForm):
             'player', 'reported_by', 'name', 'injury_date',
             'venue', 'team', 'type_of_activity',
             'cause_of_injury', 'nature_of_injury', 'expected_date_of_return',
-            'notes', 'affected_body_part', 'severity','severity_rating', 'player_status','unknown_injury_date',
+            'notes', 'affected_body_part', 'severity_rating', 'player_status','unknown_injury_date',
         ]
         widgets = {
             'player': forms.Select(attrs={'class': 'form-control'}),
@@ -273,7 +273,7 @@ class InjuryForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Notes', 'rows':2}),
             'affected_body_part': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Body region injured'}),
             # 'player_status': forms.Select(attrs={'class': 'form-control'}),
-            'severity': forms.Select(attrs={'class': 'form-control'}),
+            
             'severity_rating': forms.NumberInput(attrs={'class': 'form-control','placeholder': 'Severity Rating','min': 1,'max': 10,}),
         }
 
@@ -451,7 +451,7 @@ class MedicalDocumentFormN(forms.ModelForm):
 class TestAndResultForm(forms.ModelForm):
     class Meta:
         model = TestAndResult
-        fields = ['player', 'test', 'date', 'phase', 'best','notes','reported_by','reported_by_designation']
+        fields = ['player', 'test', 'date', 'phase', 'best','notes','reported_by']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
         }
@@ -465,6 +465,24 @@ class TestAndResultForm(forms.ModelForm):
             # Example: if there is a 'player' field
             if 'player' in self.fields:
                 self.fields['player'].queryset = Player.objects.filter(organization=organization)
+            if 'reported_by' in self.fields:
+                # Get the org admin user
+                try:
+                    org_admin_user = organization.user
+                except Organization.DoesNotExist:
+                    org_admin_user = None
+
+                # Get all staff user ids for this organization
+                staff_users = User.objects.filter(staff__organization=organization)
+
+                # Combine org admin + staff users queryset
+                users_qs = User.objects.none()
+                if org_admin_user:
+                    users_qs = User.objects.filter(id=org_admin_user.id) | staff_users
+                else:
+                    users_qs = staff_users
+
+                self.fields['reported_by'].queryset = users_qs.distinct()
 
 class TestSummaryFilterForm(forms.Form):
     player = forms.ModelChoiceField(

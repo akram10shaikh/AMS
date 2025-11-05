@@ -492,8 +492,24 @@
     </div>
   </div>
   {% endif %}
+ <!-- Chart container -->
+<div class="chart-container" style="width: 85%; margin: 2rem auto;">
+    {% if abc %}
+  <div style="display:flex; align-items:center; gap:15px; margin-bottom:8px;">
+  <div style="width:16px; height:16px; background-color:#0F52BA; border-radius:3px;"></div>
+  <span>Value</span>
+ <div style="width:16px; height:16px; background-color:red; border-radius:3px;"></div>
+  <span>GRP Average</span>
+  <div style="width:16px; height:16px; background-color:yellow; border-radius:3px;"></div>
+  <span>INDV Average</span>
+  <div style="width:16px; height:16px; background-color:green; border-radius:3px;"></div>
+  <span>Target</span>
+</div>
+  <canvas id="bestVsDateChart"></canvas>
 
-    <div class="table-container">
+   {% endif %}
+</div>
+<div class="table-container">
       {% if abc %}
       <table class="stats-table" style="margin-bottom: 2rem;">
           <thead>
@@ -533,141 +549,273 @@
       </table>
       {% endif %}
     </div>
+    </div>
     </main>
 
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+
 <script>
-  // Toggle fields based on date option radio selection
-  function toggleDateInputs(selectedOption) {
-    const fields = document.getElementById('date-range-fields');
-    const startInput = document.getElementById('startDateInput');
-    const endInput = document.getElementById('endDateInput');
-    if (selectedOption === 'range') {
-      fields.style.display = 'block';
-      startInput.disabled = false;
-      endInput.disabled = false;
-      startInput.required = true;
-      endInput.required = true;
-      startInput.addEventListener('change', () => {
-        endInput.min = startInput.value;
-        if (endInput.value < startInput.value) {
-          endInput.value = startInput.value;
+document.addEventListener("DOMContentLoaded", function() {
+    const rows = document.querySelectorAll('.player-info-table tr');
+
+    let target = null;
+    let individualNormalized = null;
+    let groupAverage = null;
+
+    rows.forEach(row => {
+        const th = row.querySelector('th');
+        const td = row.querySelector('td');
+        if (!th || !td) return;
+
+        const label = th.textContent.trim();
+        const value = parseFloat(td.textContent.trim());
+
+        if (label === 'Target') {
+            target = value;
+        } else if (label === 'Individual Average') {
+            individualNormalized = value;
+        } else if (label === 'Group Average') {
+            groupAverage = value;
         }
-      });
-    } else {
-      fields.style.display = 'none';
-      startInput.value = '';
-      endInput.value = '';
-      startInput.disabled = true;
-      endInput.disabled = true;
-      startInput.required = false;
-      endInput.required = false;
-    }
-  }
+    });
+    const chartData = JSON.parse(`[ 
+      {% for test in tests %} 
+        {"date": "{{ test.date|escapejs }}", "best": {{ test.best|default:0 }}}{% if not forloop.last %},{% endif %} 
+      {% endfor %} 
+    ]`);
 
-  // Update the number-of-tests dropdown
-  function updateNumTestsDropdown(count) {
-    const numTestsDropdown = document.getElementById('numTestsToShow');
-    numTestsDropdown.innerHTML = '';
-    for (let i = 1; i <= count; i++) {
-      const option = document.createElement('option');
-      option.value = i;
-      option.textContent = i;
-      numTestsDropdown.appendChild(option);
-    }
-  }
+    const labels = chartData.map(item => item.date);
+    const bestValues = chartData.map(item => item.best);
 
-  // Fetch test count for dropdown population
-  function fetchPlayerTestResults(updateDropdownOnly = true) {
-    const playerId = document.getElementById('playerSelect').value;
-    const test = document.getElementById('testSelect').value;
-    const startDate = document.getElementById('startDateInput').value;
-    const endDate = document.getElementById('endDateInput').value;
-    if (!playerId || !test) return;
-    fetch(`/player_app/get-player-test-results/?player_id=${playerId}&test=${test}&start_date=${startDate}&end_date=${endDate}`)
-      .then(resp => resp.json())
-      .then(data => {
-        updateNumTestsDropdown(data.count);
-        if (!updateDropdownOnly) {
-          displayTestResults(data.results);
+    // Create chart
+    const ctx = document.getElementById('bestVsDateChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Best Score',
+                data: bestValues,
+                backgroundColor: '#0F52BA',
+                borderColor: '#0F52BA',
+                borderWidth: 0.6,
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'YO YO TEST'
+                },
+                annotation: {
+                    annotations: {
+                        targetLine: {
+                            type: 'line',
+                            yMin: target,
+                            yMax: target,
+                            borderColor: 'green',
+                            borderWidth: 2,
+                             borderDash: [6, 4],
+                            label: {
+                                content: 'Target',
+                                enabled: true,
+                                position: 'end',
+                                backgroundColor: 'green'
+                            }
+                        },
+                        individualLine: {
+                            type: 'line',
+                            yMin: individualNormalized,
+                            yMax: individualNormalized,
+                            borderColor: 'yellow',
+                            borderWidth: 2,
+                             borderDash: [6, 4],
+                            label: {
+                                content: 'Individual Average',
+                                enabled: true,
+                                position: 'end',
+                                backgroundColor: 'yellow'
+                            }
+                        },
+                        groupLine: {
+                            type: 'line',
+                            yMin: groupAverage,
+                            yMax: groupAverage,
+                            borderColor: 'red',
+                            borderWidth: 2,
+                             borderDash: [6, 4], 
+                            label: {
+                                content: 'Group Average',
+                                enabled: true,
+                                position: 'end',
+                                backgroundColor: 'red'
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Date' },
+                    ticks: { autoSkip: false, maxRotation: 45, minRotation: 0 }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Value' }
+                }
+            }
         }
-      });
-  }
-
-  // Fetch players for the selected test
-  document.getElementById('testSelect').addEventListener('change', function() {
-    const selectedTest = this.value;
-    const playerSelect = document.getElementById('playerSelect');
-    playerSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
-    fetch(`/player_app/get-players-by-test/?test=${encodeURIComponent(selectedTest)}`)
-      .then(response => response.json())
-      .then(data => {
-        playerSelect.innerHTML = '<option value="" disabled selected>-- Select Player --</option>';
-        data.players.forEach(player => {
-          const option = document.createElement('option');
-          option.value = player.id;
-          option.textContent = player.name;
-          playerSelect.appendChild(option);
-        });
-      })
-      .catch(error => {
-        playerSelect.innerHTML = '<option value="" disabled selected>Error loading players</option>';
-        console.error('Error fetching players:', error);
-      });
-  });
-
-  // Update dropdown when player, test, or dates change
-  document.getElementById('playerSelect').addEventListener('change', () => fetchPlayerTestResults(true));
-  document.getElementById('testSelect').addEventListener('change', () => fetchPlayerTestResults(true));
-  document.getElementById('startDateInput').addEventListener('change', () => fetchPlayerTestResults(true));
-  document.getElementById('endDateInput').addEventListener('change', () => fetchPlayerTestResults(true));
-
-  // Fetch and display test results when N dropdown changes
-  document.getElementById('numTestsToShow').addEventListener('change', function() {
-    const playerId = document.getElementById('playerSelect').value;
-    const test = document.getElementById('testSelect').value;
-    const numTests = this.value;
-    const startDate = document.getElementById('startDateInput').value;
-    const endDate = document.getElementById('endDateInput').value;
-    if (!playerId || !test || !numTests) return;
-    fetch(`/player_app/get-player-test-results/?player_id=${playerId}&test=${test}&limit=${numTests}&start_date=${startDate}&end_date=${endDate}`)
-      .then(resp => resp.json())
-      .then(data => {
-        displayTestResults(data.results, numTests);
-      });
-  });
-
-  // Display test results and retain selection in dropdown
-  function displayTestResults(results, selectedValue = null) {
-    const numTestsDropdown = document.getElementById('numTestsToShow');
-    if (!numTestsDropdown) {
-      console.error('Dropdown with id "numTestsToShow" not found');
-      return;
-    }
-    numTestsDropdown.innerHTML = '';
-
-    if (!results || results.length === 0) {
-      const option = document.createElement('option');
-      option.textContent = 'No tests found';
-      option.disabled = true;
-      numTestsDropdown.appendChild(option);
-      return;
-    }
-
-    for (let i = 1; i <= results.length; i++) {
-      const option = document.createElement('option');
-      option.value = i;
-      option.textContent = i;
-      if (selectedValue && +selectedValue === i) {
-        option.selected = true;
-      }
-      numTestsDropdown.appendChild(option);
-    }
-
-    if (!selectedValue) {
-      numTestsDropdown.value = 1;
-    }
-  }
+    });
+});
 </script>
 
-{% endblock %}
+<script>
+ // Toggle fields based on date option radio selection
+function toggleDateInputs(selectedOption) {
+  const fields = document.getElementById('date-range-fields');
+  const startInput = document.getElementById('startDateInput');
+  const endInput = document.getElementById('endDateInput');
+  if (selectedOption === 'range') {
+    fields.style.display = 'block';
+    startInput.disabled = false;
+    endInput.disabled = false;
+    startInput.required = true;
+    endInput.required = true;
+    startInput.addEventListener('change', () => {
+      endInput.min = startInput.value;
+      if (endInput.value < startInput.value) {
+        endInput.value = startInput.value;
+      }
+    });
+  } else {
+    fields.style.display = 'none';
+    startInput.value = '';
+    endInput.value = '';
+    startInput.disabled = true;
+    endInput.disabled = true;
+    startInput.required = false;
+    endInput.required = false;
+  }
+}
+
+
+// Update the number-of-tests dropdown
+function updateNumTestsDropdown(count) {
+  const numTestsDropdown = document.getElementById('numTestsToShow');
+  numTestsDropdown.innerHTML = '';
+  for (let i = 1; i <= count; i++) {
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = i;
+    numTestsDropdown.appendChild(option);
+  }
+}
+
+
+// Fetch test count for dropdown population
+function fetchPlayerTestResults(updateDropdownOnly = true) {
+  const playerId = document.getElementById('playerSelect').value;
+  const test = document.getElementById('testSelect').value;
+  const startDate = document.getElementById('startDateInput').value;
+  const endDate = document.getElementById('endDateInput').value;
+  if (!playerId || !test) return;
+  fetch(`/player_app/get-player-test-results/?player_id=${playerId}&test=${test}&start_date=${startDate}&end_date=${endDate}`)
+    .then(resp => resp.json())
+    .then(data => {
+      updateNumTestsDropdown(data.count);
+      if (!updateDropdownOnly) {
+        displayTestResults(data.results);
+      }
+    });
+}
+
+
+// Fetch players for the selected test
+document.getElementById('testSelect').addEventListener('change', function() {
+  const selectedTest = this.value;
+  const playerSelect = document.getElementById('playerSelect');
+  playerSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+  fetch(`/player_app/get-players-by-test/?test=${encodeURIComponent(selectedTest)}`)
+    .then(response => response.json())
+    .then(data => {
+      playerSelect.innerHTML = '<option value="" disabled selected>-- Select Player --</option>';
+      data.players.forEach(player => {
+        const option = document.createElement('option');
+        option.value = player.id;
+        option.textContent = player.name;
+        playerSelect.appendChild(option);
+      });
+    })
+    .catch(error => {
+      playerSelect.innerHTML = '<option value="" disabled selected>Error loading players</option>';
+      console.error('Error fetching players:', error);
+    });
+});
+
+
+// Update dropdown when player, test, or dates change
+document.getElementById('playerSelect').addEventListener('change', () => fetchPlayerTestResults(true));
+document.getElementById('testSelect').addEventListener('change', () => fetchPlayerTestResults(true));
+document.getElementById('startDateInput').addEventListener('change', () => fetchPlayerTestResults(true));
+document.getElementById('endDateInput').addEventListener('change', () => fetchPlayerTestResults(true));
+
+
+// Fetch and display test results when N dropdown changes
+document.getElementById('numTestsToShow').addEventListener('change', function() {
+  const playerId = document.getElementById('playerSelect').value;
+  const test = document.getElementById('testSelect').value;
+  const numTests = this.value;
+  const startDate = document.getElementById('startDateInput').value;
+  const endDate = document.getElementById('endDateInput').value;
+  if (!playerId || !test || !numTests) return;
+  fetch(`/player_app/get-player-test-results/?player_id=${playerId}&test=${test}&limit=${numTests}&start_date=${startDate}&end_date=${endDate}`)
+    .then(resp => resp.json())
+    .then(data => {
+      displayTestResults(data.results, numTests);
+    });
+});
+
+
+// Display test results and retain selection in dropdown
+function displayTestResults(results, selectedValue = null) {
+  const numTestsDropdown = document.getElementById('numTestsToShow');
+  if (!numTestsDropdown) {
+    console.error('Dropdown with id "numTestsToShow" not found');
+    return;
+  }
+  numTestsDropdown.innerHTML = '';
+
+
+  if (!results || results.length === 0) {
+    const option = document.createElement('option');
+    option.textContent = 'No tests found';
+    option.disabled = true;
+    numTestsDropdown.appendChild(option);
+    return;
+  }
+
+
+  for (let i = 1; i <= results.length; i++) {
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = i;
+    if (selectedValue && +selectedValue === i) {
+      option.selected = true;
+    }
+    numTestsDropdown.appendChild(option);
+  }
+
+
+  if (!selectedValue) {
+    numTestsDropdown.value = 1;
+  }
+}
+
+</script>
+
+{%endblock%}

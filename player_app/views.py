@@ -1064,24 +1064,38 @@ def organization_camps_tournaments(request):
 
         if selected_org:
             camps = CampTournament.objects.filter(organization_id=selected_org, is_deleted=False)
+            male_players = Player.objects.filter(organization_id=selected_org, gender='Male')
+            female_players = Player.objects.filter(organization_id=selected_org, gender='Female')
         else:
             camps = CampTournament.objects.filter(is_deleted=False)  # Show all camps
+            male_players = Player.objects.filter(gender='Male')
+            female_players = Player.objects.filter(gender='Female')
 
     # Staff with permission: Sees all camps
     elif hasattr(request.user, 'staff') and request.user.staff.view_camps_tournaments:
+        org = request.user.staff.organization
         camps = CampTournament.objects.filter(is_deleted=False)
+        male_players = Player.objects.filter(organization=org, gender='Male')
+        female_players = Player.objects.filter(organization=org, gender='Female')
 
     # Regular users: See only camps in their organization
     elif hasattr(request.user, 'organization') and request.user.organization:
+        org = request.user.staff.organization
         camps = CampTournament.objects.filter(organization=request.user.organization, is_deleted=False)
+        male_players = Player.objects.filter(organization=org, gender='Male')
+        female_players = Player.objects.filter(organization=org, gender='Female')
 
     # No Access: Deny access if the user doesn’t meet the criteria
     else:
         return HttpResponseForbidden(
             "You must belong to an organization or have the necessary permissions to view camps and tournaments.")
+  
+
 
     return render(request, 'player_app/organization/organization_camps_tournaments.html', {
         'camps': camps,
+        'male_players': male_players,
+        'female_players': female_players,
         'organizations': organizations if request.user.is_superuser else None
     })
 
@@ -1161,12 +1175,25 @@ def organization_create_camp(request):
         return HttpResponseForbidden(
             "You must be a Super Admin, Organization Admin, or a Staff member to create a camp.")
 
+    players_grouped = {'M': {}, 'F': {}}
+    for player in players:
+        gender = player.gender
+        age_cat = player.age_category
+        if gender in ['M', 'F']:
+            if age_cat not in players_grouped[gender]:
+                players_grouped[gender][age_cat] = []
+            players_grouped[gender][age_cat].append({'id': player.id, 'name': player.name})
+
+    players_grouped_json = json.dumps(players_grouped)
+
     if request.method == "POST":
         name = request.POST.get("name")
         camp_type = request.POST.get("camp_type")
         start_date = request.POST.get("start_date")
-        end_date = request.POST.get("end_date")
+        gender = request.POST.get("gender")
+        age_category = request.POST.get("age_category")
         venue = request.POST.get("venue")
+
 
         # Super Admin: Allow selecting an organization
         if request.user.is_superuser:
@@ -1186,7 +1213,8 @@ def organization_create_camp(request):
             name=name,
             camp_type=camp_type,
             start_date=start_date,
-            end_date=end_date,
+            gender=gender,
+            age_category=age_category,
             venue=venue,
             organization=organization,
             created_by=request.user
@@ -1199,10 +1227,11 @@ def organization_create_camp(request):
 
         messages.success(request, "Camp/Tournament created successfully!")
         return redirect("organization_camps_tournaments")  # Redirect after creation
-
+    
     return render(request, "player_app/organization/organization_create_camp.html", {
         "organizations": organizations,  # Super Admin can select
-        "players": players  # Filtered players for the user
+        "players": players,    # Filtered players for the user
+        "players_grouped_json": players_grouped_json,
     })
 
 def organization_delete_camp(request, camp_id):
@@ -1331,7 +1360,7 @@ def add_test_result(request):
             instance.distance_covered = float(result["total_distance"])
             instance.predicted_vo2max = float(result["approximately_vo2max"])
             instance.save()
-            return redirect('new_test_dashboard') 
+            return redirect('test_results_main') 
     else:
         form = TestAndResultForm(organization=organization)
 
@@ -2544,25 +2573,20 @@ def player_info(request, player_id, test, start, end):
     min_max_formula = session_settings.get('min_max_formula', 'all_players')
     min_is_better = session_settings.get('min_is_better', False)
     grp_avg_option = session_settings.get('grp_avg_option', None)
-    print()
-    print(min_max_formula)
-    print()
+    
     # Calculate min and max based on formula
     if min_max_formula == "all_players":
         min_value = TestAndResult.objects.filter(test=test).aggregate(Min('best'))['best__min']
         max_value = TestAndResult.objects.filter(test=test).aggregate(Max('best'))['best__max']
-        print("all_player",min_value,max_value)
-        print()
+       
     elif min_max_formula == "all_players_by_gender":
         min_value = TestAndResult.objects.filter(test=test, player__gender=player.gender).aggregate(Min('best'))['best__min']
         max_value = TestAndResult.objects.filter(test=test, player__gender=player.gender).aggregate(Max('best'))['best__max']
-        print("all_player_by_gender",min_value,max_value)
-        print()
+        
     elif min_max_formula == "category_based":
         min_value = TestAndResult.objects.filter(test=test, player__age_category=player.age_category).aggregate(Min('best'))['best__min']
         max_value = TestAndResult.objects.filter(test=test, player__age_category=player.age_category).aggregate(Max('best'))['best__max']
-        print("category_based",min_value,max_value)
-        print()
+          
     elif min_max_formula == "date_based":
         group_filter = TestAndResult.objects.filter(test=test)
         if start and end:
@@ -2794,5 +2818,113 @@ def save_report_settings_view(request):
     messages.success(request, 'Report settings saved to session successfully!')
     return redirect(reverse('player_record'))
 
+@login_required
+def test_results_main(request):
+    user = request.user
+    # User's organization (adjust based on your user model)
+    user_organization = getattr(user, 'organization', None)
+    if not user_organization:
+        return render(request, 'player_app/organization/test_dashboard.html', {
+            'error_message': "Your account is not linked to any organization.",
+        })
 
+    # Players in user's organization
+    players_in_org = Player.objects.filter(organization=user_organization)
 
+    # Forms initialization with restricted player queryset
+    if request.method == 'POST':
+        add_form = TestAndResultForm(request.POST)
+        add_form.fields['player'].queryset = players_in_org
+        if add_form.is_valid():
+            add_form.save()
+            return redirect('test_dashboard')
+    else:
+        add_form = TestAndResultForm()
+        add_form.fields['player'].queryset = players_in_org
+
+    filter_form = TestSummaryFilterForm(request.GET or None)
+    filter_form.fields['player'].queryset = players_in_org
+
+    # Base queryset with related player, user; filtered by org players
+    qs = (
+        TestAndResult.objects
+        .select_related('player', 'reported_by')
+        .filter(player__in=players_in_org)
+        .order_by('player__name', 'test', 'date', 'id')
+    )
+
+    # Apply filtering
+    if filter_form.is_valid():
+        if filter_form.cleaned_data.get('player'):
+            qs = qs.filter(player=filter_form.cleaned_data['player'])
+        if filter_form.cleaned_data.get('test'):
+            qs = qs.filter(test=filter_form.cleaned_data['test'])
+
+    # Group test results by (player_id, test)
+    grouped_results = defaultdict(list)
+    for tr in qs:
+        key = (tr.player.id, tr.test)
+        grouped_results[key].append(tr)
+
+    summary_rows = []
+    for (player_id, test), trials in grouped_results.items():
+        if not trials:
+            continue
+
+        # Sort trials by date and id to keep chronological order
+        trials = sorted(trials, key=lambda x: (x.date or x.created_at, x.id))
+        last_two_trials = trials[-2:] if len(trials) >= 2 else trials[-1:]
+
+        # Trials data for columns
+        trial_1_best = last_two_trials[0].best if len(last_two_trials) == 2 else None
+        trial_2_best = last_two_trials[-1].best
+        best_trial = min(t.best for t in trials if t.best is not None)
+
+        last_trial_obj = last_two_trials[-1]
+
+        # Individual average stored in PlayerAggregate or computed from TestAndResult
+        player_agg = PlayerAggregate.objects.filter(player__id=player_id, test=test).first()
+        indv_average = player_agg.individual_average if player_agg else None
+
+        # Group average from GenderAggregate or CategoryAggregate fallback
+        gender = getattr(last_trial_obj.player, 'gender', None)
+        category = getattr(last_trial_obj.player, 'category', None)
+
+        group_average = None
+        if gender:
+            gender_agg = GenderAggregate.objects.filter(gender=gender, test=test).first()
+            group_average = gender_agg.average if gender_agg else None
+        if group_average is None and category:
+            cat_agg = CategoryAggregate.objects.filter(category=category, test=test).first()
+            group_average = cat_agg.average if cat_agg else None
+
+        summary_rows.append({
+            'serial': None,  # Will assign later per test
+            'player_name': last_trial_obj.player.name,
+            'test': test,
+            'last_date': last_trial_obj.date,
+            'last_phase': last_trial_obj.phase,
+            'trial_1': trial_1_best,
+            'trial_2': trial_2_best,
+            'best_trial': best_trial,
+            'indv_average': indv_average,
+            'group_average': group_average,
+        })
+
+    # Group rows by test for separate tables
+    summary_by_test = defaultdict(list)
+    for row in summary_rows:
+        summary_by_test[row['test']].append(row)
+
+    # Assign serial numbers per test group
+    for test_name, rows in summary_by_test.items():
+        for idx, row in enumerate(rows, start=1):
+            row['serial'] = idx
+
+    context = {
+        'add_form': add_form,
+        'form': filter_form,
+        'summary_by_test': dict(summary_by_test),
+    }
+
+    return render(request, 'player_app/organization/test_result_main.html', context)

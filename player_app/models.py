@@ -168,6 +168,8 @@ class CampTournament(models.Model):
     camp_type = models.CharField(max_length=50, choices=CAMP_TYPES, default='camp')
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=10, choices=[('Male', 'Male'), ('Female', 'Female')], null=True, blank=True)   
+    age_category = models.CharField(max_length=50, null=True, blank=True)
     venue = models.CharField(max_length=255, null=True, blank=True)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='camps_created')
