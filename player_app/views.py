@@ -339,7 +339,7 @@ from django.utils.timezone import now
 def organization_player_edit(request, pk):
     if request.user.role == "Staff":
         player = get_object_or_404(Player, pk=pk, organization=request.user.staff.organization)
-        print(player.user)
+        
         return redirect('organization_player_detail', pk=pk)
         
     org = get_object_or_404(Organization, user=request.user)
@@ -816,7 +816,7 @@ def organization_create_injury(request):
         # Pass the filtered querysets to the form so the select fields are filtered
         form = InjuryForm(request.POST, players_qs=players_qs, physios_qs=physios_qs)
         if form.is_valid():
-            print(form.cleaned_data['affected_body_part'])
+           
             injury = form.save()
             # Log injury creation
             InjuryActivityLog.objects.create(
@@ -825,9 +825,9 @@ def organization_create_injury(request):
                 action='created',
                 details=f'Injury reported by {injury.reported_by} for player {injury.player}'
             )
-            return redirect('organization_player_list')  # Update to your desired redirect
+            return redirect('organization_injury_list')  # Update to your desired redirect
         else:
-            print("Form errors:", form.errors)  # Print all form errors in console for debugging
+            print()# Print all form errors in console for debugging
     else:
         # GET: Create empty form with filtered choices
         form = InjuryForm(players_qs=players_qs, physios_qs=physios_qs)
@@ -1396,7 +1396,7 @@ def organization_dashboard_org(request):
         ("B - U14",    {'gender': 'M', 'age_category': 'boys_under-15',    'label': "B - U14"}),
         ("B - U16",    {'gender': 'M', 'age_category': 'boys_under-16',    'label': "B - U16"}),  # Add to your model choices if missing
         ("B - U19",    {'gender': 'M', 'age_category': 'boys_under-19',    'label': "B - U19"}),
-        ("M - U23",    {'gender': 'M', 'age_category': 'men_under-23',     'label': "M - U23"}),
+        ("B - U23",    {'gender': 'M', 'age_category': 'men_under-23',     'label': "B - U23"}),
         ("M - SENIOR", {'gender': 'M', 'age_category': 'men_senior',       'label': "M - SENIOR"}),
         ("W - U15",    {'gender': 'F', 'age_category': 'girls_under-15',   'label': "W - U15"}),
         ("G - U19",    {'gender': 'F', 'age_category': 'girls_under-19',   'label': "G - U19"}),
@@ -1428,9 +1428,9 @@ def organization_dashboard_org(request):
         })
     
     test_org = Player.objects.filter(organization=organization)
-    print("Mens Senior Players in Org:")
+    
     test_filter = Player.objects.filter(player_status__iexact="full participation",age_category="men_senior" ,organization=organization).count()
-    print(test_filter)
+    
 
 
     # --- Dashboard filter (all other data below can use the filtered players/injuries) ---
@@ -1479,7 +1479,7 @@ def organization_dashboard_org(request):
         reverse=True
     )
 
-    print(category_cards)
+    
 
     context = {
         'selected_category': selected_category,
