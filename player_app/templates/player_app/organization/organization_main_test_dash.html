@@ -1,0 +1,59 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Test Dashboard{% endblock %}
+
+{% block extra_head %}
+    <style>
+        table { width: 80%; border-collapse: collapse; margin: 2em auto; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
+        th { background: #f7f7f7; }
+        .btn { padding: 8px 16px; cursor: pointer; border-radius: 3px; order: none; }
+        .add-btn { background: #1976d2; color: #ffffffff; }
+        .view-btn { background: #43a047; color: #fff; }
+        .create-btn { background: #ff9800; color: #fff; margin: 1em auto; display: block; }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h2 style="text-align:center;">Test Results Main Page</h2>
+    <a href="{% url 'player_record' %}" class="btn btn-secondary" aria-label="View Player Records">View Player Records</a>
+  <a href="{% url 'nomative_data' %}" class="btn btn-secondary" aria-label="View Nomative Data">View Nomative Data</a>
+    <table>
+        <thead>
+            <tr>
+                <th>Test Name</th>
+                <th>Add Test Result</th>
+                <th>View Database</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Yo-Yo Test</td>
+                <td><a href="{% url 'add_test_results' 'YoYo' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
+                <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+            </tr>
+            <tr>
+                <td>10m Test</td>
+                <td><a href="{% url 'add_test_results' '10m' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
+                <td><a href="{% url 'test_results_by_name' '10m' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+            </tr>
+            <tr>
+                <td>20m Test</td>
+                <td><a href="{% url 'add_test_results' '20m' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
+                <td><a href="{% url 'test_results_by_name' '20m' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+            </tr>
+            <tr>
+                <td>40m Test</td>
+                <td><a href="{% url 'add_test_results' '40m' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
+                <td><a href="{% url 'test_results_by_name' '40m' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+            </tr>
+            <tr>
+                <td>SBJ (Standing Broad Jump)</td>
+                <td><a href="{% url 'add_test_results' 'SBJ' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
+                <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+            </tr>
+        </tbody>
+    </table>
+    
+{% endblock %}

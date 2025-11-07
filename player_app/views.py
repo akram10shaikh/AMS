@@ -1366,6 +1366,8 @@ def add_test_result(request):
 
     return render(request, 'player_app/organization/test_add.html', {'form': form})
 
+
+
 from django.shortcuts import render
 from django.db.models import Count, Q
 from .models import Player, Injury, Staff
@@ -2928,3 +2930,83 @@ def test_results_main(request):
     }
 
     return render(request, 'player_app/organization/test_result_main.html', context)
+
+
+# New test Views
+def test_dashboard_new(request):
+    return render(request, 'player_app/organization/organization_main_test_dash.html')
+
+
+def test_results_view(request, test_name):
+    # Filter TestAndResult by the test_name from URL
+    print(test_name)
+    results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
+
+    context = {
+        'test_name': test_name,
+        'results': results,
+    }
+    return render(request, 'player_app/organization/organization_test_data.html', context)
+
+from django.shortcuts import render, redirect
+from .models import TestAndResult, Player, User  # Make sure these models are imported
+
+def add_test_results(request, test_name=None):
+    user_organization = getattr(request.user, 'organization', None)
+    
+    players = Player.objects.filter(organization=user_organization)
+    events = CampTournament.objects.filter(is_deleted=False)
+    staff = Staff.objects.filter(organization=user_organization)
+
+    
+     # Handle form submission
+    if request.method == "POST":
+        player_id = request.POST.get('player')
+        test = request.POST.get('test')
+        date = request.POST.get('date')
+        phase = request.POST.get('phase')
+        best = request.POST.get('best')
+        notes = request.POST.get('notes')
+        reported_by_id = request.POST.get('reported_by')
+
+        # Basic field validation (add your own as needed)
+        errors = []
+        if not player_id: errors.append("Player is required.")
+        if not test: errors.append("Test is required.")
+        if not date: errors.append("Date is required.")
+        if not phase: errors.append("Phase is required.")
+        if not best: errors.append("Best is required.")
+        if not reported_by_id: errors.append("Reported by is required.")
+
+        # If no errors, save the result
+        if not errors:
+            player = Player.objects.get(pk=player_id)
+            reported_by = User.objects.get(pk=reported_by_id)
+            TestAndResult.objects.create(
+                player=player,
+                test=test,
+                date=date,
+                phase=phase,
+                best=float(best),
+                notes=notes,
+                reported_by=reported_by
+            )
+            return redirect('test_results_by_name', test_name=test)
+        # Pass errors back to template if any
+        else:
+            return render(request, 'player_app/organization/organization_test_add.html', {
+                'test_name': test_name,
+                'errors': errors,
+                'players': players,
+                'events': events,
+                'staff':staff, 
+                # you may need players/staff for dropdowns
+            })
+    else:
+        return render(request, 'player_app/organization/organization_test_add.html', {
+            'test_name': test_name,
+            'players': players,
+            'events': events,
+            'staff':staff,
+            # you may need players/staff for dropdowns
+        })

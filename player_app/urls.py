@@ -86,8 +86,12 @@ urlpatterns = [
                   path('organization/test/dashboard', views.test_dashboard, name='test_dashboard'),
                   path('test/add/', views.add_test_result, name='add_test_result'),
                   path('organization/test-main/', views.test_results_main, name='test_results_main'),
+                  path('organization/test-dashboard/', views.test_dashboard_new, name='test_dashboard_new'),
+                  path('test-results/<str:test_name>/', views.test_results_view, name='test_results_by_name'),
+                  path('add-test-results/<str:test_name>/', views.add_test_results, name='add_test_results'),
 
                   path('organization/dashboard/', views.organization_dashboard_org, name='organization_dashboard_org'),
+                 
 
                   path('teams-dashboard/', views.teams_dashboard, name='teams_dashboard'),
 

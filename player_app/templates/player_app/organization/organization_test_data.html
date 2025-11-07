@@ -1,0 +1,80 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Test Results{% endblock %}
+
+{% block extra_head %}
+    <style>
+        table { width: 90%; margin: 1em auto; border-collapse: collapse; }
+        th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+        th { background-color: #f0f0f0; }
+        #searchInput {
+            width: 300px;
+            margin: 2em auto 1em auto;
+            display: block;
+            padding: 8px;
+            font-size: 16px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h2 style="text-align:center;">{{ test_name }} Test Results</h2>
+
+    <input type="text" id="searchInput" placeholder="Search player name..." aria-label="Search Player">
+
+    <table id="resultsTable">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Player</th>
+                <th>Date</th>
+                <th>Phase</th>
+                <th>Best</th>
+                <th>Notes</th>
+                <th>Individual Average</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td class="player-name">{{ result.player.name }}</td>
+                <td>{{ result.date }}</td>
+                <td>{{ result.phase }}</td>
+                <td>{{ result.best }}</td>
+                <td>{{ result.notes|default:"-" }}</td>
+                <td>{{ result.indv_average|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7">No results found for {{ test_name }}.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('searchInput');
+            const table = document.getElementById('resultsTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            searchInput.addEventListener('keyup', function () {
+                const filter = searchInput.value.toLowerCase();
+
+                for (let row of rows) {
+                    const playerCell = row.querySelector('.player-name');
+                    if (playerCell) {
+                        const playerName = playerCell.textContent.toLowerCase();
+                        if (playerName.indexOf(filter) > -1) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+{% endblock %}
