@@ -2624,6 +2624,15 @@ def player_info(request, player_id, test, start, end):
             group_tests = group_tests.filter(date__range=[start, end], player__age_category=player.age_category)
         else:
             group_tests = group_tests.filter(player__age_category=player.age_category)
+    
+    elif grp_avg_option == "camp_or_tournament":
+        if tests.exists():
+            phase = tests.first().phase
+            group_tests = TestAndResult.objects.filter(test=test, phase=phase)
+            group_avg = group_tests.aggregate(avg_best=Avg('best'))['avg_best']
+        else:
+            group_avg = None
+
     else:
         if start and end:
             group_tests = group_tests.filter(date__range=[start, end])
