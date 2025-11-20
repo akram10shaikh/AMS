@@ -2944,18 +2944,50 @@ def test_results_main(request):
 # New test Views
 def test_dashboard_new(request):
     return render(request, 'player_app/organization/organization_main_test_dash.html')
-
+from django.core.paginator import Paginator
+from django.db.models import Q
 
 def test_results_view(request, test_name):
-    # Filter TestAndResult by the test_name from URL
-    print(test_name)
+    search_query = request.GET.get('search', '').strip()
+
     results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
+
+    # Filter by player name if search query is present
+    if search_query:
+        results = results.filter(player__name__icontains=search_query)
+
+    paginator = Paginator(results, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    player_ids = results.values_list('player_id', flat=True).distinct()
+
+    from django.db.models import Max
+
+    latest_dates = TestAndResult.objects.filter(
+        player_id__in=player_ids,
+        indv_average__isnull=False
+    ).values('player_id').annotate(latest_date=Max('date'))
+
+    latest_indv_avgs = {}
+    for entry in latest_dates:
+        latest_result = TestAndResult.objects.filter(
+            player_id=entry['player_id'],
+            date=entry['latest_date'],
+            indv_average__isnull=False
+        ).first()
+        if latest_result:
+            latest_indv_avgs[entry['player_id']] = latest_result.indv_average
 
     context = {
         'test_name': test_name,
-        'results': results,
+        'page_obj': page_obj,
+        'total_results': paginator.count,
+        'latest_indv_avgs': latest_indv_avgs,
+        'search_query': search_query,  # pass to template for form value retention
     }
     return render(request, 'player_app/organization/organization_test_data.html', context)
+
 
 from django.shortcuts import render, redirect
 from .models import TestAndResult, Player, User  # Make sure these models are imported
@@ -2987,17 +3019,25 @@ def add_test_results(request, test_name=None):
         if not best: errors.append("Best is required.")
         if not reported_by_id: errors.append("Reported by is required.")
 
+
         # If no errors, save the result
         if not errors:
+            phase_data = CampTournament.objects.get(id=int(phase))
+            nomative_data = NomativeData.objects.get(final_level=float(best))
+            total_distance = nomative_data.total_distance
+            approximately_vo2max = nomative_data.approximately_vo2max
+
             player = Player.objects.get(pk=player_id)
             reported_by = User.objects.get(pk=reported_by_id)
             TestAndResult.objects.create(
                 player=player,
                 test=test,
                 date=date,
-                phase=phase,
+                phase=phase_data,
                 best=float(best),
                 notes=notes,
+                distance_covered=total_distance,
+                predicted_vo2max=approximately_vo2max,
                 reported_by=reported_by
             )
             return redirect('test_results_by_name', test_name=test)

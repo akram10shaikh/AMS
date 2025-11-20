@@ -385,7 +385,7 @@ class TestAndResult(models.Model):
     test = models.CharField(max_length=32, choices=TEST_CHOICES, null=True)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     date = models.DateField(null=True)
-    phase = models.CharField(max_length=128, null=True)
+    phase = models.ForeignKey(CampTournament,on_delete=models.CASCADE,null=True)
     best = models.FloatField(null=True, blank=True)
     notes = models.TextField(blank=True, null=True)
     distance_covered = models.FloatField(null=True, blank=True)

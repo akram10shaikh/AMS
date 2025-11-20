@@ -1,5 +1,6 @@
 {% extends "player_app/organization/base.html" %}
 {% load static %}
+{% load dict_extras %}
 
 {% block title %}Test Results{% endblock %}
 
@@ -10,10 +11,29 @@
         th { background-color: #f0f0f0; }
         #searchInput {
             width: 300px;
-            margin: 2em auto 1em auto;
-            display: block;
             padding: 8px;
             font-size: 16px;
+        }
+        .pagination {
+            text-align: center;
+            margin: 2em 0;
+        }
+        .pagination a, .pagination strong {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 0 2px;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+            color: #333;
+            text-decoration: none;
+        }
+        .pagination strong {
+            background: #e0e0e0;
+            font-weight: bold;
+        }
+        form.search-form {
+            text-align: center;
+            margin: 2em auto 1em auto;
         }
     </style>
 {% endblock %}
@@ -21,9 +41,16 @@
 {% block content %}
     <h2 style="text-align:center;">{{ test_name }} Test Results</h2>
 
-    <input type="text" id="searchInput" placeholder="Search player name..." aria-label="Search Player">
+    <form method="get" class="search-form" aria-label="Search Player Form">
+        <input type="text" name="search" id="searchInput" placeholder="Search player name..." value="{{ search_query }}">
+        <button type="submit">Search</button>
+    </form>
 
-    <table id="resultsTable">
+    <p style="text-align:center; margin-top: 0.5em;">
+        Total rows: {{ total_results }}
+    </p>
+
+    <table id="resultsTable" aria-describedby="results summary">
         <thead>
             <tr>
                 <th>No</th>
@@ -36,15 +63,15 @@
             </tr>
         </thead>
         <tbody>
-            {% for result in results %}
+            {% for result in page_obj %}
             <tr>
-                <td>{{ forloop.counter }}</td>
+                <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
                 <td class="player-name">{{ result.player.name }}</td>
                 <td>{{ result.date }}</td>
                 <td>{{ result.phase }}</td>
                 <td>{{ result.best }}</td>
                 <td>{{ result.notes|default:"-" }}</td>
-                <td>{{ result.indv_average|default:"-" }}</td>
+                <td>{{ latest_indv_avgs|get_item:result.player.id|default:"-" }}</td>
             </tr>
             {% empty %}
             <tr>
@@ -54,27 +81,24 @@
         </tbody>
     </table>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const searchInput = document.getElementById('searchInput');
-            const table = document.getElementById('resultsTable');
-            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    <div class="pagination" style="margin-bottom:100px;">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">&laquo; First</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">&lt; Prev</a>
+        {% endif %}
 
-            searchInput.addEventListener('keyup', function () {
-                const filter = searchInput.value.toLowerCase();
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+                <strong>{{ num }}</strong>
+            {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
 
-                for (let row of rows) {
-                    const playerCell = row.querySelector('.player-name');
-                    if (playerCell) {
-                        const playerName = playerCell.textContent.toLowerCase();
-                        if (playerName.indexOf(filter) > -1) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    }
-                }
-            });
-        });
-    </script>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next &gt;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last &raquo;</a>
+        {% endif %}
+    </div>
+
 {% endblock %}
