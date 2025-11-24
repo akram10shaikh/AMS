@@ -827,7 +827,7 @@ def organization_create_injury(request):
             )
             return redirect('organization_injury_list')  # Update to your desired redirect
         else:
-            print()# Print all form errors in console for debugging
+            print(form.errors)# Print all form errors in console for debugging
     else:
         # GET: Create empty form with filtered choices
         form = InjuryForm(players_qs=players_qs, physios_qs=physios_qs)

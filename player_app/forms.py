@@ -235,7 +235,11 @@ class OrganizationPlayerFormUpdate(forms.ModelForm):
         widgets = {'date_of_birth': forms.DateInput(attrs={'type': 'date'})}
 
 # Injury Form
-
+SIDE_CHOICES = [
+    ('left', 'Left'),
+    ('right', 'Right'),
+    ('bilateral', 'Bilateral'),
+]
 class InjuryForm(forms.ModelForm):
     injury_date = forms.DateField(
         widget=forms.DateInput(attrs={'type': 'date', 'placeholder': 'Injury Date'})
@@ -244,20 +248,25 @@ class InjuryForm(forms.ModelForm):
         required=False,
         widget=forms.DateInput(attrs={'type': 'date', 'placeholder': 'Expected Date of Return'})
     )
-
+    
     from player_app.models import Player  # import Player model
 
     player_status = forms.ChoiceField(
         choices=Player._meta.get_field('player_status').choices,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
-
+    side = forms.ChoiceField(
+        choices=SIDE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control', 'placeholder': 'Side of body injured'}),
+        required=True,
+        label='Side of body injured'
+    )
     class Meta:
         model = Injury
         fields = [
-            'player', 'reported_by', 'name', 'injury_date',
-            'venue', 'team', 'type_of_activity',
-            'cause_of_injury', 'nature_of_injury', 'expected_date_of_return',
+            'player', 'reported_by', 'name', 'injury_date','diagnosis_date',
+            'venue', 'team', 'type_of_activity','side','diagnosis_remarks','action_taken','traning_participation',
+            'nature_of_injury', 'expected_date_of_return',
             'notes', 'affected_body_part', 'severity_rating', 'player_status','unknown_injury_date',
         ]
         widgets = {
@@ -268,13 +277,14 @@ class InjuryForm(forms.ModelForm):
             'team': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Team'}),
             'type_of_activity': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Type of activity at time of injury'}),
             
-            'cause_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cause of injury'}),
             'nature_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nature of injury'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Notes', 'rows':2}),
             'affected_body_part': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Body region injured'}),
             # 'player_status': forms.Select(attrs={'class': 'form-control'}),
-            
+            'action_taken': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Action Taken', 'rows': 2}),
+            'traning_participation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Training Participation'}),
             'severity_rating': forms.NumberInput(attrs={'class': 'form-control','placeholder': 'Severity Rating','min': 1,'max': 10,}),
+            'diagnosis_date': forms.DateInput(attrs={'type': 'date', 'placeholder': 'Diagnosis Date'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -299,6 +309,8 @@ BODY_PART_CHOICES = [
     ('chest', 'Chest'),
     ('back', 'Back'),
     ('abdomen', 'Abdomen'),
+    ('shin-left', 'Shin Left'),
+    ('shin-right', 'Shin Right'),
     ('left-arm', 'Left Arm'),
     ('right-arm', 'Right Arm'),
     ('left-hand', 'Left Hand'),
@@ -332,10 +344,10 @@ class InjuryFormUpdate(forms.ModelForm):
     class Meta:
         model = Injury
         fields = [
-            'player', 'reported_by', 'name', 'injury_date',
+            'player', 'reported_by', 'name', 'injury_date','diagnosis_date',
             'venue', 'team', 'type_of_activity', 'unknown_injury_date',
             'cause_of_injury', 'nature_of_injury', 'expected_date_of_return',
-            'notes', 'affected_body_part', 'severity_rating', 
+            'notes', 'affected_body_part', 'severity_rating', 'side','diagnosis_remarks','action_taken','traning_participation',
         ]
         widgets = {
             'player': forms.Select(attrs={'class': 'form-control'}),
@@ -347,7 +359,10 @@ class InjuryFormUpdate(forms.ModelForm):
             'cause_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cause of injury'}),
             'nature_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nature of injury'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Notes', 'rows': 2}),
-            
+            'diagnosis_date': forms.DateInput(attrs={'type': 'date', 'placeholder': 'Diagnosis Date'}),
+            'side': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Side of body injured'}),
+            'action_taken': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Action Taken', 'rows': 2}),
+            'traning_participation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Training Participation'}),
             'severity_rating': forms.NumberInput(attrs={'class': 'form-control','placeholder': 'Severity Rating','min': 1,'max': 10,}),
 
             }

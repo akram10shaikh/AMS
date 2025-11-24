@@ -118,17 +118,26 @@
                     <label for="{{ form.type_of_activity.id_for_label }}">Type of activity at time of injury</label>
                     {{ form.type_of_activity }}
                 </div>
+
                 <div class="form-group">
-                    <label for="{{ form.cause_of_injury.id_for_label }}">Cause of injury</label>
-                    {{ form.cause_of_injury }}
+                    <label for="{{ form.diagnosis_date.id_for_label }}">Diagnosis Date</label>
+                    {{ form.diagnosis_date }}
                 </div>
                 <div class="form-group">
                     <label for="{{ form.nature_of_injury.id_for_label }}">Nature of injury</label>
                     {{ form.nature_of_injury }}
                 </div>
                 <div class="form-group">
+                    <label for="{{ form.action_taken.id_for_label }}">Action Taken</label>
+                    {{ form.action_taken }}
+                </div>
+                <div class="form-group">
                     <label for="{{ form.notes.id_for_label }}">Notes</label>
                     {{ form.notes }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.traning_participation.id_for_label }}">Traning Participation</label>
+                    {{ form.traning_participation }}
                 </div>
                 <div class="form-group">
                 <label for="{{ form.unknown_injury_date.id_for_label }}">Expected Unknown Date</label>
@@ -146,20 +155,38 @@
                     <label for="{{ form.player_status.id_for_label }}">Player Status</label>
                     {{ form.player_status }}
                 </div>
+                <div class="form-group">
+                    <label for="{{ form.severity.id_for_label }}">Side</label>
+                    {{ form.side }}
+                </div>
                  <div class="form-group">
                      <label for="part-select">Body part effected</label><br>
                         <select id="part-select" multiple size="12" name="affected_body_part" class="form-control">
                             <option value="head">Head</option>
                             <option value="neck">Neck</option>
                             <option value="chest">Chest</option>
-                            <option value="back">Back</option>
+                            <option value="obliques-left">Obliques Left</option>
+                            <option value="obliques-right">Obliques Right</option>
                             <option value="abdomen">Abdomen</option>
+                            <option value="rotator-cuff-left">Rotator Cuff Left</option>
+                            <option value="rotator-cuff-right">Rotator Cuff Right</option>
                             <option value="left-arm">Left Arm</option>
                             <option value="right-arm">Right Arm</option>
+                            <option value="finger-left">Finger Left</option>
+                            <option value="finger-right">Finger Right</option>
                             <option value="left-hand">Left Hand</option>
                             <option value="right-hand">Right Hand</option>
+                            <option value="lower-back">Lower Back</option>
+                            <option value="knee-left">Knee Left</option>
+                            <option value="knee-right">Knee Right</option>
+                            <option value="shin-left">Shin Left</option>
+                            <option value="shin-right">Shin Right</option>
+                            <option value="hamstring-left">Hamstring Left</option>
+                            <option value="hamstring-right">Hamstring Right</option>
                             <option value="left-leg">Left Leg</option>
                             <option value="right-leg">Right Leg</option>
+                            <option value="ankle-left">Ankle Left</option>
+                            <option value="ankle-right">Ankle Right</option>
                             <option value="left-foot">Left Foot</option>
                             <option value="right-foot">Right Foot</option>
                         </select>
@@ -230,16 +257,30 @@ document.addEventListener('DOMContentLoaded', function () {
       "head":      {x: 75,  y: 35},
       "neck":      {x: 75,  y: 55},
       "chest":     {x: 75,  y: 85},
-      "back":      {x: 225, y: 85},
+      "obliques-left":  {x: 50,  y: 110},
+      "obliques-right": {x: 80, y: 110},
+      "lower-back":      {x: 235, y: 110},
       "abdomen":   {x: 75,  y: 130},
+      "rotator-cuff-left":  {x: 30,  y:  60},
+      "rotator-cuff-right": {x: 100, y:  60},
       "left-arm":  {x: 35,  y: 85},
       "right-arm": {x: 115, y: 85},
+      "finger-left":  {x: 14,  y: 145},
+      "finger-right": {x: 125, y: 145},
       "left-hand": {x: 15,  y: 145},
       "right-hand":{x: 135, y: 145},
+      "knee-left": {x: 50,  y: 195},
+      "knee-right":{x: 78,  y: 195},
+      "shin-left": {x: 48,  y: 230},
+      "shin-right":{x: 80, y: 230},
+      "hamstring-left":  {x: 225,  y: 180},
+      "hamstring-right": {x: 250,  y: 180},
       "left-leg":  {x: 60,  y: 215},
       "right-leg": {x: 90,  y: 215},
-      "left-foot": {x: 58,  y: 260},
-      "right-foot":{x: 92,  y: 260}
+      "ankle-left": {x:  40,  y: 255},
+      "ankle-right":{x:  85,  y: 255},
+      "left-foot": {x: 45,  y: 260},
+      "right-foot":{x: 85,  y: 260},
     };
 
     const partSelect = document.getElementById('part-select');
