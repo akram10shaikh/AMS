@@ -83,7 +83,7 @@ urlpatterns = [
                   path('organization/camp/<int:camp_id>/delete/', views.organization_delete_camp, name='organization_delete_camp'),
 
                # Organization Test Results URLs
-                  path('organization/test/dashboard', views.test_dashboard, name='test_dashboard'),
+                  # path('organization/test/dashboard', views.test_dashboard, name='test_dashboard'),
                   path('test/add/', views.add_test_result, name='add_test_result'),
                   path('organization/test-main/', views.test_results_main, name='test_results_main'),
                   path('organization/test-dashboard/', views.test_dashboard_new, name='test_dashboard_new'),
@@ -105,10 +105,16 @@ urlpatterns = [
 
                   path('new_test_details/',views.new_test_details, name='new_test_details'),  
                   path('nomative_data/',views.nomative_data, name='nomative_data'),
-                  path('new_test_dashboard/',views.new_test_dashboard, name='new_test_dashboard'),
+                  # path('new_test_dashboard/',views.new_test_dashboard, name='new_test_dashboard'),
 
                   path('report-settings/', views.report_settings_view, name='report_settings'),
                   path('save-report-settings/', views.save_report_settings_view, name='save_report_settings'),
                   path('delete-session/', views.delete_session, name='delete_session'),
+
+                  # Test URLs
+                  path('runa3x6/<str:test_name>/', views.add_run_3x6_test, name='add_run_3x6_test'),
+                  path('glute-bridges/<str:test_name>/', views.add_glute_bridges_test, name='add_glute_bridges_test'),
+                  path('lunge-calf-raises/<str:test_name>/', views.add_lunge_calf_raises_test, name='add_lunge_calf_raises_test'),
+                  path('mb-rotational-throw/<str:test_name>/', views.add_mb_rotational_throw_test, name='add_mb_rotational_throw_test'),
 
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

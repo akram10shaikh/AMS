@@ -53,7 +53,97 @@
                 <td><a href="{% url 'add_test_results' 'SBJ' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
                 <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
+            <tr>
+                <td>Run A 3x6 </td>
+                <td><a href="{% url 'add_run_3x6_test' 'Run A 3x6' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
+                <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+            </tr>
+             <tr>
+                <td>S/L Glute Bridges</td>
+                <td><a href="{% url 'add_glute_bridges_test' 'SL Glute Bridges' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
+                <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+            </tr>
+            <tr>
+                <td>SL Lunge Calf Raises</td>
+                <td><a href="{% url 'add_lunge_calf_raises_test' 'SL Lunge Calf Raises' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
+                <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+            </tr>
+            <tr>
+                <td>MB Rotational Throws</td>
+                <td><a href="{% url 'add_mb_rotational_throw_test' 'MB Rotational Throws' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
+                <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+            </tr>
         </tbody>
     </table>
-    
+    <br>
+    <br>    
+    <br><br>
+<script>
+(function() {
+    function parseVal(id) {
+        var el = document.getElementById(id);
+        if (!el) return null;
+        var v = el.value;
+        return v === "" ? null : parseFloat(v);
+    }
+
+    // ... your existing updateAverage() and updateGluteBridges() here ...
+
+    // === SL Lunge Calf Raises Calculations ===
+    function updateLungeCalfRaises() {
+        var right = parseVal("sl_lunge_calf_right");
+        var left = parseVal("sl_lunge_calf_left");
+
+        var diffDisplay = document.getElementById("sl_lunge_calf_diff_display");
+        var diffHidden = document.getElementById("sl_lunge_calf_diff");
+        var ratioDisplay = document.getElementById("sl_lunge_calf_ratio_display");
+        var ratioHidden = document.getElementById("sl_lunge_calf_ratio");
+
+        // S/L Difference (absolute, always positive)
+        if (!isNaN(right) && !isNaN(left)) {
+            var diff = Math.abs(left - right);  // absolute difference[web:21][web:25]
+            diffDisplay.value = diff.toFixed(0);
+            diffHidden.value = diff.toFixed(0);
+        } else {
+            diffDisplay.value = "";
+            diffHidden.value = "";
+        }
+
+        // SLG Ratio (Left ÷ Right)
+        if (!isNaN(left) && !isNaN(right) && right !== 0) {
+            var ratio = left / right;
+            ratioDisplay.value = ratio.toFixed(3);
+            ratioHidden.value = ratio.toFixed(3);
+        } else {
+            ratioDisplay.value = "";
+            ratioHidden.value = "";
+        }
+    }
+
+    // Existing listeners for trials and glute bridges...
+    var trialIds = ["trial1","trial2","trial3","trial4","trial5","trial6"];
+    trialIds.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener("input", updateAverage); // uses input event for live updates[web:32]
+        }
+    });
+
+    ["sl_glute_right", "sl_glute_left"].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener("input", updateGluteBridges);
+        }
+    });
+
+    // New listeners for SL Lunge Calf Raises
+    ["sl_lunge_calf_right", "sl_lunge_calf_left"].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener("input", updateLungeCalfRaises);
+        }
+    });
+})();
+</script>
+
 {% endblock %}

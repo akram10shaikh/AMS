@@ -397,6 +397,9 @@ class TestAndResult(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
+    # Run A 3x6 specific fields
+    run_a_3x6_attempts = models.IntegerField(null=True, blank=True)
+
     def save(self, *args, **kwargs):
         # Compute individual average of all 'best' values for this player and test
         if self.player_id and self.test and self.best is not None:

@@ -1254,97 +1254,97 @@ def organization_delete_camp(request, camp_id):
 from django.db.models import Avg
 from django.db.models import Min, Max
 from collections import defaultdict
-@login_required
-def test_dashboard(request):
-    # Get user's organization (adjust as per your user model)
-    user_organization = getattr(request.user, 'organization', None)
-    if not user_organization:
-        return render(request, 'player_app/organization/test_dashboard.html', {
-            'error_message': "Your account is not linked to any organization.",
-        })
+# @login_required
+# def test_dashboard(request):
+#     # Get user's organization (adjust as per your user model)
+#     user_organization = getattr(request.user, 'organization', None)
+#     if not user_organization:
+#         return render(request, 'player_app/organization/test_dashboard.html', {
+#             'error_message': "Your account is not linked to any organization.",
+#         })
 
-    # Get players in user's organization
-    players_in_org = Player.objects.filter(organization=user_organization)
+#     # Get players in user's organization
+#     players_in_org = Player.objects.filter(organization=user_organization)
 
-    # Handle new test result form (restrict player queryset to org players)
-    if request.method == 'POST':
-        add_form = TestAndResultForm(request.POST)
-        add_form.fields['player'].queryset = players_in_org
-        if add_form.is_valid():
-            add_form.save()
-            return redirect('test_dashboard')
-    else:
-        add_form = TestAndResultForm()
-        add_form.fields['player'].queryset = players_in_org
+#     # Handle new test result form (restrict player queryset to org players)
+#     if request.method == 'POST':
+#         add_form = TestAndResultForm(request.POST)
+#         add_form.fields['player'].queryset = players_in_org
+#         if add_form.is_valid():
+#             add_form.save()
+#             return redirect('test_dashboard')
+#     else:
+#         add_form = TestAndResultForm()
+#         add_form.fields['player'].queryset = players_in_org
 
-    # Handle filter form (restrict player queryset to org players)
-    filter_form = TestSummaryFilterForm(request.GET or None)
-    filter_form.fields['player'].queryset = players_in_org
+#     # Handle filter form (restrict player queryset to org players)
+#     filter_form = TestSummaryFilterForm(request.GET or None)
+#     filter_form.fields['player'].queryset = players_in_org
 
-    # Base queryset filtered by org players only
-    qs = TestAndResult.objects.select_related('player').filter(player__in=players_in_org).order_by('player__name', 'test', 'date', 'id')
+#     # Base queryset filtered by org players only
+#     qs = TestAndResult.objects.select_related('player').filter(player__in=players_in_org).order_by('player__name', 'test', 'date', 'id')
 
-    # Apply filters if valid form submitted
-    if filter_form.is_valid():
-        if filter_form.cleaned_data.get('player'):
-            qs = qs.filter(player=filter_form.cleaned_data['player'])
-        if filter_form.cleaned_data.get('test'):
-            qs = qs.filter(test=filter_form.cleaned_data['test'])
+#     # Apply filters if valid form submitted
+#     if filter_form.is_valid():
+#         if filter_form.cleaned_data.get('player'):
+#             qs = qs.filter(player=filter_form.cleaned_data['player'])
+#         if filter_form.cleaned_data.get('test'):
+#             qs = qs.filter(test=filter_form.cleaned_data['test'])
 
-    # Group trials by (player_id, test)
-    player_test_trials = defaultdict(list)
-    for trial in qs:
-        key = (trial.player.id, trial.test)
-        player_test_trials[key].append(trial)
+#     # Group trials by (player_id, test)
+#     player_test_trials = defaultdict(list)
+#     for trial in qs:
+#         key = (trial.player.id, trial.test)
+#         player_test_trials[key].append(trial)
 
-    # Build summary rows without serial yet
-    summary_rows = []
-    for (player_id, test), trials in player_test_trials.items():
-        if not trials:
-            continue
+#     # Build summary rows without serial yet
+#     summary_rows = []
+#     for (player_id, test), trials in player_test_trials.items():
+#         if not trials:
+#             continue
 
-        # Last two trials chronologically
-        last_two_trials = trials[-2:] if len(trials) >= 2 else trials[-1:]
+#         # Last two trials chronologically
+#         last_two_trials = trials[-2:] if len(trials) >= 2 else trials[-1:]
 
-        trial_1 = last_two_trials[0].trial if len(last_two_trials) == 2 else None
-        trial_2 = last_two_trials[-1].trial
+#         trial_1 = last_two_trials[0].trial if len(last_two_trials) == 2 else None
+#         trial_2 = last_two_trials[-1].trial
 
-        best_trial = min(t.trial for t in trials)
+#         best_trial = min(t.trial for t in trials)
 
-        last_trial_obj = last_two_trials[-1]
-        # Individual Average: mean of all trials for this player and test
+#         last_trial_obj = last_two_trials[-1]
+#         # Individual Average: mean of all trials for this player and test
         
-        indv_average = sum(t.trial for t in trials) / len(trials) if trials else None
-        group_average = TestAndResult.objects.filter(test=test).aggregate(Avg('trial'))['trial__avg']
+#         indv_average = sum(t.trial for t in trials) / len(trials) if trials else None
+#         group_average = TestAndResult.objects.filter(test=test).aggregate(Avg('trial'))['trial__avg']
         
-        summary_rows.append({
-            'player_name': last_trial_obj.player.name,
-            'test': test,
-            'last_date': last_trial_obj.date,
-            'last_phase': last_trial_obj.phase,
-            'trial_1': trial_1,
-            'trial_2': trial_2,
-            'best_trial': best_trial,
-            'indv_average': indv_average,
-            'group_average': group_average,
-        })
+#         summary_rows.append({
+#             'player_name': last_trial_obj.player.name,
+#             'test': test,
+#             'last_date': last_trial_obj.date,
+#             'last_phase': last_trial_obj.phase,
+#             'trial_1': trial_1,
+#             'trial_2': trial_2,
+#             'best_trial': best_trial,
+#             'indv_average': indv_average,
+#             'group_average': group_average,
+#         })
 
-    # Group rows by test
-    summary_by_test = defaultdict(list)
-    for row in summary_rows:
-        summary_by_test[row['test']].append(row)
+#     # Group rows by test
+#     summary_by_test = defaultdict(list)
+#     for row in summary_rows:
+#         summary_by_test[row['test']].append(row)
 
-    # Assign serial numbers per test table starting at 1
-    for test_name, rows in summary_by_test.items():
-        for idx, row in enumerate(rows, start=1):
-            row['serial'] = idx
+#     # Assign serial numbers per test table starting at 1
+#     for test_name, rows in summary_by_test.items():
+#         for idx, row in enumerate(rows, start=1):
+#             row['serial'] = idx
 
-    context = {
-        'add_form': add_form,
-        'form': filter_form,
-        'summary_by_test': dict(summary_by_test),
-    }
-    return render(request, 'player_app/organization/test_dashboard.html', context)
+#     context = {
+#         'add_form': add_form,
+#         'form': filter_form,
+#         'summary_by_test': dict(summary_by_test),
+#     }
+#     return render(request, 'player_app/organization/test_dashboard.html', context)
 
 @login_required
 def add_test_result(request):
@@ -2724,41 +2724,41 @@ from django.forms.models import model_to_dict
 def nomative_data(request):
     data = NomativeData.objects.all()
     return render(request, 'player_app/organization/nomative_data.html', {'datas': data})
-@login_required
-def new_test_dashboard(request):
-    user_organization = getattr(request.user, 'organization', None)
-    if not user_organization:
-        return render(request, 'player_app/organization/test_results.html', {
-            'error_message': "Your account is not linked to any organization.",
-        })
-    players_in_org = Player.objects.filter(organization=user_organization)
+# @login_required
+# def new_test_dashboard(request):
+#     user_organization = getattr(request.user, 'organization', None)
+#     if not user_organization:
+#         return render(request, 'player_app/organization/test_results.html', {
+#             'error_message': "Your account is not linked to any organization.",
+#         })
+#     players_in_org = Player.objects.filter(organization=user_organization)
 
-    # Base queryset ordered by player, test and date
-    qs = TestAndResult.objects.select_related('player').filter(player__in=players_in_org).order_by(
-        'player__name', 'test', 'date'
-    )
+#     # Base queryset ordered by player, test and date
+#     qs = TestAndResult.objects.select_related('player').filter(player__in=players_in_org).order_by(
+#         'player__name', 'test', 'date'
+#     )
 
-    # Calculate group averages per test using "best" field (one average per test)
-    group_averages = TestAndResult.objects.filter(player__in=players_in_org) \
-        .values('test').annotate(group_avg=Avg('best')).order_by('test')
-    group_avg_dict = {item['test']: item['group_avg'] for item in group_averages}
+#     # Calculate group averages per test using "best" field (one average per test)
+#     group_averages = TestAndResult.objects.filter(player__in=players_in_org) \
+#         .values('test').annotate(group_avg=Avg('best')).order_by('test')
+#     group_avg_dict = {item['test']: item['group_avg'] for item in group_averages}
 
-    # Calculate individual averages per player per test using "best" field
-    indv_averages = TestAndResult.objects.filter(player__in=players_in_org).values('player', 'test').annotate(indv_avg=Avg('best'))
-    indv_avg_dict = {(item['player'], item['test']): item['indv_avg'] for item in indv_averages}
+#     # Calculate individual averages per player per test using "best" field
+#     indv_averages = TestAndResult.objects.filter(player__in=players_in_org).values('player', 'test').annotate(indv_avg=Avg('best'))
+#     indv_avg_dict = {(item['player'], item['test']): item['indv_avg'] for item in indv_averages}
 
-    # Annotate each trial with averages for easy display in template
-    trials_with_avg = []
-    for trial in qs:
-        trial.individual_average = indv_avg_dict.get((trial.player.id, trial.test), None)
-        trial.group_average = group_avg_dict.get(trial.test, None)
-        trials_with_avg.append(trial)
+#     # Annotate each trial with averages for easy display in template
+#     trials_with_avg = []
+#     for trial in qs:
+#         trial.individual_average = indv_avg_dict.get((trial.player.id, trial.test), None)
+#         trial.group_average = group_avg_dict.get(trial.test, None)
+#         trials_with_avg.append(trial)
 
-    context = {
-        'trials': trials_with_avg,
-    }
+#     context = {
+#         'trials': trials_with_avg,
+#     }
 
-    return render(request, 'player_app/organization/new_test_dashboard.html', context)
+#     return render(request, 'player_app/organization/new_test_dashboard.html', context)
 
 def report_settings_view(request):
     categories = Category.objects.all()
@@ -2944,6 +2944,7 @@ def test_results_main(request):
 # New test Views
 def test_dashboard_new(request):
     return render(request, 'player_app/organization/organization_main_test_dash.html')
+
 from django.core.paginator import Paginator
 from django.db.models import Q
 
@@ -3053,6 +3054,71 @@ def add_test_results(request, test_name=None):
             })
     else:
         return render(request, 'player_app/organization/organization_test_add.html', {
+            'test_name': test_name,
+            'players': players,
+            'events': events,
+            'staff':staff,
+            # you may need players/staff for dropdowns
+        })
+
+# Run A 3x6 test views
+def add_run_3x6_test(request,test_name=None):
+    user_organization = getattr(request.user, 'organization', None)
+    
+    players = Player.objects.filter(organization=user_organization)
+    events = CampTournament.objects.filter(is_deleted=False)
+    staff = Staff.objects.filter(organization=user_organization)
+
+
+    return render(request, 'player_app/tests/runa3x6.html',{
+            'test_name': test_name,
+            'players': players,
+            'events': events,
+            'staff':staff,
+            # you may need players/staff for dropdowns
+        })
+
+# Glute Bridges Test views
+def add_glute_bridges_test(request,test_name=None):
+    user_organization = getattr(request.user, 'organization', None)
+    test_name = "S/L Glute Bridges"
+    players = Player.objects.filter(organization=user_organization)
+    events = CampTournament.objects.filter(is_deleted=False)
+    staff = Staff.objects.filter(organization=user_organization)
+
+
+    return render(request, 'player_app/tests/glute_bridges.html',{
+            'test_name': test_name,
+            'players': players,
+            'events': events,
+            'staff':staff,
+            # you may need players/staff for dropdowns
+        })
+
+# Lunge Calf Raises Test views
+def add_lunge_calf_raises_test(request,test_name=None):
+    user_organization = getattr(request.user, 'organization', None)
+    players = Player.objects.filter(organization=user_organization)
+    events = CampTournament.objects.filter(is_deleted=False)
+    staff = Staff.objects.filter(organization=user_organization)
+
+
+    return render(request, 'player_app/tests/lunge_calf_raises.html',{
+            'test_name': test_name,
+            'players': players,
+            'events': events,
+            'staff':staff,
+            # you may need players/staff for dropdowns
+        })
+
+def add_mb_rotational_throw_test(request,test_name=None):
+    user_organization = getattr(request.user, 'organization', None)
+    players = Player.objects.filter(organization=user_organization)
+    events = CampTournament.objects.filter(is_deleted=False)
+    staff = Staff.objects.filter(organization=user_organization)
+
+
+    return render(request, 'player_app/tests/rotational_throws.html',{
             'test_name': test_name,
             'players': players,
             'events': events,
