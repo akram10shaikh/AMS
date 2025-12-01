@@ -3086,7 +3086,61 @@ def add_glute_bridges_test(request,test_name=None):
     events = CampTournament.objects.filter(is_deleted=False)
     staff = Staff.objects.filter(organization=user_organization)
 
+    if request.method == "POST":
+        player_id = request.POST.get('player')
+        test = request.POST.get('test')
+        date = request.POST.get('date')
+        phase = request.POST.get('phase')
+        sl_right = request.POST.get('sl_glute_right')
+        sl_left = request.POST.get('sl_glute_left')
+        sl_difference = request.POST.get('sl_difference')
+        slg_ratio = request.POST.get('slg_ratio')
+        notes = request.POST.get('notes')
+        reported_by_id = request.POST.get('reported_by')
 
+        # Basic field validation (add your own as needed)
+        errors = []
+        if not player_id: errors.append("Player is required.")
+        if not test: errors.append("Test is required.")
+        if not date: errors.append("Date is required.")
+        if not phase: errors.append("Phase is required.")
+        if not sl_right: errors.append("S/L Glute Right is required.")
+        if not sl_left: errors.append("S/L Glute Left is required.")
+        if not sl_difference: errors.append("S/L Difference is required.")
+        if not slg_ratio: errors.append("S/L Glute Ratio is required.")
+        if not reported_by_id: errors.append("Reported by is required.")
+
+
+        # If no errors, save the result
+        if not errors:
+            phase_data = CampTournament.objects.get(id=int(phase))
+            
+
+            player = Player.objects.get(pk=player_id)
+            reported_by = User.objects.get(pk=reported_by_id)
+            TestAndResult.objects.create(
+                player=player,
+                test=test,
+                date=date,
+                phase=phase_data,
+                sl_right=sl_right,
+                sl_left=sl_left,
+                sl_difference=sl_difference,
+                slg_ratio=slg_ratio,
+                notes=notes,
+                reported_by=reported_by
+            )
+            return redirect('test_results_by_name', test_name=test)
+        # Pass errors back to template if any
+        else:
+            return render(request, 'player_app/organization/organization_test_add.html', {
+                'test_name': test_name,
+                'errors': errors,
+                'players': players,
+                'events': events,
+                'staff':staff, 
+                # you may need players/staff for dropdowns
+            })
     return render(request, 'player_app/tests/glute_bridges.html',{
             'test_name': test_name,
             'players': players,
@@ -3111,6 +3165,7 @@ def add_lunge_calf_raises_test(request,test_name=None):
             # you may need players/staff for dropdowns
         })
 
+# MB Rotational Throw Test views
 def add_mb_rotational_throw_test(request,test_name=None):
     user_organization = getattr(request.user, 'organization', None)
     players = Player.objects.filter(organization=user_organization)
@@ -3119,6 +3174,116 @@ def add_mb_rotational_throw_test(request,test_name=None):
 
 
     return render(request, 'player_app/tests/rotational_throws.html',{
+            'test_name': test_name,
+            'players': players,
+            'events': events,
+            'staff':staff,
+            # you may need players/staff for dropdowns
+        })
+
+# Copen Hagen Test views
+def add_copen_hagen_test(request,test_name=None):
+    user_organization = getattr(request.user, 'organization', None)
+    players = Player.objects.filter(organization=user_organization)
+    events = CampTournament.objects.filter(is_deleted=False)
+    staff = Staff.objects.filter(organization=user_organization)
+
+
+    return render(request, 'player_app/tests/copen_hagen.html',{
+            'test_name': test_name,
+            'players': players,
+            'events': events,
+            'staff':staff,
+            # you may need players/staff for dropdowns
+        })
+
+# S/L Hop Test views
+def add_sl_hop_test(request,test_name=None):
+    user_organization = getattr(request.user, 'organization', None)
+    players = Player.objects.filter(organization=user_organization)
+    events = CampTournament.objects.filter(is_deleted=False)
+    staff = Staff.objects.filter(organization=user_organization)
+    test_name = "S/L Hop"
+
+    return render(request, 'player_app/tests/sl_hop.html',{
+            'test_name': test_name,
+            'players': players,
+            'events': events,
+            'staff':staff,
+            # you may need players/staff for dropdowns
+        })
+
+# CMJ Test views
+def add_cmj_scores_test(request,test_name=None):
+    user_organization = getattr(request.user, 'organization', None)
+    players = Player.objects.filter(organization=user_organization)
+    events = CampTournament.objects.filter(is_deleted=False)
+    staff = Staff.objects.filter(organization=user_organization)
+    test_name = "CMJ"
+
+    return render(request, 'player_app/tests/cmj_scores.html',{
+            'test_name': test_name,
+            'players': players,
+            'events': events,
+            'staff':staff,
+            # you may need players/staff for dropdowns
+        })
+
+def add_anthropometry_test(request,test_name=None):
+    user_organization = getattr(request.user, 'organization', None)
+    players = Player.objects.filter(organization=user_organization)
+    events = CampTournament.objects.filter(is_deleted=False)
+    staff = Staff.objects.filter(organization=user_organization)
+    test_name = "Anthropometry"
+
+    return render(request, 'player_app/tests/anthropometry.html',{
+            'test_name': test_name,
+            'players': players,
+            'events': events,
+            'staff':staff,
+            # you may need players/staff for dropdowns
+        })
+
+def add_dexa_scan_test(request,test_name=None):
+    user_organization = getattr(request.user, 'organization', None)
+    players = Player.objects.filter(organization=user_organization)
+    events = CampTournament.objects.filter(is_deleted=False)
+    staff = Staff.objects.filter(organization=user_organization)
+    test_name = "Dexa Scan"
+
+    return render(request, 'player_app/tests/dexa_scan.html',{
+            'test_name': test_name,
+            'players': players,
+            'events': events,
+            'staff':staff,
+            # you may need players/staff for dropdowns
+        })
+
+
+def add_blood_test(request,test_name=None):
+    user_organization = getattr(request.user, 'organization', None)
+    players = Player.objects.filter(organization=user_organization)
+    events = CampTournament.objects.filter(is_deleted=False)
+    staff = Staff.objects.filter(organization=user_organization)
+
+
+    return render(request, 'player_app/tests/blood_work.html',{
+            'test_name': test_name,
+            'players': players,
+            'events': events,
+            'staff':staff,
+            # you may need players/staff for dropdowns
+        })
+
+def add_runa3_test(request,test_name=None):
+    user_organization = getattr(request.user, 'organization', None)
+    
+    players = Player.objects.filter(organization=user_organization)
+    events = CampTournament.objects.filter(is_deleted=False)
+    staff = Staff.objects.filter(organization=user_organization)
+
+
+    return render(request, 'player_app/tests/runa3.html',{
             'test_name': test_name,
             'players': players,
             'events': events,

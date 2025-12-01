@@ -1,0 +1,297 @@
+{% extends "player_app/tests/base.html" %}
+{% load static %}
+
+{% block title %}Add New Test Result{% endblock %}
+
+{% block extra_head %}
+    <style>
+        body {
+            background: #fff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .form-title {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 24px;
+            color: #234;
+        }
+        .form-container {
+            width: 500px;
+            margin: 0 auto;
+            background: #fafbfc;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 26px 38px 14px 38px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+            transition: border 0.2s;
+        }
+        label {
+            display: block;
+            font-size: 0.97em;
+            font-weight: 500;
+            color: #435;
+            margin-bottom: 5px;
+        }
+        select, input[type="text"], input[type="date"], textarea {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 16px;
+            border: 1px solid #cfd8dc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background: #fff;
+            color: #263238;
+        }
+        select:focus, input:focus, textarea:focus {
+            border-color: #1976d2;
+            outline: none;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+            max-height: 120px;
+        }
+        .form-actions {
+            text-align: center;
+        }
+        .btn-main {
+            background: #1976d2;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            font-size: 16px;
+            padding: 10px 0;
+            width: 100%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-main:hover {
+            background: #1565c0;
+        }
+        .back-link {
+            text-align: left;
+            font-size: 12px;
+            margin-top: 8px;
+            color: #1976d2;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .error-list {
+            margin-bottom: 20px;
+            padding: 10px 18px;
+            background: #ffcdd2;
+            border: 1px solid #ef9a9a;
+            border-radius: 6px;
+            color: #b71c1c;
+            font-size: 15px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="form-title">Add CMJ Scores New Test Result </div>
+    <div class="form-container">
+        {% if errors %}
+            <ul class="error-list">
+                {% for err in errors %}
+                    <li>{{ err }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <form id="testResultForm" method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="player">Player:</label>
+                <select id="player" name="player" required>
+                    <option value="">---------</option>
+                    {% for player in players %}
+                        <option value="{{ player.id }}">{{ player.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+            <label for="test">Test:</label>
+            <!-- Shows to user but disabled, not submitted -->
+            <input type="text" id="test" name="test_display" value="{{ test_name }}" disabled/>
+            <!-- Hidden input: submitted with form -->
+            <input type="hidden" name="test" value="{{ test_name }}"/>
+        </div>
+            <div class="form-group">
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+            <div class="form-group">
+                <label for="phase">Phase:</label>
+                <select id="phase" name="phase" required>
+                    <option value="">---------</option>
+                    {% for event in events %}
+                        <option value="{{ event.id }}">{{ event.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+           
+              <div class="form-group">
+                    <label>Body weight (kg):</label>
+                    <input type="number" step="0.01" id="body_weight" name="body_weight" placeholder="Body weight (kg)" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Push-off distance (hp0, in m):</label>
+                    <input type="number" step="0.01" id="push_off_distance" name="push_off_distance" placeholder="hp0 (m)" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Jump type:</label>
+                    <select id="jump_type" name="jump_type" required>
+                        <option value="">---------</option>
+                        <option value="countermovement">Countermovement Jump</option>
+                        <option value="squat">Squat Jump</option>
+                        <option value="drop">Drop Jump</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Box height (m):</label>
+                    <input type="number" step="0.01" id="box_height" name="box_height" placeholder="Box height (m)">
+                </div>
+
+                <div class="form-group">
+                    <label>Load (kg):</label>
+                    <input type="number" step="0.01" id="load" name="load" placeholder="Load (kg)">
+                </div>
+
+                <div class="form-group">
+                    <label>Jump height (cm):</label>
+                    <input type="number" step="0.01" id="jump_height" name="jump_height" placeholder="Jump height (cm)" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Flight time (ms):</label>
+                    <input type="number" step="1" id="flight_time" name="flight_time" placeholder="Flight time (ms)" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Contact time (ms):</label>
+                    <input type="number" step="1" id="contact_time" name="contact_time" placeholder="Contact time (ms)">
+                </div>
+
+                <div class="form-group">
+                    <label>Force (N):</label>
+                    <input type="number" step="1" id="force" name="force" placeholder="Force (N)">
+                </div>
+
+                <div class="form-group">
+                    <label>Velocity (m/s):</label>
+                    <input type="number" step="0.01" id="velocity" name="velocity" placeholder="Velocity (m/s)">
+                </div>
+
+                <div class="form-group">
+                    <label>Power (W):</label>
+                    <input type="number" step="1" id="power" name="power" placeholder="Power (W)">
+                </div>
+
+                <div class="form-group">
+                    <label>Reactive strength index:</label>
+                    <input type="number" step="0.01" id="rsi_display" name="rsi" placeholder="RSI" disabled>
+                    <input type="hidden" id="rsi_hidden" name="rsi">
+                </div>
+
+                <div class="form-group">
+                    <label>Stiffness (kN/m):</label>
+                    <input type="number" step="0.1" id="stiffness_display" name="stiffness" placeholder="Stiffness (kN/m)" disabled>
+                    <input type="hidden" id="stiffness_hidden" name="stiffness">
+                </div>
+
+                <div class="form-group">
+                    <label>Readiness colour:</label>
+                    <select id="readiness_colour" name="readiness_colour">
+                        <option value="">---------</option>
+                        <option value="green">Green</option>
+                        <option value="yellow">Yellow</option>
+                        <option value="orange">Orange</option>
+                        <option value="red">Red</option>
+                    </select>
+                </div>
+
+
+            <div class="form-group">
+                <label for="notes">Notes:</label>
+                <textarea id="notes" name="notes" placeholder="Notes"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="reported_by">Reported by:</label>
+                <select id="reported_by" name="reported_by" required>
+                    <option value="">---------</option>
+                    {% for s in staff %}
+                        <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-main">Add Test Result</button>
+            </div>
+        </form>
+        <div class="form-actions" style="margin-top:8px;">
+            <a href="{% url 'test_results_by_name' test_name %}" style="margin-bottom:100px;" class="back-link">&larr; Back to List</a>
+        </div>
+    </div>
+ <script>
+(function() {
+    function parseVal(id) {
+        var el = document.getElementById(id);
+        if (!el) return null;
+        var v = el.value;
+        return v === "" ? null : parseFloat(v);
+    }
+
+    function updateCMJCalculations() {
+        var jumpHeightCm = parseVal("jump_height");
+        var flightTime = parseVal("flight_time");
+        var contactTime = parseVal("contact_time");
+
+        // Reactive Strength Index (RSI) = Jump Height / Contact Time
+        var rsiDisplay = document.getElementById("rsi_display");
+        var rsiHidden = document.getElementById("rsi_hidden");
+        if (!isNaN(jumpHeightCm) && !isNaN(contactTime) && contactTime > 0) {
+            var rsi = jumpHeightCm / contactTime;
+            rsiDisplay.value = rsi.toFixed(2);
+            rsiHidden.value = rsi.toFixed(2);
+        } else {
+            rsiDisplay.value = "";
+            rsiHidden.value = "";
+        }
+
+        // Stiffness (simplified formula - needs body weight, etc. for full calc)
+        var bodyWeight = parseVal("body_weight");
+        var stiffnessDisplay = document.getElementById("stiffness_display");
+        var stiffnessHidden = document.getElementById("stiffness_hidden");
+        if (!isNaN(bodyWeight) && !isNaN(contactTime) && !isNaN(flightTime)) {
+            // Basic stiffness approximation: body_weight * g / contact_time^2 (g=9.81)
+            var g = 9.81;
+            var stiffness = (bodyWeight * g) / (Math.pow(contactTime / 1000, 2)); // contactTime in ms to sec
+            stiffnessDisplay.value = (stiffness / 1000).toFixed(1); // kN/m
+            stiffnessHidden.value = (stiffness / 1000).toFixed(1);
+        } else {
+            stiffnessDisplay.value = "";
+            stiffnessHidden.value = "";
+        }
+    }
+
+    // Event listeners for CMJ fields
+    ["jump_height", "flight_time", "contact_time", "body_weight"].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener("input", updateCMJCalculations);
+        }
+    });
+})();
+</script>
+
+{% endblock %}

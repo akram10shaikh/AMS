@@ -1,0 +1,271 @@
+{% extends "player_app/tests/base.html" %}
+{% load static %}
+
+{% block title %}Add New Test Result{% endblock %}
+
+{% block extra_head %}
+    <style>
+        body {
+            background: #fff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .form-title {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 24px;
+            color: #234;
+        }
+        .form-container {
+            width: 500px;
+            margin: 0 auto;
+            background: #fafbfc;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 26px 38px 14px 38px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+            transition: border 0.2s;
+        }
+        label {
+            display: block;
+            font-size: 0.97em;
+            font-weight: 500;
+            color: #435;
+            margin-bottom: 5px;
+        }
+        select, input[type="text"], input[type="date"], textarea {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 16px;
+            border: 1px solid #cfd8dc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background: #fff;
+            color: #263238;
+        }
+        select:focus, input:focus, textarea:focus {
+            border-color: #1976d2;
+            outline: none;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+            max-height: 120px;
+        }
+        .form-actions {
+            text-align: center;
+        }
+        .btn-main {
+            background: #1976d2;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            font-size: 16px;
+            padding: 10px 0;
+            width: 100%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-main:hover {
+            background: #1565c0;
+        }
+        .back-link {
+            text-align: left;
+            font-size: 12px;
+            margin-top: 8px;
+            color: #1976d2;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .error-list {
+            margin-bottom: 20px;
+            padding: 10px 18px;
+            background: #ffcdd2;
+            border: 1px solid #ef9a9a;
+            border-radius: 6px;
+            color: #b71c1c;
+            font-size: 15px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="form-title">Add Blood Work New Test Result </div>
+    <div class="form-container">
+        {% if errors %}
+            <ul class="error-list">
+                {% for err in errors %}
+                    <li>{{ err }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <form id="testResultForm" method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="player">Player:</label>
+                <select id="player" name="player" required>
+                    <option value="">---------</option>
+                    {% for player in players %}
+                        <option value="{{ player.id }}">{{ player.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+            <label for="test">Test:</label>
+            <!-- Shows to user but disabled, not submitted -->
+            <input type="text" id="test" name="test_display" value="{{ test_name }}" disabled/>
+            <!-- Hidden input: submitted with form -->
+            <input type="hidden" name="test" value="{{ test_name }}"/>
+        </div>
+            <div class="form-group">
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+            <div class="form-group">
+                <label for="phase">Phase:</label>
+                <select id="phase" name="phase" required>
+                    <option value="">---------</option>
+                    {% for event in events %}
+                        <option value="{{ event.id }}">{{ event.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+           
+                    <h4 style="margin-top:20px; margin-bottom:8px; color:#435;">Blood Work</h4>
+
+                    <div class="form-group">
+                        <label>Haemoglobin (13–17 g/dL):</label>
+                        <input type="number" step="0.1" id="bw_haemoglobin" name="bw_haemoglobin" placeholder="e.g. 14.5">
+                    </div>
+
+                    <div class="form-group">
+                        <label>RBC Count (4.5–5.5 million/cumm):</label>
+                        <input type="number" step="0.01" id="bw_rbc" name="bw_rbc" placeholder="e.g. 5.0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Platelet Count (1.50–4.00 lakhs/cumm):</label>
+                        <input type="number" step="0.01" id="bw_platelets" name="bw_platelets" placeholder="e.g. 2.50">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Albumin (3.5–5.2 g/dL):</label>
+                        <input type="number" step="0.1" id="bw_albumin" name="bw_albumin" placeholder="e.g. 4.2">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Globulin (2.5–3.5 g/dL):</label>
+                        <input type="number" step="0.1" id="bw_globulin" name="bw_globulin" placeholder="e.g. 3.0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Uric Acid (3.4–7.0 mg/dL):</label>
+                        <input type="number" step="0.1" id="bw_uric_acid" name="bw_uric_acid" placeholder="e.g. 5.6">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Creatinine (0.7–1.2 mg/dL):</label>
+                        <input type="number" step="0.1" id="bw_creatinine" name="bw_creatinine" placeholder="e.g. 0.9">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Testosterone (2.8–8.0 ng/mL):</label>
+                        <input type="number" step="0.1" id="bw_testosterone" name="bw_testosterone" placeholder="e.g. 5.2">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Iron (60–160 µg/dL):</label>
+                        <input type="number" step="1" id="bw_iron" name="bw_iron" placeholder="e.g. 95">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Vitamin D3 (30–100 ng/mL):</label>
+                        <input type="number" step="1" id="bw_vitd3" name="bw_vitd3" placeholder="e.g. 45">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Cholesterol (&lt;200 mg/dL):</label>
+                        <input type="number" step="1" id="bw_cholesterol" name="bw_cholesterol" placeholder="e.g. 180">
+                    </div>
+
+                    <div class="form-group">
+                        <label>HDL (&gt;60 mg/dL):</label>
+                        <input type="number" step="1" id="bw_hdl" name="bw_hdl" placeholder="e.g. 55">
+                    </div>
+
+                    <div class="form-group">
+                        <label>LDL (&lt;100 mg/dL):</label>
+                        <input type="number" step="1" id="bw_ldl" name="bw_ldl" placeholder="e.g. 90">
+                    </div>
+
+                    <div class="form-group">
+                        <label>LDL/HDL Ratio (&lt;3.5):</label>
+                        <input type="number" step="0.01" id="bw_ldl_hdl_ratio" name="bw_ldl_hdl_ratio" placeholder="e.g. 2.5">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Vitamin B12 (197–771 pg/mL):</label>
+                        <input type="number" step="1" id="bw_b12" name="bw_b12" placeholder="e.g. 350">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Lipoprotein (&lt;30 mg/dL):</label>
+                        <input type="number" step="0.1" id="bw_lipoprotein" name="bw_lipoprotein" placeholder="e.g. 20">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Homocysteine (5.2–11.4 µmol/L):</label>
+                        <input type="number" step="0.1" id="bw_homocysteine" name="bw_homocysteine" placeholder="e.g. 8.5">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Protein (6.4–8.3 g/dL):</label>
+                        <input type="number" step="0.1" id="bw_protein" name="bw_protein" placeholder="e.g. 7.2">
+                    </div>
+
+                    <div class="form-group">
+                        <label>T3 (80–200 ng/dL):</label>
+                        <input type="number" step="1" id="bw_t3" name="bw_t3" placeholder="e.g. 120">
+                    </div>
+
+                    <div class="form-group">
+                        <label>T4 (5.1–14.1 µg/dL):</label>
+                        <input type="number" step="0.1" id="bw_t4" name="bw_t4" placeholder="e.g. 8.5">
+                    </div>
+
+                    <div class="form-group">
+                        <label>TSH (0.27–4.2 µIU/mL):</label>
+                        <input type="number" step="0.01" id="bw_tsh" name="bw_tsh" placeholder="e.g. 2.1">
+                    </div>
+
+
+
+            <div class="form-group">
+                <label for="notes">Notes:</label>
+                <textarea id="notes" name="notes" placeholder="Notes"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="reported_by">Reported by:</label>
+                <select id="reported_by" name="reported_by" required>
+                    <option value="">---------</option>
+                    {% for s in staff %}
+                        <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-main">Add Test Result</button>
+            </div>
+        </form>
+        <div class="form-actions" style="margin-top:8px;">
+            <a href="{% url 'test_results_by_name' test_name %}" style="margin-bottom:100px;" class="back-link">&larr; Back to List</a>
+        </div>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,315 @@
+{% extends "player_app/tests/base.html" %}
+{% load static %}
+
+{% block title %}Add New Test Result{% endblock %}
+
+{% block extra_head %}
+    <style>
+        body {
+            background: #fff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .form-title {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 24px;
+            color: #234;
+        }
+        .form-container {
+            width: 500px;
+            margin: 0 auto;
+            background: #fafbfc;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 26px 38px 14px 38px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+            transition: border 0.2s;
+        }
+        label {
+            display: block;
+            font-size: 0.97em;
+            font-weight: 500;
+            color: #435;
+            margin-bottom: 5px;
+        }
+        select, input[type="text"], input[type="date"], textarea {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 16px;
+            border: 1px solid #cfd8dc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background: #fff;
+            color: #263238;
+        }
+        select:focus, input:focus, textarea:focus {
+            border-color: #1976d2;
+            outline: none;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+            max-height: 120px;
+        }
+        .form-actions {
+            text-align: center;
+        }
+        .btn-main {
+            background: #1976d2;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            font-size: 16px;
+            padding: 10px 0;
+            width: 100%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-main:hover {
+            background: #1565c0;
+        }
+        .back-link {
+            text-align: left;
+            font-size: 12px;
+            margin-top: 8px;
+            color: #1976d2;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .error-list {
+            margin-bottom: 20px;
+            padding: 10px 18px;
+            background: #ffcdd2;
+            border: 1px solid #ef9a9a;
+            border-radius: 6px;
+            color: #b71c1c;
+            font-size: 15px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="form-title">Add Anthropometry New Test Result </div>
+    <div class="form-container">
+        {% if errors %}
+            <ul class="error-list">
+                {% for err in errors %}
+                    <li>{{ err }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <form id="testResultForm" method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="player">Player:</label>
+                <select id="player" name="player" required>
+                    <option value="">---------</option>
+                    {% for player in players %}
+                        <option value="{{ player.id }}">{{ player.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+            <label for="test">Test:</label>
+            <!-- Shows to user but disabled, not submitted -->
+            <input type="text" id="test" name="test_display" value="{{ test_name }}" disabled/>
+            <!-- Hidden input: submitted with form -->
+            <input type="hidden" name="test" value="{{ test_name }}"/>
+        </div>
+            <div class="form-group">
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+            <div class="form-group">
+                <label for="phase">Phase:</label>
+                <select id="phase" name="phase" required>
+                    <option value="">---------</option>
+                    {% for event in events %}
+                        <option value="{{ event.id }}">{{ event.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+           
+                <!-- Anthropometry: Skinfolds and main values -->
+                <div class="form-group">
+                    <label>WEIGHT (kg):</label>
+                    <input type="number" step="0.1" id="weight" name="weight" placeholder="Weight (kg)" required>
+                </div>
+
+                <div class="form-group">
+                    <label>HEIGHT (cm):</label>
+                    <input type="number" step="0.1" id="height" name="height" placeholder="Height (cm)" required>
+                </div>
+
+                <div class="form-group">
+                    <label>AGE (years):</label>
+                    <input type="number" step="1" id="age" name="age" placeholder="Age (years)" required>
+                </div>
+
+                <div class="form-group">
+                    <label>CHEST (mm):</label>
+                    <input type="number" step="0.1" id="chest" name="chest" placeholder="Chest skinfold (mm)">
+                </div>
+
+                <div class="form-group">
+                    <label>MID AXILLARY (mm):</label>
+                    <input type="number" step="0.1" id="mid_axillary" name="mid_axillary" placeholder="Mid axillary (mm)">
+                </div>
+
+                <div class="form-group">
+                    <label>SUBSCAPULAR (mm):</label>
+                    <input type="number" step="0.1" id="subscapular" name="subscapular" placeholder="Subscapular (mm)">
+                </div>
+
+                <div class="form-group">
+                    <label>TRICEPS (mm):</label>
+                    <input type="number" step="0.1" id="triceps" name="triceps" placeholder="Triceps (mm)">
+                </div>
+
+                <div class="form-group">
+                    <label>ABDOMEN (mm):</label>
+                    <input type="number" step="0.1" id="abdomen" name="abdomen" placeholder="Abdomen (mm)">
+                </div>
+
+                <div class="form-group">
+                    <label>SUPRAILIAC (mm):</label>
+                    <input type="number" step="0.1" id="suprailiac" name="suprailiac" placeholder="Suprailiac (mm)">
+                </div>
+
+                <div class="form-group">
+                    <label>MID THIGH (mm):</label>
+                    <input type="number" step="0.1" id="mid_thigh" name="mid_thigh" placeholder="Mid thigh (mm)">
+                </div>
+
+                <div class="form-group">
+                    <label>TOTAL (sum of skinfolds, mm):</label>
+                    <input type="number" step="0.1" id="skinfold_total" name="skinfold_total" placeholder="Total skinfolds (mm)">
+                </div>
+
+                <div class="form-group">
+                    <label>BODY DENSITY:</label>
+                    <input type="number" step="0.0001" id="body_density" name="body_density" placeholder="Body density">
+                </div>
+
+                <div class="form-group">
+                    <label>FAT%:</label>
+                    <input type="number" step="0.1" id="fat_percent" name="fat_percent" placeholder="Body fat %">
+                </div>
+
+                <div class="form-group">
+                    <label>ERROR CORRECTED:</label>
+                    <input type="text" id="error_corrected" name="error_corrected" placeholder="Error corrected notes">
+                </div>
+
+                <h4 style="margin-top:20px; margin-bottom:8px; color:#435;">Measurements</h4>
+
+                <div class="form-group">
+                    <label>CHEST N (cm):</label>
+                    <input type="number" step="0.1" id="chest_n" name="chest_n" placeholder="Chest N (cm)">
+                </div>
+
+                <div class="form-group">
+                    <label>CHEST E (cm):</label>
+                    <input type="number" step="0.1" id="chest_e" name="chest_e" placeholder="Chest E (cm)">
+                </div>
+
+                <div class="form-group">
+                    <label>UPPER ARM (cm):</label>
+                    <input type="number" step="0.1" id="upper_arm" name="upper_arm" placeholder="Upper arm (cm)">
+                </div>
+
+                <div class="form-group">
+                    <label>WAIST (cm):</label>
+                    <input type="number" step="0.1" id="waist" name="waist" placeholder="Waist (cm)">
+                </div>
+
+                <div class="form-group">
+                    <label>ABDOMEN (cm):</label>
+                    <input type="number" step="0.1" id="abdomen_girth" name="abdomen_girth" placeholder="Abdomen (cm)">
+                </div>
+
+                <div class="form-group">
+                    <label>HIPS (cm):</label>
+                    <input type="number" step="0.1" id="hips" name="hips" placeholder="Hips (cm)">
+                </div>
+
+                <div class="form-group">
+                    <label>THIGHS (cm):</label>
+                    <input type="number" step="0.1" id="thighs" name="thighs" placeholder="Thighs (cm)">
+                </div>
+
+                <div class="form-group">
+                    <label>CALF (cm):</label>
+                    <input type="number" step="0.1" id="calf" name="calf" placeholder="Calf (cm)">
+                </div>
+
+
+            <div class="form-group">
+                <label for="notes">Notes:</label>
+                <textarea id="notes" name="notes" placeholder="Notes"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="reported_by">Reported by:</label>
+                <select id="reported_by" name="reported_by" required>
+                    <option value="">---------</option>
+                    {% for s in staff %}
+                        <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-main">Add Test Result</button>
+            </div>
+        </form>
+        <div class="form-actions" style="margin-top:8px;">
+            <a href="{% url 'test_results_by_name' test_name %}" style="margin-bottom:100px;" class="back-link">&larr; Back to List</a>
+        </div>
+    </div>
+<script>
+(function() {
+    function parseVal(id) {
+        var el = document.getElementById(id);
+        if (!el) return null;
+        var v = el.value;
+        return v === "" ? null : parseFloat(v);
+    }
+
+    function updateSkinfoldTotal() {
+        var ids = ["chest","mid_axillary","subscapular","triceps","abdomen","suprailiac","mid_thigh"];
+        var sum = 0;
+        var any = false;
+
+        ids.forEach(function(id) {
+            var val = parseVal(id);
+            if (!isNaN(val)) {
+                sum += val;
+                any = true;
+            }
+        });
+
+        var totalEl = document.getElementById("skinfold_total");
+        if (any) {
+            totalEl.value = sum.toFixed(1);
+        } else {
+            totalEl.value = "";
+        }
+    }
+
+    ["chest","mid_axillary","subscapular","triceps","abdomen","suprailiac","mid_thigh"].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener("input", updateSkinfoldTotal);
+        }
+    });
+})();
+</script>
+
+
+{% endblock %}

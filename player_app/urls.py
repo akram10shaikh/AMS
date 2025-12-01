@@ -116,5 +116,12 @@ urlpatterns = [
                   path('glute-bridges/<str:test_name>/', views.add_glute_bridges_test, name='add_glute_bridges_test'),
                   path('lunge-calf-raises/<str:test_name>/', views.add_lunge_calf_raises_test, name='add_lunge_calf_raises_test'),
                   path('mb-rotational-throw/<str:test_name>/', views.add_mb_rotational_throw_test, name='add_mb_rotational_throw_test'),
+                  path('copen-hagen/<str:test_name>/', views.add_copen_hagen_test, name='add_copen_hagen_test'),
+                  path('sl-hop/<str:test_name>/', views.add_sl_hop_test, name='add_sl_hop_test'),
+                  path('cmj-scores/<str:test_name>/', views.add_cmj_scores_test, name='add_cmj_scores_test'),
+                  path('anthropometry/<str:test_name>/', views.add_anthropometry_test, name='add_anthropometry_test'),
+                  path('dexa-scan/<str:test_name>/', views.add_dexa_scan_test, name='add_dexa_scan_test'),
+                  path('blood-test/<str:test_name>/', views.add_blood_test, name='add_blood_tests_test'),
+                  path('runa3/<str:test_name>/', views.add_runa3_test, name='add_runa3_test'),
 
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

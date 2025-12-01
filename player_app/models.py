@@ -400,6 +400,13 @@ class TestAndResult(models.Model):
     # Run A 3x6 specific fields
     run_a_3x6_attempts = models.IntegerField(null=True, blank=True)
 
+    # S/L Glute Bridges specific fields
+    sl_right = models.FloatField(null=True, blank=True)
+    sl_left = models.FloatField(null=True, blank=True)
+    sl_difference = models.FloatField(null=True, blank=True)
+    slg_ratio = models.FloatField(null=True, blank=True)
+
+
     def save(self, *args, **kwargs):
         # Compute individual average of all 'best' values for this player and test
         if self.player_id and self.test and self.best is not None:
