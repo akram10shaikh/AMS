@@ -3130,10 +3130,10 @@ def add_glute_bridges_test(request,test_name=None):
                 notes=notes,
                 reported_by=reported_by
             )
-            return redirect('test_results_by_name', test_name=test)
+            return redirect('test_dashboard_new')
         # Pass errors back to template if any
         else:
-            return render(request, 'player_app/organization/organization_test_add.html', {
+            return render(request, 'player_app/tests/glute_bridges.html', {
                 'test_name': test_name,
                 'errors': errors,
                 'players': players,
@@ -3149,6 +3149,48 @@ def add_glute_bridges_test(request,test_name=None):
             # you may need players/staff for dropdowns
         })
 
+# Glute Bridges Test Data views
+def glute_bridges_test_view(request,test_name=None):
+    test_name = "S/L Glute Bridges"
+    search_query = request.GET.get('search', '').strip()
+    results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
+
+    # Filter by player name if search query is present
+    if search_query:
+        results = results.filter(player__name__icontains=search_query)
+
+    paginator = Paginator(results, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    player_ids = results.values_list('player_id', flat=True).distinct()
+
+    from django.db.models import Max
+
+    latest_dates = TestAndResult.objects.filter(
+        player_id__in=player_ids,
+        indv_average__isnull=False
+    ).values('player_id').annotate(latest_date=Max('date'))
+
+    latest_indv_avgs = {}
+    for entry in latest_dates:
+        latest_result = TestAndResult.objects.filter(
+            player_id=entry['player_id'],
+            date=entry['latest_date'],
+            indv_average__isnull=False
+        ).first()
+        if latest_result:
+            latest_indv_avgs[entry['player_id']] = latest_result.indv_average
+
+    context = {
+        'test_name': test_name,
+        'page_obj': page_obj,
+        'total_results': paginator.count,
+        'latest_indv_avgs': latest_indv_avgs,
+        'search_query': search_query,  # pass to template for form value retention
+    }
+    return render(request, 'player_app/tests/glute_bridges_data.html', context)
+
 # Lunge Calf Raises Test views
 def add_lunge_calf_raises_test(request,test_name=None):
     user_organization = getattr(request.user, 'organization', None)
@@ -3156,7 +3198,62 @@ def add_lunge_calf_raises_test(request,test_name=None):
     events = CampTournament.objects.filter(is_deleted=False)
     staff = Staff.objects.filter(organization=user_organization)
 
+    if request.method == "POST":
+        player_id = request.POST.get('player')
+        test = request.POST.get('test')
+        date = request.POST.get('date')
+        phase = request.POST.get('phase')
+        sl_cr_right = request.POST.get('sl_lunge_calf_right')
+        sl_cr_left = request.POST.get('sl_lunge_calf_left')
+        sl_cr_difference = request.POST.get('sl_lunge_calf_diff')
+        sl_cr_ratio = request.POST.get('sl_lunge_calf_ratio')
 
+        notes = request.POST.get('notes')
+        reported_by_id = request.POST.get('reported_by')
+
+        # Basic field validation (add your own as needed)
+        errors = []
+        if not player_id: errors.append("Player is required.")
+        if not test: errors.append("Test is required.")
+        if not date: errors.append("Date is required.")
+        if not phase: errors.append("Phase is required.")
+        if not sl_cr_right: errors.append("S/L Lunge Calf Right is required.")
+        if not sl_cr_left: errors.append("S/L Lunge Calf Left is required.")
+        if not sl_cr_difference: errors.append("S/L Lunge Calf Difference is required.")
+        if not sl_cr_ratio: errors.append("S/L Lunge Calf Ratio is required.")
+        if not reported_by_id: errors.append("Reported by is required.")
+
+
+        # If no errors, save the result
+        if not errors:
+            phase_data = CampTournament.objects.get(id=int(phase))
+            
+
+            player = Player.objects.get(pk=player_id)
+            reported_by = User.objects.get(pk=reported_by_id)
+            TestAndResult.objects.create(
+                player=player,
+                test=test,
+                date=date,
+                phase=phase_data,
+                sl_cr_right=sl_cr_right,
+                sl_cr_left=sl_cr_left,
+                sl_cr_difference=sl_cr_difference,
+                sl_cr_ratio=sl_cr_ratio,
+                notes=notes,
+                reported_by=reported_by
+            )
+            return redirect('test_dashboard_new')
+        # Pass errors back to template if any
+        else:
+            return render(request, 'player_app/tests/lunge_calf_raises.html', {
+                'test_name': test_name,
+                'errors': errors,
+                'players': players,
+                'events': events,
+                'staff':staff, 
+                # you may need players/staff for dropdowns
+            })
     return render(request, 'player_app/tests/lunge_calf_raises.html',{
             'test_name': test_name,
             'players': players,
@@ -3165,6 +3262,29 @@ def add_lunge_calf_raises_test(request,test_name=None):
             # you may need players/staff for dropdowns
         })
 
+def lunge_calf_raises_test_view(request,test_name=None):
+    test_name = 'SL Lunge Calf Raises'
+    search_query = request.GET.get('search', '').strip()
+    results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
+
+    # Filter by player name if search query is present
+    if search_query:
+        results = results.filter(player__name__icontains=search_query)
+
+    paginator = Paginator(results, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    player_ids = results.values_list('player_id', flat=True).distinct()
+
+    context = {
+        'test_name': test_name,
+        'page_obj': page_obj,
+        'total_results': paginator.count,
+        'search_query': search_query,  # pass to template for form value retention
+    }
+    return render(request, 'player_app/tests/lunge_calf_raises_data.html', context)
+
 # MB Rotational Throw Test views
 def add_mb_rotational_throw_test(request,test_name=None):
     user_organization = getattr(request.user, 'organization', None)
@@ -3172,7 +3292,62 @@ def add_mb_rotational_throw_test(request,test_name=None):
     events = CampTournament.objects.filter(is_deleted=False)
     staff = Staff.objects.filter(organization=user_organization)
 
+    if request.method == "POST":
+        player_id = request.POST.get('player')
+        test = request.POST.get('test')
+        date = request.POST.get('date')
+        phase = request.POST.get('phase')
+        mb_right = request.POST.get('mb_abs_right')
+        mb_left = request.POST.get('mb_abs_left')
+        mb_difference = request.POST.get('mb_abs_difference')
+        mb_ratio = request.POST.get('mb_abs_ratio')
 
+        notes = request.POST.get('notes')
+        reported_by_id = request.POST.get('reported_by')
+
+        # Basic field validation (add your own as needed)
+        errors = []
+        if not player_id: errors.append("Player is required.")
+        if not test: errors.append("Test is required.")
+        if not date: errors.append("Date is required.")
+        if not phase: errors.append("Phase is required.")
+        if not mb_right: errors.append("MB Rotational Throw Right is required.")
+        if not mb_left: errors.append("MB Rotational Throw Left is required.")
+        if not mb_difference: errors.append("MB Rotational Throw Difference is required.")
+        if not mb_ratio: errors.append("MB Rotational Throw Ratio is required.")
+        if not reported_by_id: errors.append("Reported by is required.")
+
+
+        # If no errors, save the result
+        if not errors:
+            phase_data = CampTournament.objects.get(id=int(phase))
+            
+
+            player = Player.objects.get(pk=player_id)
+            reported_by = User.objects.get(pk=reported_by_id)
+            TestAndResult.objects.create(
+                player=player,
+                test=test,
+                date=date,
+                phase=phase_data,
+                mb_right=mb_right,
+                mb_left=mb_left,
+                mb_difference=mb_difference,
+                mb_ratio=mb_ratio,
+                notes=notes,
+                reported_by=reported_by
+            )
+            return redirect('test_dashboard_new')
+        # Pass errors back to template if any
+        else:
+            return render(request, 'player_app/tests/rotational_throws.html', {
+                'test_name': test_name,
+                'errors': errors,
+                'players': players,
+                'events': events,
+                'staff':staff, 
+                # you may need players/staff for dropdowns
+            })
     return render(request, 'player_app/tests/rotational_throws.html',{
             'test_name': test_name,
             'players': players,
@@ -3181,6 +3356,29 @@ def add_mb_rotational_throw_test(request,test_name=None):
             # you may need players/staff for dropdowns
         })
 
+# MB Rotational Throw Test Data views
+def mb_rotational_throw_test_view(request,test_name=None):
+    test_name = "MB Rotational Throws"
+    search_query = request.GET.get('search', '').strip()
+    results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
+
+    # Filter by player name if search query is present
+    if search_query:
+        results = results.filter(player__name__icontains=search_query)
+
+    paginator = Paginator(results, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'test_name': test_name,
+        'page_obj': page_obj,
+        'total_results': paginator.count,
+        'search_query': search_query,  # pass to template for form value retention
+    }   
+    return render(request, 'player_app/tests/rotational_throws_data.html', context)
+
+
 # Copen Hagen Test views
 def add_copen_hagen_test(request,test_name=None):
     user_organization = getattr(request.user, 'organization', None)
@@ -3188,6 +3386,63 @@ def add_copen_hagen_test(request,test_name=None):
     events = CampTournament.objects.filter(is_deleted=False)
     staff = Staff.objects.filter(organization=user_organization)
 
+    if request.method == "POST":
+        player_id = request.POST.get('player')
+        test = request.POST.get('test')
+        date = request.POST.get('date')
+        phase = request.POST.get('phase')
+        
+        cp_hagen_right = request.POST.get('copen_hagen_right')
+        cp_hagen_left = request.POST.get('copen_hagen_left')
+        cp_hagen_difference = request.POST.get('copen_hagen_difference')
+        cp_hagen_ratio = request.POST.get('copen_hagen_ratio')
+
+        notes = request.POST.get('notes')
+        reported_by_id = request.POST.get('reported_by')
+
+        # Basic field validation (add your own as needed)
+        errors = []
+        if not player_id: errors.append("Player is required.")
+        if not test: errors.append("Test is required.")
+        if not date: errors.append("Date is required.")
+        if not phase: errors.append("Phase is required.")
+        if not cp_hagen_right: errors.append("Copen Hagen Right is required.")
+        if not cp_hagen_left: errors.append("Copen Hagen Left is required.")
+        if not cp_hagen_difference: errors.append("Copen Hagen Difference is required.")
+        if not cp_hagen_ratio: errors.append("Copen Hagen Ratio is required.")
+        if not reported_by_id: errors.append("Reported by is required.")
+
+
+        # If no errors, save the result
+        if not errors:
+            phase_data = CampTournament.objects.get(id=int(phase))
+            
+
+            player = Player.objects.get(pk=player_id)
+            reported_by = User.objects.get(pk=reported_by_id)
+            TestAndResult.objects.create(
+                player=player,
+                test=test,
+                date=date,
+                phase=phase_data,
+                copenhagen_right=cp_hagen_right,
+                copenhagen_left=cp_hagen_left,
+                copenhagen_difference=cp_hagen_difference,
+                copenhagen_ratio=cp_hagen_ratio,
+                notes=notes,
+                reported_by=reported_by
+            )
+            return redirect('test_dashboard_new')
+        # Pass errors back to template if any
+        else:
+            return render(request, 'player_app/tests/copen_hagen.html', {
+                'test_name': test_name,
+                'errors': errors,
+                'players': players,
+                'events': events,
+                'staff':staff, 
+                # you may need players/staff for dropdowns
+            })
 
     return render(request, 'player_app/tests/copen_hagen.html',{
             'test_name': test_name,
@@ -3197,6 +3452,28 @@ def add_copen_hagen_test(request,test_name=None):
             # you may need players/staff for dropdowns
         })
 
+# Copen Hagen Test Data views
+def copen_hagen_test_view(request,test_name=None):
+    test_name = "Copenhagen"
+    search_query = request.GET.get('search', '').strip()
+    results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
+
+    # Filter by player name if search query is present
+    if search_query:
+        results = results.filter(player__name__icontains=search_query)
+
+    paginator = Paginator(results, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'test_name': test_name,
+        'page_obj': page_obj,
+        'total_results': paginator.count,
+        'search_query': search_query,  # pass to template for form value retention
+    }   
+    return render(request, 'player_app/tests/copen_hagen_data.html', context)
+
 # S/L Hop Test views
 def add_sl_hop_test(request,test_name=None):
     user_organization = getattr(request.user, 'organization', None)
@@ -3204,6 +3481,66 @@ def add_sl_hop_test(request,test_name=None):
     events = CampTournament.objects.filter(is_deleted=False)
     staff = Staff.objects.filter(organization=user_organization)
     test_name = "S/L Hop"
+
+    if request.method == "POST":
+        player_id = request.POST.get('player')
+        test = request.POST.get('test')
+        date = request.POST.get('date')
+        phase = request.POST.get('phase')
+        
+        sl_hop_right = request.POST.get('sl_hop_right')
+        sl_hop_left = request.POST.get('sl_hop_left')
+        sl_hop_difference = request.POST.get('sl_hop_difference')
+        sl_hop_ratio = request.POST.get('sl_hop_ratio')
+        
+
+        notes = request.POST.get('notes')
+        reported_by_id = request.POST.get('reported_by')
+
+        # Basic field validation (add your own as needed)
+        errors = []
+        if not player_id: errors.append("Player is required.")
+        if not test: errors.append("Test is required.")
+        if not date: errors.append("Date is required.")
+        if not phase: errors.append("Phase is required.")
+        if not sl_hop_right: errors.append("S/L Hop Right is required.")
+        if not sl_hop_left: errors.append("S/L Hop Left is required.")
+        if not sl_hop_difference: errors.append("S/L Hop Difference is required.")
+        if not sl_hop_ratio: errors.append("S/L Hop Ratio is required.")
+        if not reported_by_id: errors.append("Reported by is required.")
+
+
+        # If no errors, save the result
+        if not errors:
+            phase_data = CampTournament.objects.get(id=int(phase))
+            
+
+            player = Player.objects.get(pk=player_id)
+            reported_by = User.objects.get(pk=reported_by_id)
+            TestAndResult.objects.create(
+                player=player,
+                test=test,
+                date=date,
+                phase=phase_data,
+                sl_hop_right=sl_hop_right,
+                sl_hop_left=sl_hop_left,
+                sl_hop_difference=sl_hop_difference,
+                sl_hop_ratio=sl_hop_ratio,
+                notes=notes,
+                reported_by=reported_by
+            )
+            return redirect('test_dashboard_new')
+        # Pass errors back to template if any
+        else:
+            return render(request, 'player_app/tests/sl_hop.html', {
+                'test_name': test_name,
+                'errors': errors,
+                'players': players,
+                'events': events,
+                'staff':staff, 
+                # you may need players/staff for dropdowns
+            })
+
 
     return render(request, 'player_app/tests/sl_hop.html',{
             'test_name': test_name,
@@ -3213,13 +3550,123 @@ def add_sl_hop_test(request,test_name=None):
             # you may need players/staff for dropdowns
         })
 
+# S/L Hop Test Data views
+def sl_hop_test_view(request,test_name=None):
+    test_name = "S/L Hop"
+    search_query = request.GET.get('search', '').strip()
+    results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
+
+    # Filter by player name if search query is present
+    if search_query:
+        results = results.filter(player__name__icontains=search_query)
+
+    paginator = Paginator(results, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'test_name': test_name,
+        'page_obj': page_obj,
+        'total_results': paginator.count,
+        'search_query': search_query,  # pass to template for form value retention
+    }   
+    return render(request, 'player_app/tests/sl_hop_data.html', context)
+
 # CMJ Test views
 def add_cmj_scores_test(request,test_name=None):
     user_organization = getattr(request.user, 'organization', None)
     players = Player.objects.filter(organization=user_organization)
     events = CampTournament.objects.filter(is_deleted=False)
     staff = Staff.objects.filter(organization=user_organization)
-    test_name = "CMJ"
+    
+    if request.method == "POST":
+        player_id = request.POST.get('player')
+        test = request.POST.get('test')
+        date = request.POST.get('date')
+        phase = request.POST.get('phase')
+        
+        cmj_body_weight = request.POST.get('body_weight')
+        cmj_push_off_distance = request.POST.get('push_off_distance')
+        cmj_box_height = request.POST.get('box_height')
+        cmj_load = request.POST.get('load')
+        cmj_jump_height = request.POST.get('jump_height')
+        cmj_flight_time = request.POST.get('flight_time')
+        cmj_contact_time = request.POST.get('contact_time')
+        cmj_force = request.POST.get('force')
+        cmj_velocity = request.POST.get('velocity')
+        cmj_power = request.POST.get('power')
+        cmj_reactive_strength_index = request.POST.get('rsi')
+        cmj_stiffness = request.POST.get('stiffness')
+        cmj_readliness_color = request.POST.get('readiness_colour')
+        cmj_jump_type = request.POST.get('jump_type')
+
+        notes = request.POST.get('notes')
+        reported_by_id = request.POST.get('reported_by')
+
+        # Basic field validation (add your own as needed)
+        errors = []
+        if not player_id: errors.append("Player is required.")
+        if not test: errors.append("Test is required.")
+        if not date: errors.append("Date is required.")
+        if not phase: errors.append("Phase is required.")
+        if not cmj_body_weight: errors.append("CMJ Body Weight is required.")
+        if not cmj_push_off_distance: errors.append("CMJ Push Off Distance is required.")
+        if not cmj_box_height: errors.append("CMJ Box Height is required.")
+        if not cmj_load: errors.append("CMJ Load is required.")
+        if not cmj_jump_height: errors.append("CMJ Jump Height is required.")
+        if not cmj_flight_time: errors.append("CMJ Flight Time is required.")
+        if not cmj_contact_time: errors.append("CMJ Contract Time is required.")
+        if not cmj_force: errors.append("CMJ Force is required.")
+        if not cmj_velocity: errors.append("CMJ Velocity is required.")
+        if not cmj_power: errors.append("CMJ Power is required.")
+        if not cmj_reactive_strength_index: errors.append("CMJ Reactive Strength Index is required.")
+        if not cmj_stiffness: errors.append("CMJ Stiffness is required.")
+        if not cmj_readliness_color: errors.append("CMJ Readliness Color is required.")
+        if not cmj_jump_type: errors.append("CMJ Jump Type is required.")
+        if not reported_by_id: errors.append("Reported by is required.")
+
+
+        # If no errors, save the result
+        if not errors:
+            phase_data = CampTournament.objects.get(id=int(phase))
+            
+
+            player = Player.objects.get(pk=player_id)
+            reported_by = User.objects.get(pk=reported_by_id)
+            TestAndResult.objects.create(
+                player=player,
+                test=test,
+                date=date,
+                phase=phase_data,
+                cmj_body_weight=cmj_body_weight,
+                cmj_push_off_distance=cmj_push_off_distance,
+                cmj_box_height=cmj_box_height,
+                cmj_load=cmj_load,
+                cmj_jump_height=cmj_jump_height,
+                cmj_flight_time=cmj_flight_time,
+                cmj_contact_time=cmj_contact_time,
+                cmj_force=cmj_force,
+                cmj_velocity=cmj_velocity,
+                cmj_power=cmj_power,
+                cmj_reactive_strength_index=cmj_reactive_strength_index,
+                cmj_stiffness=cmj_stiffness,
+                cmj_readiness_color=cmj_readliness_color,
+                cmj_jump_type=cmj_jump_type,
+                 
+                notes=notes,
+                reported_by=reported_by
+            )
+            return redirect('test_dashboard_new')
+        # Pass errors back to template if any
+        else:
+            return render(request, 'player_app/tests/cmj_scores.html', {
+                'test_name': test_name,
+                'errors': errors,
+                'players': players,
+                'events': events,
+                'staff':staff, 
+                # you may need players/staff for dropdowns
+            })
 
     return render(request, 'player_app/tests/cmj_scores.html',{
             'test_name': test_name,
@@ -3229,6 +3676,29 @@ def add_cmj_scores_test(request,test_name=None):
             # you may need players/staff for dropdowns
         })
 
+# CMJ Test Data views
+def cmj_scores_test_view(request,test_name=None):
+    test_name = "CMJ Scores"
+    search_query = request.GET.get('search', '').strip()
+    results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
+
+    # Filter by player name if search query is present
+    if search_query:
+        results = results.filter(player__name__icontains=search_query)
+
+    paginator = Paginator(results, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'test_name': test_name,
+        'page_obj': page_obj,
+        'total_results': paginator.count,
+        'search_query': search_query,  # pass to template for form value retention
+    }       
+    return render(request, 'player_app/tests/cmj_scores_data.html', context)
+
+# Anthropometry Test views
 def add_anthropometry_test(request,test_name=None):
     user_organization = getattr(request.user, 'organization', None)
     players = Player.objects.filter(organization=user_organization)
@@ -3236,6 +3706,120 @@ def add_anthropometry_test(request,test_name=None):
     staff = Staff.objects.filter(organization=user_organization)
     test_name = "Anthropometry"
 
+    if request.method == "POST":
+        player_id = request.POST.get('player')
+        test = request.POST.get('test')
+        date = request.POST.get('date')
+        phase = request.POST.get('phase')
+        
+        anthropometry_height = request.POST.get('height')
+        anthropometry_weight = request.POST.get('weight')
+        anthropometry_age = request.POST.get('age')
+        anthropometry_chest = request.POST.get('chest')
+        anthropometry_mid_axillary = request.POST.get('mid_axillary')
+        anthropometry_subscapular = request.POST.get('subscapular')
+        anthropometry_triceps = request.POST.get('triceps')
+        anthropometry_abdomen = request.POST.get('abdomen')
+        anthropometry_suprailiac = request.POST.get('suprailiac')
+        anthropometry_mid_thigh = request.POST.get('mid_thigh')
+        anthropometry_total_skinfold = request.POST.get('total_skinfold')
+        anthropometry_body_density = request.POST.get('body_density')
+        anthropometry_fat_percentage = request.POST.get('fat_percent')
+        anthropometry_error_corrected = request.POST.get('error_corrected')
+        anthropometry_chest_n = request.POST.get('chest_n')
+        anthropometry_chest_e = request.POST.get('chest_e')
+        anthropometry_upper_arm = request.POST.get('upper_arm')
+        anthropometry_waist = request.POST.get('waist')
+        anthropometry_abdomen_cm = request.POST.get('abdomen_n')
+        anthropometry_hip = request.POST.get('hip')
+        anthropometry_thigh = request.POST.get('thigh')
+        anthropometry_calf = request.POST.get('calf')
+       
+        notes = request.POST.get('notes')
+        reported_by_id = request.POST.get('reported_by')
+
+        # Basic field validation (add your own as needed)
+        errors = []
+        if not player_id: errors.append("Player is required.")
+        if not test: errors.append("Test is required.")
+        if not date: errors.append("Date is required.")
+        if not phase: errors.append("Phase is required.")
+        if not anthropometry_height: errors.append("Anthropometry Height is required.")
+        if not anthropometry_weight: errors.append("Anthropometry Weight is required.")
+        if not anthropometry_age: errors.append("Anthropometry Age is required.")
+        if not anthropometry_chest: errors.append("Anthropometry Chest is required.")
+        if not anthropometry_mid_axillary: errors.append("Anthropometry Mid Axillary is required.")
+        if not anthropometry_subscapular: errors.append("Anthropometry Subscapular is required.")
+        if not anthropometry_triceps: errors.append("Anthropometry Triceps is required.")
+        if not anthropometry_abdomen: errors.append("Anthropometry Abdomen is required.")
+        if not anthropometry_suprailiac: errors.append("Anthropometry Suprailiac is required.")
+        if not anthropometry_mid_thigh: errors.append("Anthropometry Mid Thigh is required.")
+        if not anthropometry_total_skinfold: errors.append("Anthropometry Total Skinfold is required.")
+        if not anthropometry_body_density: errors.append("Anthropometry Body Density is required.")
+        if not anthropometry_fat_percentage: errors.append("Anthropometry Fat Percentage is required.")
+        if not anthropometry_error_corrected: errors.append("Anthropometry Error Corrected is required.")
+        if not anthropometry_chest_n: errors.append("Anthropometry Chest N is required.")
+        if not anthropometry_chest_e: errors.append("Anthropometry Chest E is required.")
+        if not anthropometry_upper_arm: errors.append("Anthropometry Upper Arm is required.")   
+        if not anthropometry_waist: errors.append("Anthropometry Waist is required.")
+        if not anthropometry_abdomen_cm: errors.append("Anthropometry Abdomen N is required.")
+        if not anthropometry_hip: errors.append("Anthropometry Hip is required.")
+        if not anthropometry_thigh: errors.append("Anthropometry Thigh is required.")
+        if not anthropometry_calf: errors.append("Anthropometry Calf is required.")
+        if not reported_by_id: errors.append("Reported by is required.")
+
+
+        # If no errors, save the result
+        if not errors:
+            phase_data = CampTournament.objects.get(id=int(phase))
+            
+
+            player = Player.objects.get(pk=player_id)
+            reported_by = User.objects.get(pk=reported_by_id)
+            TestAndResult.objects.create(
+                player=player,
+                test=test,
+                date=date,
+                phase=phase_data,
+                
+                anthropometry_height=anthropometry_height,
+                anthropometry_weight=anthropometry_weight,
+                anthropometry_age=anthropometry_age,
+                anthropometry_chest=anthropometry_chest,
+                anthropometry_mid_axillary=anthropometry_mid_axillary,
+                anthropometry_subscapular=anthropometry_subscapular,
+                anthropometry_triceps=anthropometry_triceps,
+                anthropometry_abdomen=anthropometry_abdomen,
+                anthropometry_suprailiac=anthropometry_suprailiac,
+                anthropometry_mid_thigh=anthropometry_mid_thigh,
+                anthropometry_total_skinfold=anthropometry_total_skinfold,
+                anthropometry_body_density=anthropometry_body_density,
+                anthropometry_fat_percentage=anthropometry_fat_percentage,
+                anthropometry_error_corrected=anthropometry_error_corrected,
+                anthropometry_chest_n=anthropometry_chest_n,
+                anthropometry_chest_e=anthropometry_chest_e,
+                anthropometry_upper_arm=anthropometry_upper_arm,
+                anthropometry_waist=anthropometry_waist,
+                anthropometry_abdomen_cm=anthropometry_abdomen_cm,
+                anthropometry_hip=anthropometry_hip,
+                anthropometry_thigh=anthropometry_thigh,
+                anthropometry_calf=anthropometry_calf,
+
+                 
+                notes=notes,
+                reported_by=reported_by
+            )
+            return redirect('test_dashboard_new')
+        # Pass errors back to template if any
+        else:
+            return render(request, 'player_app/tests/anthropometry.html', {
+                'test_name': test_name,
+                'errors': errors,
+                'players': players,
+                'events': events,
+                'staff':staff, 
+                # you may need players/staff for dropdowns
+            })
     return render(request, 'player_app/tests/anthropometry.html',{
             'test_name': test_name,
             'players': players,
@@ -3244,13 +3828,114 @@ def add_anthropometry_test(request,test_name=None):
             # you may need players/staff for dropdowns
         })
 
+# Anthropometry Test Data views
+def anthropometry_test_view(request,test_name=None):
+    test_name = "Anthropometry"
+    search_query = request.GET.get('search', '').strip()
+    results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
+
+    # Filter by player name if search query is present
+    if search_query:
+        results = results.filter(player__name__icontains=search_query)
+
+    paginator = Paginator(results, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'test_name': test_name,
+        'page_obj': page_obj,
+        'total_results': paginator.count,
+        'search_query': search_query,  # pass to template for form value retention
+    }
+    return render(request, 'player_app/tests/anthropometry_data.html', context)
+
+# Dexa Scan Test views
 def add_dexa_scan_test(request,test_name=None):
     user_organization = getattr(request.user, 'organization', None)
     players = Player.objects.filter(organization=user_organization)
     events = CampTournament.objects.filter(is_deleted=False)
     staff = Staff.objects.filter(organization=user_organization)
-    test_name = "Dexa Scan"
+    test_name = "DEXA Scan Test"
 
+    if request.method == "POST":
+        player_id = request.POST.get('player')
+        test = request.POST.get('test')
+        date = request.POST.get('date')
+        phase = request.POST.get('phase')
+
+        dexa_height = request.POST.get('dexa_height')
+        dexa_weight = request.POST.get('dexa_weight')
+        dexa_bmi = request.POST.get('dexa_bmi')
+        dexa_rmr = request.POST.get('dexa_rmr')
+        dexa_bmd = request.POST.get('dexa_bmd')
+        dexa_tscore = request.POST.get('dexa_tscore')
+        dexa_total_fat = request.POST.get('dexa_total_fat')
+        dexa_lean = request.POST.get('dexa_lean')
+        dexa_lean_mass = request.POST.get('dexa_lean_mass')
+        dexa_testosterone = request.POST.get('dexa_testosterone')
+       
+        notes = request.POST.get('notes')
+        reported_by_id = request.POST.get('reported_by')
+
+        # Basic field validation (add your own as needed)
+        errors = []
+        if not player_id: errors.append("Player is required.")
+        if not test: errors.append("Test is required.")
+        if not date: errors.append("Date is required.")
+        if not phase: errors.append("Phase is required.")
+        if not dexa_height: errors.append("Dexa Height is required.")
+        if not dexa_weight: errors.append("Dexa Weight is required.")
+        if not dexa_bmi: errors.append("Dexa BMI is required.")
+        if not dexa_rmr: errors.append("Dexa RMR is required.")
+        if not dexa_bmd: errors.append("Dexa BMD is required.")
+        if not dexa_tscore: errors.append("Dexa T Score is required.")
+        if not dexa_total_fat: errors.append("Dexa Total Fat is required.")
+        if not dexa_lean: errors.append("Dexa Lean is required.")
+        if not dexa_lean_mass: errors.append("Dexa Lean Mass is required.")
+        if not dexa_testosterone: errors.append("Dexa Testosterone is required.")
+        if not reported_by_id: errors.append("Reported by is required.")
+
+
+        # If no errors, save the result
+        if not errors:
+            phase_data = CampTournament.objects.get(id=int(phase))
+            
+
+            player = Player.objects.get(pk=player_id)
+            reported_by = User.objects.get(pk=reported_by_id)
+            TestAndResult.objects.create(
+                player=player,
+                test=test,
+                date=date,
+                phase=phase_data,
+                
+                dexa_height=dexa_height,
+                dexa_weight=dexa_weight,
+                dexa_bmi=dexa_bmi,
+                dexa_rmr=dexa_rmr,
+                dexa_bmd=dexa_bmd,
+                dexa_tscore=dexa_tscore,
+                dexa_total_fat=dexa_total_fat,
+                dexa_lean=dexa_lean,
+                dexa_lean_mass=dexa_lean_mass,
+                dexa_testosterone=dexa_testosterone,
+
+                 
+                notes=notes,
+                reported_by=reported_by
+            )
+            return redirect('test_dashboard_new')
+        # Pass errors back to template if any
+        else:
+            return render(request, 'player_app/tests/dexa_scan.html', {
+                'test_name': test_name,
+                'errors': errors,
+                'players': players,
+                'events': events,
+                'staff':staff, 
+                # you may need players/staff for dropdowns
+            })
     return render(request, 'player_app/tests/dexa_scan.html',{
             'test_name': test_name,
             'players': players,
@@ -3259,13 +3944,149 @@ def add_dexa_scan_test(request,test_name=None):
             # you may need players/staff for dropdowns
         })
 
+# Dexa Scan Test Data views
+def dexa_scan_test_view(request,test_name=None):
+    test_name = "DEXA Scan Test"
+    search_query = request.GET.get('search', '').strip()
+    results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
 
+    # Filter by player name if search query is present
+    if search_query:
+        results = results.filter(player__name__icontains=search_query)
+
+    paginator = Paginator(results, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'test_name': test_name,
+        'page_obj': page_obj,
+        'total_results': paginator.count,
+        'search_query': search_query,  # pass to template for form value retention
+    }
+    return render(request, 'player_app/tests/dexa_scan_data.html', context)
+
+# Blood Work Test views
 def add_blood_test(request,test_name=None):
     user_organization = getattr(request.user, 'organization', None)
     players = Player.objects.filter(organization=user_organization)
     events = CampTournament.objects.filter(is_deleted=False)
     staff = Staff.objects.filter(organization=user_organization)
 
+    if request.method == "POST":
+        player_id = request.POST.get('player')
+        test = request.POST.get('test')
+        date = request.POST.get('date')
+        phase = request.POST.get('phase')
+
+        blood_hemoglobin = request.POST.get('blood_hemoglobin')
+        blood_rbc = request.POST.get('blood_rbc')
+        blood_platelets = request.POST.get('blood_platelets')
+        blood_albumin = request.POST.get('blood_albumin')
+        blood_globulin = request.POST.get('blood_globulin')
+        blood_uric_acid = request.POST.get('blood_uric_acid')
+        blood_creatinine = request.POST.get('blood_creatinine')
+        blood_testosterone = request.POST.get('blood_testosterone') 
+        blood_iron = request.POST.get('blood_iron')
+        blood_vitamin_d3 = request.POST.get('blood_vitamin_d3')
+        blood_cholesterol = request.POST.get('blood_cholesterol')
+        blood_hdl = request.POST.get('blood_hdl')
+        blood_ldl = request.POST.get('blood_ldl')
+        blood_ldl_hdl_ratio = request.POST.get('blood_ldl_hdl_ratio')
+        blood_vitamin_b12 = request.POST.get('blood_vitamin_b12')
+        blood_lipoprotein = request.POST.get('blood_lipoprotein')
+        blood_homocysteine = request.POST.get('blood_homocysteine')
+        blood_protein = request.POST.get('blood_protein')
+        blood_t3 = request.POST.get('blood_t3')
+        blood_t4 = request.POST.get('blood_t4')
+        blood_tsh = request.POST.get('blood_tsh')
+
+       
+       
+        notes = request.POST.get('notes')
+        reported_by_id = request.POST.get('reported_by')
+
+        # Basic field validation (add your own as needed)
+        errors = []
+        if not player_id: errors.append("Player is required.")
+        if not test: errors.append("Test is required.")
+        if not date: errors.append("Date is required.")
+        if not phase: errors.append("Phase is required.")
+        if not blood_hemoglobin: errors.append("Blood Hemoglobin is required.")
+        if not blood_rbc: errors.append("Blood RBC is required.")
+        if not blood_platelets: errors.append("Blood Platelets is required.")
+        if not blood_albumin: errors.append("Blood Albumin is required.")
+        if not blood_globulin: errors.append("Blood Globulin is required.")
+        if not blood_uric_acid: errors.append("Blood Uric Acid is required.")
+        if not blood_creatinine: errors.append("Blood Creatinine is required.")
+        if not blood_testosterone: errors.append("Blood Testosterone is required.")
+        if not blood_iron: errors.append("Blood Iron is required.")
+        if not blood_vitamin_d3: errors.append("Blood Vitamin D3 is required.")
+        if not blood_cholesterol: errors.append("Blood Cholesterol is required.")
+        if not blood_hdl: errors.append("Blood HDL is required.")
+        if not blood_ldl: errors.append("Blood LDL is required.")
+        if not blood_ldl_hdl_ratio: errors.append("Blood LDL/HDL Ratio is required.")
+        if not blood_vitamin_b12: errors.append("Blood Vitamin B12 is required.")
+        if not blood_lipoprotein: errors.append("Blood Lipoprotein is required.")
+        if not blood_homocysteine: errors.append("Blood Homocysteine is required.")
+        if not blood_protein: errors.append("Blood Protein is required.")
+        if not blood_t3: errors.append("Blood T3 is required.")
+        if not blood_t4: errors.append("Blood T4 is required.")
+        if not blood_tsh: errors.append("Blood TSH is required.")
+        if not reported_by_id: errors.append("Reported by is required.")
+
+
+        # If no errors, save the result
+        if not errors:
+            phase_data = CampTournament.objects.get(id=int(phase))
+            
+
+            player = Player.objects.get(pk=player_id)
+            reported_by = User.objects.get(pk=reported_by_id)
+            TestAndResult.objects.create(
+                player=player,
+                test=test,
+                date=date,
+                phase=phase_data,
+                
+                blood_hemoglobin=blood_hemoglobin,
+                blood_rbc=blood_rbc,
+                blood_platelets=blood_platelets,
+                blood_albumin=blood_albumin,
+                blood_globulin=blood_globulin,
+                blood_uric_acid=blood_uric_acid,
+                blood_creatinine=blood_creatinine,
+                blood_testosterone=blood_testosterone,
+                blood_iron=blood_iron,
+                blood_vitamin_d3=blood_vitamin_d3,
+                blood_cholesterol=blood_cholesterol,
+                blood_hdl=blood_hdl,
+                blood_ldl=blood_ldl,
+                blood_ldl_hdl_ratio=blood_ldl_hdl_ratio,
+                blood_vitamin_b12=blood_vitamin_b12,
+                blood_lipoprotein=blood_lipoprotein,
+                blood_homocysteine=blood_homocysteine,
+                blood_protein=blood_protein,
+                blood_t3=blood_t3,
+                blood_t4=blood_t4,
+                blood_tsh=blood_tsh,
+
+
+                 
+                notes=notes,
+                reported_by=reported_by
+            )
+            return redirect('test_dashboard_new')
+        # Pass errors back to template if any
+        else:
+            return render(request, 'player_app/tests/dexa_scan.html', {
+                'test_name': test_name,
+                'errors': errors,
+                'players': players,
+                'events': events,
+                'staff':staff, 
+                # you may need players/staff for dropdowns
+            })
 
     return render(request, 'player_app/tests/blood_work.html',{
             'test_name': test_name,
@@ -3275,14 +4096,88 @@ def add_blood_test(request,test_name=None):
             # you may need players/staff for dropdowns
         })
 
+# Blood Work Test Data views
+def blood_test_view(request,test_name=None):
+    test_name = "Blood Work"
+    search_query = request.GET.get('search', '').strip()
+    results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
+
+    # Filter by player name if search query is present
+    if search_query:
+        results = results.filter(player__name__icontains=search_query)
+
+    paginator = Paginator(results, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'test_name': test_name,
+        'page_obj': page_obj,
+        'total_results': paginator.count,
+        'search_query': search_query,  # pass to template for form value retention
+    }
+    return render(request, 'player_app/tests/blood_work_data.html', context)
+
+
+# Run A 3 test view
 def add_runa3_test(request,test_name=None):
     user_organization = getattr(request.user, 'organization', None)
     
     players = Player.objects.filter(organization=user_organization)
     events = CampTournament.objects.filter(is_deleted=False)
     staff = Staff.objects.filter(organization=user_organization)
+    test_name = 'Run A 3'
+    # Handle form submission
+    if request.method == "POST":
+        player_id = request.POST.get('player')
+        test = request.POST.get('test')
+        date = request.POST.get('date')
+        phase = request.POST.get('phase')
+        best = request.POST.get('best')
+        notes = request.POST.get('notes')
+        reported_by_id = request.POST.get('reported_by')
+
+        # Basic field validation (add your own as needed)
+        errors = []
+        if not player_id: errors.append("Player is required.")
+        if not test: errors.append("Test is required.")
+        if not date: errors.append("Date is required.")
+        if not phase: errors.append("Phase is required.")
+        if not best: errors.append("Best is required.")
+        if not reported_by_id: errors.append("Reported by is required.")
 
 
+        # If no errors, save the result
+        if not errors:
+            phase_data = CampTournament.objects.get(id=int(phase))
+            nomative_data = NomativeData.objects.get(final_level=float(best))
+            total_distance = nomative_data.total_distance
+            approximately_vo2max = nomative_data.approximately_vo2max
+
+            player = Player.objects.get(pk=player_id)
+            reported_by = User.objects.get(pk=reported_by_id)
+            TestAndResult.objects.create(
+                player=player,
+                test=test,
+                date=date,
+                phase=phase_data,
+                best=float(best),
+                notes=notes,
+                distance_covered=total_distance,
+                predicted_vo2max=approximately_vo2max,
+                reported_by=reported_by
+            )
+            return redirect('test_results_by_name', test_name=test)
+        # Pass errors back to template if any
+        else:
+            return render(request, 'player_app/organization/runa3.html', {
+                'test_name': test_name,
+                'errors': errors,
+                'players': players,
+                'events': events,
+                'staff':staff, 
+                # you may need players/staff for dropdowns
+            })
     return render(request, 'player_app/tests/runa3.html',{
             'test_name': test_name,
             'players': players,
@@ -3290,3 +4185,46 @@ def add_runa3_test(request,test_name=None):
             'staff':staff,
             # you may need players/staff for dropdowns
         })
+
+def runa3_test_view(request,test_name=None):
+    test_name = 'Run A 3'
+    search_query = request.GET.get('search', '').strip()
+
+    results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
+
+    # Filter by player name if search query is present
+    if search_query:
+        results = results.filter(player__name__icontains=search_query)
+
+    paginator = Paginator(results, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    player_ids = results.values_list('player_id', flat=True).distinct()
+
+    from django.db.models import Max
+
+    latest_dates = TestAndResult.objects.filter(
+        player_id__in=player_ids,
+        indv_average__isnull=False
+    ).values('player_id').annotate(latest_date=Max('date'))
+
+    latest_indv_avgs = {}
+    for entry in latest_dates:
+        latest_result = TestAndResult.objects.filter(
+            player_id=entry['player_id'],
+            date=entry['latest_date'],
+            indv_average__isnull=False
+        ).first()
+        if latest_result:
+            latest_indv_avgs[entry['player_id']] = latest_result.indv_average
+
+    context = {
+        'test_name': test_name,
+        'page_obj': page_obj,
+        'total_results': paginator.count,
+        'latest_indv_avgs': latest_indv_avgs,
+        'search_query': search_query,  # pass to template for form value retention
+    }
+    return render(request, 'player_app/tests/runa3_data.html', context)
+

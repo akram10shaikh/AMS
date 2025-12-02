@@ -124,4 +124,16 @@ urlpatterns = [
                   path('blood-test/<str:test_name>/', views.add_blood_test, name='add_blood_tests_test'),
                   path('runa3/<str:test_name>/', views.add_runa3_test, name='add_runa3_test'),
 
+                  # Test Data View URLs
+                  path('glute-bridges-view/<str:test_name>/', views.glute_bridges_test_view, name='glute_bridges_test_view'),
+                  path('lunge-calf-raises-view/<str:test_name>/', views.lunge_calf_raises_test_view, name='lunge_calf_raises_test_view'),
+                  path('mb-rotational-throw-view/<str:test_name>/', views.mb_rotational_throw_test_view, name='mb_rotational_throw_test_view'),
+                  path('copen-hagen-view/<str:test_name>/', views.copen_hagen_test_view, name='copen_hagen_test_view'),
+                  path('sl-hop-view/<str:test_name>/', views.sl_hop_test_view, name='sl_hop_test_view'),
+                  path('cmj-scores-view/<str:test_name>/', views.cmj_scores_test_view, name='cmj_scores_test_view'),
+                  path('anthropometry-view/<str:test_name>/', views.anthropometry_test_view, name='anthropometry_test_view'),
+                  path('dexa-scan-view/<str:test_name>/', views.dexa_scan_test_view, name='dexa_scan_test_view'),
+                  path('blood-test-view/<str:test_name>/', views.blood_test_view, name='blood_test_view'),
+                  path('runa3-view/<str:test_name>/',views.runa3_test_view, name='runa3_test_view'),
+
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -376,11 +376,14 @@ class TestAndResult(models.Model):
         ('Copenhagen', 'Copenhagen (Sec)'),
         ('S/L Hop', 'S/L Hop'),
         ('Run A 3', 'Run A 3'),
-        ('Run A 3x6', 'Run A 3×6'),
+        ('Run A 3x6', 'Run A 3x6'),
         ('1 Mile', '1 Mile'),
         ('Push-ups', 'Push-ups'),
         ('2 KM', '2 KM'),
         ('CMJ Scores', 'CMJ Scores'),
+        ('Anthropometry Test', 'Anthropometry Test'),
+        ('Blood Work', 'Blood Work'),
+        ('DEXA Scan Test', 'DEXA Scan Test'),
     ]
     test = models.CharField(max_length=32, choices=TEST_CHOICES, null=True)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
@@ -406,6 +409,104 @@ class TestAndResult(models.Model):
     sl_difference = models.FloatField(null=True, blank=True)
     slg_ratio = models.FloatField(null=True, blank=True)
 
+    # SL Lunge Calf Raises specific fields
+    sl_cr_right = models.FloatField(null=True, blank=True)
+    sl_cr_left = models.FloatField(null=True, blank=True)
+    sl_cr_difference = models.FloatField(null=True, blank=True)
+    sl_cr_ratio = models.FloatField(null=True, blank=True)
+
+    # MB Rotational Throws specific fields
+    mb_right = models.FloatField(null=True, blank=True)
+    mb_left = models.FloatField(null=True, blank=True)
+    mb_difference = models.FloatField(null=True, blank=True)
+    mb_ratio = models.FloatField(null=True, blank=True)
+
+    # Copenhagen specific fields
+    copenhagen_right = models.FloatField(null=True, blank=True)
+    copenhagen_left = models.FloatField(null=True, blank=True)
+    copenhagen_difference = models.FloatField(null=True, blank=True)
+    copenhagen_ratio = models.FloatField(null=True, blank=True)
+    
+    # S/L Hop Test specific fields
+    sl_hop_right = models.FloatField(null=True, blank=True)
+    sl_hop_left = models.FloatField(null=True, blank=True)
+    sl_hop_difference = models.FloatField(null=True, blank=True)
+    sl_hop_ratio = models.FloatField(null=True, blank=True)
+
+    # CMJ Scores specific fields
+    cmj_body_weight = models.FloatField(null=True, blank=True)
+    cmj_push_off_distance = models.FloatField(null=True, blank=True)
+    cmj_box_height = models.FloatField(null=True, blank=True)
+    cmj_load = models.FloatField(null=True, blank=True)
+    cmj_jump_height = models.FloatField(null=True, blank=True)
+    cmj_flight_time = models.FloatField(null=True, blank=True)
+    cmj_contact_time = models.FloatField(null=True, blank=True)
+    cmj_force = models.FloatField(null=True, blank=True)
+    cmj_velocity = models.FloatField(null=True, blank=True)
+    cmj_power = models.FloatField(null=True, blank=True)
+    cmj_reactive_strength_index = models.FloatField(null=True, blank=True)
+    cmj_stiffness = models.FloatField(null=True, blank=True)
+    cmj_readiness_color = models.CharField(max_length=20,null=True, blank=True)
+    cmj_jump_type = models.CharField(max_length=50,null=True, blank=True)
+
+    # Anthropometry Test specific fields
+    anthropometry_height = models.FloatField(null=True, blank=True)
+    anthropometry_weight = models.FloatField(null=True, blank=True)
+    anthropometry_age = models.IntegerField(null=True, blank=True)
+    anthropometry_chest = models.FloatField(null=True, blank=True)
+    anthropometry_mid_axillary = models.FloatField(null=True, blank=True)
+    anthropometry_subscapular = models.FloatField(null=True, blank=True)
+    anthropometry_triceps = models.FloatField(null=True, blank=True)
+    anthropometry_abdomen = models.FloatField(null=True, blank=True)
+    anthropometry_suprailiac = models.FloatField(null=True, blank=True)
+    anthropometry_mid_thigh = models.FloatField(null=True, blank=True)
+    anthropometry_total_skinfold = models.FloatField(null=True, blank=True)
+    anthropometry_body_density = models.FloatField(null=True, blank=True)
+    anthropometry_fat_percentage = models.FloatField(null=True, blank=True)
+    anthropometry_error_corrected = models.CharField(max_length=100, null=True, blank=True)
+    anthropometry_chest_n = models.FloatField(null=True, blank=True)
+    anthropometry_chest_e = models.FloatField(null=True, blank=True)
+    anthropometry_upper_arm = models.FloatField(null=True, blank=True)
+    anthropometry_waist = models.FloatField(null=True, blank=True)
+    anthropometry_abdomen_cm = models.FloatField(null=True, blank=True)
+    anthropometry_hip = models.FloatField(null=True, blank=True)
+    anthropometry_thigh = models.FloatField(null=True, blank=True)
+    anthropometry_calf = models.FloatField(null=True, blank=True)
+
+    # DEXA Scan Test specific fields
+    dexa_height = models.FloatField(null=True, blank=True)
+    dexa_weight = models.FloatField(null=True, blank=True)
+    dexa_bmi = models.FloatField(null=True, blank=True)
+    dexa_rmr = models.FloatField(null=True, blank=True)
+    dexa_bmd = models.FloatField(null=True, blank=True)
+    dexa_tscore = models.FloatField(null=True, blank=True)
+    dexa_total_fat = models.FloatField(null=True, blank=True)
+    dexa_lean = models.FloatField(null=True, blank=True)
+    dexa_lean_mass = models.FloatField(null=True, blank=True)
+    dexa_testosterone = models.FloatField(null=True, blank=True)
+
+    # Blood Work specific fields
+    blood_hemoglobin = models.FloatField(null=True, blank=True)
+    blood_rbc = models.FloatField(null=True, blank=True)
+    blood_platelets = models.FloatField(null=True, blank=True)
+    blood_albumin = models.FloatField(null=True, blank=True)
+    blood_globulin = models.FloatField(null=True, blank=True)
+    blood_uric_acid = models.FloatField(null=True, blank=True)
+    blood_creatinine = models.FloatField(null=True, blank=True)
+    blood_testosterone = models.FloatField(null=True, blank=True)
+    blood_iron = models.FloatField(null=True, blank=True)
+    blood_vitamin_d3 = models.FloatField(null=True, blank=True)
+    blood_cholesterol = models.FloatField(null=True, blank=True)
+    blood_hdl = models.FloatField(null=True, blank=True)
+    blood_ldl = models.FloatField(null=True, blank=True)
+    blood_ldl_hdl_ratio = models.FloatField(null=True, blank=True)
+    blood_vitamin_b12 = models.FloatField(null=True, blank=True)
+    blood_lipoprotein = models.FloatField(null=True, blank=True)
+    blood_homocysteine = models.FloatField(null=True, blank=True)
+    blood_protein = models.FloatField(null=True, blank=True)
+    blood_t3 = models.FloatField(null=True, blank=True)
+    blood_t4 = models.FloatField(null=True, blank=True)
+    blood_tsh = models.FloatField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         # Compute individual average of all 'best' values for this player and test

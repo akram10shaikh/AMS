@@ -1,0 +1,147 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+{% load dict_extras %}
+
+{% block title %}Test Results{% endblock %}
+
+{% block extra_head %}
+    <style>
+        table { width: 90%; margin: 1em auto; border-collapse: collapse; }
+        th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+        th { background-color: #f0f0f0; }
+        #searchInput {
+            width: 300px;
+            padding: 8px;
+            font-size: 16px;
+        }
+        .pagination {
+            text-align: center;
+            margin: 2em 0;
+        }
+        .pagination a, .pagination strong {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 0 2px;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+            color: #333;
+            text-decoration: none;
+        }
+        .pagination strong {
+            background: #e0e0e0;
+            font-weight: bold;
+        }
+        form.search-form {
+            text-align: center;
+            margin: 2em auto 1em auto;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h2 style="text-align:center;">{{ test_name }} Test Results</h2>
+
+    <form method="get" class="search-form" aria-label="Search Player Form">
+        <input type="text" name="search" id="searchInput" placeholder="Search player name..." value="{{ search_query }}">
+        <button type="submit">Search</button>
+    </form>
+
+    <p style="text-align:center; margin-top: 0.5em;">
+        Total rows: {{ total_results }}
+    </p>
+
+    <table id="resultsTable" aria-describedby="results summary">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Player</th>
+                <th>Date</th>
+                <th>Phase</th>
+                
+                <th>Haemoglobin (g/dL)</th>
+                <th>RBC Count (million/µL)</th>
+                <th>Platelet Count (lakhs/cumm)</th>
+                <th>Albumin (g/dL)</th>
+                <th>Globulin (g/dL)</th>
+                <th>Uric Acid (mg/dL)</th>
+                <th>Creatinine (mg/dL)</th>
+                <th>Testosterone (ng/dL)</th>
+                <th>Iron (µg/dL)</th>
+                <th>Vitamin D3 (ng/mL)</th>
+                <th>Cholesterol (mg/dL)</th>
+                <th>HDL (mg/dL)</th>
+                <th>LDL (mg/dL)</th>
+                <th>LDL/HDL Ratio</th>
+                <th>Vitamin B12 (pg/mL)</th>
+                <th>Lipoprotein (mg/dL)</th>
+                <th>Homocysteine (µmol/L)</th>
+                <th>Protein (g/dL)</th>
+                <th>T3 (ng/dL)</th>
+                <th>T4 (µg/dL)</th>
+                <th>TSH (µIU/mL)</th>
+
+
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in page_obj %}
+            <tr>
+                <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                <td class="player-name">{{ result.player.name }}</td>
+                <td>{{ result.date }}</td>
+                <td>{{ result.phase }}</td>
+               
+                <td>{{ result.blood_hemoglobin|default:"-" }}</td>
+                <td>{{ result.blood_rbc|default:"-" }}</td>
+                <td>{{ result.blood_platelets|default:"-" }}</td>
+                <td>{{ result.blood_albumin|default:"-" }}</td>
+                <td>{{ result.blood_globulin|default:"-" }}</td>
+                <td>{{ result.blood_uric_acid|default:"-" }}</td>
+                <td>{{ result.blood_creatinine|default:"-" }}</td>
+                <td>{{ result.blood_testosterone|default:"-" }}</td>
+                <td>{{ result.blood_iron|default:"-" }}</td>
+                <td>{{ result.blood_vitamin_d3|default:"-" }}</td>
+                <td>{{ result.blood_cholesterol|default:"-" }}</td>
+                <td>{{ result.blood_hdl|default:"-" }}</td>
+                <td>{{ result.blood_ldl|default:"-" }}</td>
+                <td>{{ result.blood_ldl_hdl_ratio|default:"-" }}</td>
+                <td>{{ result.blood_vitamin_b12|default:"-" }}</td>
+                <td>{{ result.blood_lipoprotein|default:"-" }}</td>
+                <td>{{ result.blood_homocysteine|default:"-" }}</td>
+                <td>{{ result.blood_protein|default:"-" }}</td>
+                <td>{{ result.blood_t3|default:"-" }}</td>
+                <td>{{ result.blood_t4|default:"-" }}</td>
+                <td>{{ result.blood_tsh|default:"-" }}</td>
+
+                <td>{{ result.notes|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7">No results found for {{ test_name }}.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="pagination" style="margin-bottom:100px;">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">&laquo; First</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">&lt; Prev</a>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+                <strong>{{ num }}</strong>
+            {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next &gt;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last &raquo;</a>
+        {% endif %}
+    </div>
+
+{% endblock %}

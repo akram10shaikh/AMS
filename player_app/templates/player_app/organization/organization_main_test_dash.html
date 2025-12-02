@@ -22,6 +22,7 @@
     <table>
         <thead>
             <tr>
+                <th>No</th>
                 <th>Test Name</th>
                 <th>Add Test Result</th>
                 <th>View Database</th>
@@ -29,84 +30,100 @@
         </thead>
         <tbody>
             <tr>
+                <td>1</td>
                 <td>Yo-Yo Test</td>
                 <td><a href="{% url 'add_test_results' 'YoYo' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
                 <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>2</td>
                 <td>10m Test</td>
                 <td><a href="{% url 'add_test_results' '10m' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
                 <td><a href="{% url 'test_results_by_name' '10m' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>3</td>
                 <td>20m Test</td>
                 <td><a href="{% url 'add_test_results' '20m' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
                 <td><a href="{% url 'test_results_by_name' '20m' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>4</td>
                 <td>40m Test</td>
                 <td><a href="{% url 'add_test_results' '40m' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
                 <td><a href="{% url 'test_results_by_name' '40m' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>5</td>
                 <td>Run A 3 Test</td>
-                <td><a href="{% url 'add_test_results' 'Run A 3' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
-                <td><a href="{% url 'test_results_by_name' 'Run A 3' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+                <td><a href="{% url 'add_runa3_test' 'Run A 3' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
+                <td><a href="{% url 'runa3_test_view' 'Run A 3' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>6</td>
                 <td>SBJ (Standing Broad Jump)</td>
                 <td><a href="{% url 'add_test_results' 'SBJ' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
-                <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+                <td><a href="{% url 'test_results_by_name' 'SBJ' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>7</td>
                 <td>Run A 3x6 </td>
                 <td><a href="{% url 'add_run_3x6_test' 'Run A 3x6' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
-                <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+                <td><a href="{% url 'test_results_by_name' 'Run A 3x6' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
              <tr>
+                <td>8</td>
                 <td>S/L Glute Bridges</td>
                 <td><a href="{% url 'add_glute_bridges_test' 'SL Glute Bridges' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
-                <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+                <td><a href="{% url 'glute_bridges_test_view' 'SL Glute Bridges' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>9</td>
                 <td>SL Lunge Calf Raises</td>
                 <td><a href="{% url 'add_lunge_calf_raises_test' 'SL Lunge Calf Raises' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
-                <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+                <td><a href="{% url 'lunge_calf_raises_test_view' 'SL Lunge Calf Raises' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>10</td>
                 <td>MB Rotational Throws</td>
                 <td><a href="{% url 'add_mb_rotational_throw_test' 'MB Rotational Throws' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
-                <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+                <td><a href="{% url 'mb_rotational_throw_test_view' 'MB Rotational Throws' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>11</td>
                 <td>Copen Hagen Test</td>
-                <td><a href="{% url 'add_copen_hagen_test' 'Copen Hagen Test' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
-                <td><a href="{% url 'test_results_by_name' 'YoYo' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+                <td><a href="{% url 'add_copen_hagen_test' 'Copenhagen' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
+                <td><a href="{% url 'copen_hagen_test_view' 'Copenhagen' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>12</td>
                 <td>S/L Hop Test</td>
                 <td><a href="{% url 'add_sl_hop_test' 'SL Hop' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
-                <td><a href="{% url 'test_results_by_name' 'SL Hop' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+                <td><a href="{% url 'sl_hop_test_view' 'SL Hop' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>13</td>
                 <td>CMJ Scores</td>
                 <td><a href="{% url 'add_cmj_scores_test' 'CMJ Scores' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
-                <td><a href="{% url 'test_results_by_name' 'CMJ Scores' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+                <td><a href="{% url 'cmj_scores_test_view' 'CMJ Scores' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>14</td>
                 <td>Anthropometry Test</td>
                 <td><a href="{% url 'add_anthropometry_test' 'Anthropometry Test' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
-                <td><a href="{% url 'test_results_by_name' 'Anthropometry Test' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+                <td><a href="{% url 'anthropometry_test_view' 'Anthropometry Test' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>15</td>
                 <td>DEXA Scan Test</td>
                 <td><a href="{% url 'add_dexa_scan_test' 'DEXA Scan Test' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
-                <td><a href="{% url 'test_results_by_name' 'DEXA Scan Test' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+                <td><a href="{% url 'dexa_scan_test_view' 'DEXA Scan Test' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
             <tr>
+                <td>16</td>
                 <td>Blood Tests</td>
-                <td><a href="{% url 'add_blood_tests_test' 'Blood Tests' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
-                <td><a href="{% url 'test_results_by_name' 'Blood Tests' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+                <td><a href="{% url 'add_blood_tests_test' 'Blood Work' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
+                <td><a href="{% url 'blood_test_view' 'Blood Work' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
             </tr>
         </tbody>
     </table>
