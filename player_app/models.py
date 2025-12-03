@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Avg
 from django.dispatch import receiver
 from django.db.models.signals import post_save
+from .utils import age_for_current_season
 
 # Group model
 class Player_Group(models.Model):
@@ -18,7 +19,6 @@ class Player_Group(models.Model):
 
 
 User = get_user_model()  # Use the CustomUser model if defined
-
 
 # Player model
 class Player(models.Model):
@@ -60,7 +60,7 @@ class Player(models.Model):
     pincode = models.CharField(max_length=10, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     nationality = models.CharField(max_length=100, blank=True, null=True)
-
+    current_age = models.IntegerField(null=True,blank=True)
     STATES = [
         ('Andhra Pradesh', 'Andhra Pradesh'),
         ('Arunachal Pradesh', 'Arunachal Pradesh'),
@@ -156,6 +156,11 @@ class Player(models.Model):
     password = models.CharField(max_length=100, default=False)
 
     player_status = models.CharField(max_length=40, choices=PLAYERS_STATAUS,null=True)
+
+    def save(self, *args, **kwargs):
+        if self.date_of_birth:
+            self.current_age = age_for_current_season(self.date_of_birth)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name

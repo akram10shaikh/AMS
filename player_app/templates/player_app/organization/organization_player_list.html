@@ -133,7 +133,8 @@
             <label><input type="checkbox" checked disabled> Name (fixed)</label><br>
             <!-- All optional columns checked by default -->
             <label><input type="checkbox" class="col-toggle" value="col-email" checked> Email</label><br>
-            <label><input type="checkbox" class="col-toggle" value="col-dob" checked> D.O.B</label><br>
+            <label><input type="checkbox" class="col-toggle" value="col-dob" checked> D.O.B </label><br>
+            <label><input type="checkbox" class="col-toggle" value="col-age-current" checked> Age </label><br>
             <label><input type="checkbox" class="col-toggle" value="col-contact" checked> Primary Contact</label><br>
             <label><input type="checkbox" class="col-toggle" value="col-contact2" checked> Secondary Contact</label><br>
             <label><input type="checkbox" class="col-toggle" value="col-gender" checked> Gender</label><br>
@@ -204,6 +205,7 @@
                 <th class="col-age">Age Category</th>
                 <th class="col-email">Email</th>
                 <th class="col-dob">D.O.B</th>
+                <th class="col-age-current">Age</th>
                 
                 <th class="col-gender">Gender</th>
                 <th class="col-state">State</th>
@@ -231,7 +233,7 @@
                 <td class="col-age">{% if player.age_category %}{{ player.get_age_category_display }}{% endif %}</td>
                 <td class="col-email">{{ player.email }}</td>
                 <td class="col-dob">{% if player.date_of_birth %}{{ player.date_of_birth|date:"d M Y" }}{% endif %}</td>
-               
+                <td class="col-age-current">{{ player.current_age }}</td>
                 <td class="col-gender">{{ player.get_gender_display }}</td>
                 <td class="col-state">{{ player.state }}</td>
                 <td class="col-role">{{ player.district }}</td>
