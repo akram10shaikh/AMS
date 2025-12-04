@@ -1,0 +1,471 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+  .snc-wrapper {
+    max-width: 980px;
+    margin: 32px auto;
+    padding: 0 12px;
+    color: #111827;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    margin-bottom:100px;
+  }
+
+  .snc-header {
+    margin-bottom: 20px;
+  }
+
+  .snc-title {
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    margin-bottom: 4px;
+  }
+
+  .snc-subtitle {
+    font-size: 0.94rem;
+    color: #6b7280;
+  }
+
+  .snc-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e4f0;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.12);
+    padding: 20px 20px 18px;
+    margin-bottom: 18px;
+  }
+
+  .snc-card-title {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #6b7280;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+
+  .snc-field-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+
+  .snc-field {
+    flex: 1 1 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .snc-field label {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #111827;
+  }
+
+  .snc-required {
+    color: #dc2626;
+    margin-left: 2px;
+  }
+
+  .snc-hint {
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+
+  .snc-input,
+  .snc-select,
+  .snc-textarea {
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    outline: none;
+    background-color: #f9fafb;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+  }
+
+  .snc-textarea {
+    min-height: 90px;
+    resize: vertical;
+  }
+
+  .snc-input:focus,
+  .snc-select:focus,
+  .snc-textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.08);
+    background-color: #ffffff;
+  }
+
+  .snc-choice-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 6px;
+  }
+
+  .snc-choice {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: #111827;
+  }
+
+  .snc-choice input {
+    width: 16px;
+    height: 16px;
+  }
+
+  .snc-activities-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+    gap: 12px;
+  }
+
+  .snc-activities-header span {
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+
+  .snc-activities-grid {
+    border-radius: 10px;
+    border: 1px solid #e2e4f0;
+    overflow: hidden;
+  }
+
+  .snc-activities-row {
+    display: grid;
+    grid-template-columns: minmax(160px, 2.5fr) minmax(130px, 1.5fr) minmax(150px, 1.5fr);
+    gap: 10px;
+    padding: 10px 12px;
+    align-items: center;
+    font-size: 0.88rem;
+  }
+
+  .snc-activities-row:nth-child(even) {
+    background-color: #f9fafb;
+  }
+
+  .snc-activities-row-header {
+    background-color: #eef2ff;
+    font-weight: 600;
+    color: #4b5563;
+  }
+
+  .snc-activity-name {
+    font-weight: 500;
+  }
+
+  .snc-select-small {
+    font-size: 0.85rem;
+    padding: 7px 9px;
+  }
+
+  .snc-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .snc-btn {
+    border-radius: 999px;
+    border: none;
+    padding: 9px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.08s ease-out, box-shadow 0.1s ease-out, background-color 0.1s ease-out;
+  }
+
+  .snc-btn-primary {
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    color: #f9fafb;
+    box-shadow: 0 10px 28px rgba(37, 99, 235, 0.45);
+  }
+
+  .snc-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 34px rgba(37, 99, 235, 0.7);
+  }
+
+  .snc-btn-ghost {
+    background: transparent;
+    color: #6b7280;
+    border: 1px solid #e2e4f0;
+  }
+
+  .snc-btn-ghost:hover {
+    background-color: #f3f4ff;
+    color: #374151;
+  }
+
+  .snc-select-disabled {
+    background-color: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 640px) {
+    .snc-wrapper {
+      margin-top: 16px;
+      padding: 0 10px;
+    }
+    .snc-activities-row {
+      grid-template-columns: 1fr;
+      align-items: flex-start;
+    }
+    .snc-activities-row-header {
+      display: none;
+    }
+    .snc-activity-name {
+      margin-bottom: 6px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="snc-wrapper">
+  <header class="snc-header">
+    <h1 class="snc-title">Daily S&amp;C Coach's Log</h1>
+    <p class="snc-subtitle">
+      Record daily activities, intensity, duration, recovery and key concerns for your team.
+    </p>
+  </header>
+
+  <form id="snc-log-form" method="post" action="{% url 'daily_activity_coach_log' %}">
+    {% csrf_token %}
+
+    <!-- Session overview -->
+    <section class="snc-card">
+      <h2 class="snc-card-title">Session overview</h2>
+
+      <div class="snc-field-row">
+        <div class="snc-field">
+          <label for="team">Team <span class="snc-required">*</span></label>
+          <input type="text" id="team" name="team" class="snc-input" required placeholder="Team name">
+          
+        </div>
+
+        <div class="snc-field">
+          <label for="coach_name">S&amp;C Coach's name <span class="snc-required">*</span></label>
+          <input type="text" id="coach_name" name="coach_name"
+                 class="snc-input" required placeholder="Coach name">
+        </div>
+
+        <div class="snc-field">
+          <label for="session_date">Date <span class="snc-required">*</span></label>
+          <input type="date" id="session_date" name="session_date"
+                 class="snc-input" required>
+        </div>
+      </div>
+    </section>
+
+    <!-- Daily activities -->
+    <section class="snc-card">
+      <div class="snc-activities-header">
+        <h2 class="snc-card-title">Daily activities</h2>
+        <span>Set <strong>duration</strong> and <strong>intensity</strong> for each activity.</span>
+      </div>
+
+      <div class="snc-activities-grid" id="activities-grid">
+        <div class="snc-activities-row snc-activities-row-header">
+          <div>Activity</div>
+          <div>Duration</div>
+          <div>Intensity</div>
+        </div>
+        <!-- rows injected by JS -->
+      </div>
+    </section>
+
+    <!-- Recovery sessions -->
+    <section class="snc-card">
+      <h2 class="snc-card-title">Recovery sessions</h2>
+
+      <div class="snc-field">
+        <label>Any recovery sessions? <span class="snc-required">*</span></label>
+        <div class="snc-choice-group">
+          <label class="snc-choice">
+            <input type="checkbox" name="recovery" value="ice_bath">
+            <span>Ice bath</span>
+          </label>
+          <label class="snc-choice">
+            <input type="checkbox" name="recovery" value="swimming">
+            <span>Swimming</span>
+          </label>
+          <label class="snc-choice">
+            <input type="checkbox" name="recovery" value="stretching">
+            <span>Stretching</span>
+          </label>
+          <label class="snc-choice">
+            <input type="checkbox" name="recovery" value="none">
+            <span>None</span>
+          </label>
+        </div>
+        <p class="snc-hint">Select all that apply. Choose "None" if no recovery work was done.</p>
+      </div>
+    </section>
+
+    <!-- Wellbeing & logistics -->
+    <section class="snc-card">
+      <h2 class="snc-card-title">Wellbeing &amp; logistics</h2>
+
+      <div class="snc-field">
+        <label for="concerns">Any concerns that need to be raised?</label>
+        <p class="snc-hint">
+          This could be related to logistics, scheduling, training load or communication hurdles.
+        </p>
+        <textarea id="concerns" name="concerns" class="snc-textarea"
+                  placeholder="Your answer"></textarea>
+      </div>
+
+      <div class="snc-field" style="margin-top: 14px;">
+        <label>Any niggles, aches, or injuries? <span class="snc-required">*</span></label>
+        <div class="snc-choice-group">
+          <label class="snc-choice">
+            <input type="radio" name="niggles" value="yes" required>
+            <span>Yes</span>
+          </label>
+          <label class="snc-choice">
+            <input type="radio" name="niggles" value="no">
+            <span>No</span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <div class="snc-actions">
+      <button type="button" class="snc-btn snc-btn-ghost"
+              onclick="document.getElementById('snc-log-form').reset();">
+        Clear form
+      </button>
+      <button type="submit" class="snc-btn snc-btn-primary">
+        Save daily log
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  const activities = [
+    "Match",
+    "Match Simulation",
+    "Practice",
+    "Fielding",
+    "Strength",
+    "Conditioning",
+    "Rest",
+    "Travelling",
+    "Fitness Testing",
+    "Screening / Assessments"
+  ];
+
+  const durationOptions = [
+    { value: "",   label: "Select duration" },
+    { value: "<1", label: "< 1 hr" },
+    { value: "1-2", label: "1 – 2 hrs" },
+    { value: "2-3", label: "2 – 3 hrs" },
+    { value: "3-4", label: "3 – 4 hrs" },
+    { value: ">4", label: "> 4 hrs" }
+  ];
+
+  const intensityOptions = [
+    { value: "", label: "Select intensity" },
+    { value: "1", label: "1 – Very Low" },
+    { value: "2", label: "2 – Low" },
+    { value: "3", label: "3 – Moderate" },
+    { value: "4", label: "4 – High" },
+    { value: "5", label: "5 – Very High" }
+  ];
+
+  function slugify(text) {
+    return text
+      .toLowerCase()
+      .replace(/\s+\/\s+/g, "_")
+      .replace(/\s+/g, "_")
+      .replace(/[^a-z0-9_]/g, "");
+  }
+
+  function createSelect(options, name, cssClass) {
+    const select = document.createElement("select");
+    select.name = name;
+    select.className = cssClass || "";
+    options.forEach(opt => {
+      const o = document.createElement("option");
+      o.value = opt.value;
+      o.textContent = opt.label;
+      select.appendChild(o);
+    });
+    return select;
+  }
+
+  function renderActivities() {
+    const grid = document.getElementById("activities-grid");
+
+    activities.forEach(activity => {
+      const row = document.createElement("div");
+      row.className = "snc-activities-row";
+
+      const nameCol = document.createElement("div");
+      nameCol.className = "snc-activity-name";
+      nameCol.textContent = activity;
+
+      const slug = slugify(activity);
+
+      const durationCol = document.createElement("div");
+      const durationSelect = createSelect(
+        durationOptions,
+        `activities[${slug}][duration]`,
+        "snc-select snc-select-small"
+      );
+      durationCol.appendChild(durationSelect);
+
+      const intensityCol = document.createElement("div");
+      const intensitySelect = createSelect(
+        intensityOptions,
+        `activities[${slug}][intensity]`,
+        "snc-select snc-select-small snc-select-disabled"
+      );
+      intensitySelect.disabled = true;
+      intensityCol.appendChild(intensitySelect);
+
+      row.appendChild(nameCol);
+      row.appendChild(durationCol);
+      row.appendChild(intensityCol);
+      grid.appendChild(row);
+
+      durationSelect.addEventListener("change", function () {
+        if (this.value === "") {
+          intensitySelect.disabled = true;
+          intensitySelect.value = "";
+          intensitySelect.classList.add("snc-select-disabled");
+        } else {
+          intensitySelect.disabled = false;
+          intensitySelect.classList.remove("snc-select-disabled");
+        }
+      });
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    renderActivities();
+
+    document.getElementById("snc-log-form").addEventListener("submit", function (e) {
+      const recoveryChecks = document.querySelectorAll('input[name="recovery"]:checked');
+      if (recoveryChecks.length === 0) {
+        e.preventDefault();
+        alert("Please select at least one recovery option (or 'None').");
+      }
+    });
+  });
+</script>
+{% endblock %}

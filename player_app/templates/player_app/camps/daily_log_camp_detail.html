@@ -1,0 +1,317 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+  .snc-detail-wrapper {
+    max-width: 980px;
+    margin: 32px auto;
+    padding: 0 12px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #e5e7eb;
+    margin-bottom:100px;
+  }
+
+  .snc-detail-header {
+    margin-bottom: 18px;
+  }
+
+  .snc-detail-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #05080bff;
+    margin-bottom: 4px;
+  }
+
+  .snc-detail-subtitle {
+    font-size: 0.9rem;
+    color: #090c12ff;
+  }
+
+  .snc-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    color: #e5e7eb;
+    margin-right: 6px;
+  }
+
+  .snc-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2.6fr);
+    gap: 18px;
+  }
+
+  .snc-card-dark {
+    background: radial-gradient(circle at top, #111827 0, #020617 55%);
+    border-radius: 14px;
+    border: 1px solid rgba(31, 41, 55, 0.95);
+    box-shadow:
+      0 24px 60px rgba(15, 23, 42, 0.9),
+      0 0 0 1px rgba(37, 99, 235, 0.18);
+    padding: 18px 18px 16px;
+  }
+
+  .snc-card-title-sm {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #9ca3af;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  .snc-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px 18px;
+  }
+
+  .snc-meta-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #6b7280;
+    margin-bottom: 2px;
+  }
+
+  .snc-meta-value {
+    font-size: 0.96rem;
+    color: #e5e7eb;
+  }
+
+  .snc-pill-flag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .snc-pill-ok {
+    background: rgba(22, 163, 74, 0.16);
+    border: 1px solid rgba(52, 211, 153, 0.7);
+    color: #bbf7d0;
+  }
+
+  .snc-pill-alert {
+    background: rgba(239, 68, 68, 0.16);
+    border: 1px solid rgba(248, 113, 113, 0.8);
+    color: #fecaca;
+  }
+
+  .snc-text-muted {
+    font-size: 0.9rem;
+    color: #9ca3af;
+  }
+
+  /* timeline-style activities */
+  .snc-activity-timeline {
+    position: relative;
+    margin-top: 6px;
+  }
+
+  .snc-activity-timeline::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: 4px;
+    bottom: 8px;
+    width: 2px;
+    background: linear-gradient(to bottom, #3b82f6, transparent);
+    opacity: 0.7;
+  }
+
+  .snc-activity-item {
+    position: relative;
+    padding-left: 26px;
+    padding-bottom: 10px;
+  }
+
+  .snc-activity-dot {
+    position: absolute;
+    left: 4px;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 30% 30%, #93c5fd 0, #2563eb 55%, #1e40af 100%);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.55);
+  }
+
+  .snc-activity-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #e5e7eb;
+  }
+
+  .snc-activity-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  .snc-tag {
+    font-size: 0.76rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    background-color: rgba(15, 23, 42, 0.9);
+    color: #e5e7eb;
+  }
+
+  .snc-tag-intensity {
+    border-color: rgba(249, 115, 22, 0.8);
+    background: rgba(248, 153, 50, 0.08);
+    color: #fed7aa;
+  }
+
+  .snc-tag-duration {
+    border-color: rgba(56, 189, 248, 0.8);
+    background: rgba(56, 189, 248, 0.1);
+    color: #bae6fd;
+  }
+
+  .snc-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .snc-list li {
+    font-size: 0.9rem;
+    color: #d1d5db;
+    padding: 4px 0;
+    border-bottom: 1px dashed rgba(55, 65, 81, 0.7);
+  }
+
+  .snc-list li:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 768px) {
+    .snc-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="snc-detail-wrapper">
+  <div class="snc-detail-header">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;">
+      <div>
+        <h1 class="snc-detail-title">{{ log.team }}</h1>
+        <p class="snc-detail-subtitle">
+          S&amp;C log for {{ log.date }} &middot; Coach: {{ log.coach_name }}
+        </p>
+      </div>
+      <div>
+        <span class="snc-badge">Daily camp log</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="snc-grid">
+    <!-- Left: session + activities -->
+    <section class="snc-card-dark">
+      <h2 class="snc-card-title-sm">Session summary</h2>
+      <div class="snc-meta-grid" style="margin-bottom:10px;">
+        <div>
+          <div class="snc-meta-label">Team</div>
+          <div class="snc-meta-value">{{ log.team }}</div>
+        </div>
+        <div>
+          <div class="snc-meta-label">Date</div>
+          <div class="snc-meta-value">{{ log.date }}</div>
+        </div>
+        <div>
+          <div class="snc-meta-label">Coach</div>
+          <div class="snc-meta-value">
+            {{ log.coach_name }}{% if log.user %} <span class="snc-text-muted">(user: {{ log.user.username }})</span>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <hr style="border-color:rgba(55,65,81,0.9);margin:8px 0 10px;">
+
+      <h3 class="snc-card-title-sm" style="margin-bottom:6px;">Daily activities</h3>
+      {% if activities %}
+        <div class="snc-activity-timeline">
+          {% for a in activities %}
+            <article class="snc-activity-item">
+              <span class="snc-activity-dot"></span>
+              <div class="snc-activity-name">{{ a.activity_name }}</div>
+              <div class="snc-activity-tags">
+                {% if a.duration %}
+                  <span class="snc-tag snc-tag-duration">
+                    Duration: {{ a.get_duration_display }}
+                  </span>
+                {% endif %}
+                {% if a.intensity %}
+                  <span class="snc-tag snc-tag-intensity">
+                    Intensity: {{ a.get_intensity_display }}
+                  </span>
+                {% endif %}
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="snc-text-muted">No activities recorded for this day.</p>
+      {% endif %}
+    </section>
+
+    <!-- Right: wellbeing & recovery -->
+    <section class="snc-card-dark">
+      <h2 class="snc-card-title-sm">Wellbeing &amp; recovery</h2>
+
+      <div style="margin-bottom:10px;">
+        <div class="snc-meta-label">Niggles / aches / injuries</div>
+        {% if log.niggles %}
+          <span class="snc-pill-flag snc-pill-alert">Issues reported</span>
+        {% else %}
+          <span class="snc-pill-flag snc-pill-ok">No issues</span>
+        {% endif %}
+      </div>
+
+      <div style="margin-bottom:12px;">
+            <div class="snc-meta-label">Recovery sessions</div>
+            {% if recovery_list %}
+                <ul class="snc-list">
+                {% for item in recovery_list %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="snc-text-muted">No recovery reported.</p>
+            {% endif %}
+            </div>
+
+        <div class="snc-meta-label">Concerns / logistics notes</div>
+        {% if log.concerns %}
+          <p style="font-size:0.9rem;color:#e5e7eb;margin-top:4px;white-space:pre-line;">
+            {{ log.concerns }}
+          </p>
+        {% else %}
+          <p class="snc-text-muted" style="margin-top:4px;">
+            No concerns recorded for this session.
+          </p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

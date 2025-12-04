@@ -691,3 +691,62 @@ class CategoryTarget(models.Model):
 
     def __str__(self):
         return f"{self.category.name}: {self.target_value}"
+    
+
+
+class DailySncLogCamps(models.Model):
+    """
+    Holds: session overview, wellbeing & logistics, niggles, recovery.
+    One row per team + date.
+    """
+    team = models.CharField(blank=True,null=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='snc_logs')
+    coach_name = models.CharField(max_length=100, null=True)
+    date = models.DateField(null=True)
+
+    # Wellbeing & logistics
+    concerns = models.TextField(blank=True)
+    niggles = models.BooleanField(default=False)
+
+    # Recovery sessions (comma-separated list: "ice_bath,stretching")
+    recovery_sessions = models.CharField(max_length=255, blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('team', 'date')
+        ordering = ['-date', '-created_at']
+
+    def __str__(self):
+        return f"{self.team} - {self.date} - {self.coach_name}"
+
+
+class DailyActivityCamps(models.Model):
+    """
+    Holds: daily activities grid (duration + intensity per activity) for a log.
+    Multiple rows per DailySncLog.
+    """
+    DURATION_CHOICES = [
+        ('<1', '< 1 hr'),
+        ('1-2', '1 - 2 hrs'),
+        ('2-3', '2 - 3 hrs'),
+        ('3-4', '3 - 4 hrs'),
+        ('>4', '> 4 hrs'),
+    ]
+
+    INTENSITY_CHOICES = [
+        ('1', '1 - Very Low'),
+        ('2', '2 - Low'),
+        ('3', '3 - Moderate'),
+        ('4', '4 - High'),
+        ('5', '5 - Very High'),
+    ]
+
+    log = models.ForeignKey(DailySncLogCamps, on_delete=models.CASCADE, related_name='activities')
+    activity_name = models.CharField(max_length=80)
+    duration = models.CharField(max_length=10, choices=DURATION_CHOICES, blank=True)
+    intensity = models.CharField(max_length=2, choices=INTENSITY_CHOICES, blank=True)
+
+    def __str__(self):
+        return f"{self.log} - {self.activity_name}"

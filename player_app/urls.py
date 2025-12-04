@@ -136,4 +136,8 @@ urlpatterns = [
                   path('blood-test-view/<str:test_name>/', views.blood_test_view, name='blood_test_view'),
                   path('runa3-view/<str:test_name>/',views.runa3_test_view, name='runa3_test_view'),
 
+                  # Daily Activity of Coachs
+                  path('daily-log/',views.daily_activity_coach_log,name='daily_activity_coach_log'),
+                  path('daily-snc-camp-detail/<int:pk>/',views.daily_snc_camp_detail, name='daily_snc_camp_detail'),
+
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

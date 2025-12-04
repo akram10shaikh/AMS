@@ -1251,6 +1251,105 @@ def organization_delete_camp(request, camp_id):
     messages.success(request, 'Camp/Tournament deleted successfully.')
     return redirect('organization_camps_tournaments')
 
+# Daily Activities of S&C Coach's Log
+ACTIVITY_NAMES = [
+    "Match",
+    "Match Simulation",
+    "Practice",
+    "Fielding",
+    "Strength",
+    "Conditioning",
+    "Rest",
+    "Travelling",
+    "Fitness Testing",
+    "Screening / Assessments",
+]
+
+# Function for the view
+import re
+def _slugify_activity(name: str) -> str:
+    slug = name.lower()
+    slug = re.sub(r"\s+/\s+", "_", slug)
+    slug = re.sub(r"\s+", "_", slug)
+    slug = re.sub(r"[^a-z0-9_]", "", slug)
+    return slug
+
+# Daily Activity log view
+def daily_activity_coach_log(request):
+    if request.method == "POST":
+        team = request.POST.get("team", "").strip()
+        coach_name = request.POST.get("coach_name", "").strip()
+        date = request.POST.get("session_date")  # yyyy-mm-dd
+        concerns = request.POST.get("concerns", "").strip()
+
+        niggles_value = request.POST.get("niggles")  # "yes" / "no"
+        niggles = niggles_value == "yes"
+
+        recovery_list = request.POST.getlist("recovery")  # many checkboxes
+        recovery_sessions = ",".join(recovery_list)
+
+        if not (team and coach_name and date):
+            messages.error(request, "Team, coach name and date are required.")
+            return render(
+                request,
+                "snc/daily_log_camp_form.html",
+                {"activities": ACTIVITY_NAMES},
+            )
+
+        # create / update header row (unique team + date)
+        log, created = DailySncLogCamps.objects.update_or_create(
+            team=team,
+            date=date,
+            defaults={
+                "user": request.user,
+                "coach_name": coach_name,
+                "concerns": concerns,
+                "niggles": niggles,
+                "recovery_sessions": recovery_sessions,
+            },
+        )
+
+        # clear previous activities for this day (if updating)
+        log.activities.all().delete()
+
+        # create activities
+        for activity_name in ACTIVITY_NAMES:
+            slug = _slugify_activity(activity_name)
+            duration_key = f"activities[{slug}][duration]"
+            intensity_key = f"activities[{slug}][intensity]"
+
+            duration = (request.POST.get(duration_key) or "").strip()
+            intensity = (request.POST.get(intensity_key) or "").strip()
+
+            # rule: only save when duration selected
+            if duration:
+                DailyActivityCamps.objects.create(
+                    log=log,
+                    activity_name=activity_name,
+                    duration=duration,
+                    intensity=intensity,
+                )
+
+        messages.success(request, "Daily S&C camp log saved.")
+        return redirect("daily_snc_camp_detail", pk=log.pk)
+
+    # GET
+    return render(request,"player_app/camps/daily_activity.html",{"activities": ACTIVITY_NAMES},)
+
+
+# Daily Activity log view page
+def daily_snc_camp_detail(request, pk):
+    log = get_object_or_404(DailySncLogCamps, pk=pk)
+    activities = log.activities.all().order_by("id")
+
+    recovery_list = []
+    if log.recovery_sessions:
+        raw_items = [item for item in log.recovery_sessions.split(",") if item]
+        for item in raw_items:
+            label = item.replace("_", " ").strip().title()
+            recovery_list.append(label)
+    return render(request,"player_app/camps/daily_log_camp_detail.html", {"log": log, "activities": activities,"recovery_list": recovery_list,},)
+
 from django.db.models import Avg
 from django.db.models import Min, Max
 from collections import defaultdict
