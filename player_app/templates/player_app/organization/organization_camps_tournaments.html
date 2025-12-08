@@ -225,6 +225,33 @@
         }
     }
 
+    .camp-year-tabs {
+        display: inline-flex;
+        gap: 16px;
+        padding: 4px;
+        border-radius: 999px;
+        background: #0a0b0cff;
+        margin: 0 1rem 1.5rem 1rem;
+    }
+    .camp-year-tab {
+        border: none;
+        padding: 8px 18px;
+        border-radius: 999px;
+        background: transparent;
+        color: #fbfcffff;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .camp-year-tab--active {
+        background: #ffffff;
+        color: #16a34a;
+        box-shadow: 0 2px 6px rgba(15,23,42,0.18);
+    }
+    .camp-year-panel--hidden {
+        display: none;
+    }
+
 </style>
 {% endblock %}
 
@@ -257,41 +284,96 @@
 {% endif %}
 
 <!-- Camps & Tournaments List -->
-<div id="campsContainer" class="container">
-    {% for camp in camps %}
+<div class="camp-year-tabs" id="campYearTabs">
+  {% for year, items in camps_by_year.items %}
+    <button type="button"
+            class="camp-year-tab {% if forloop.first %}camp-year-tab--active{% endif %}"
+            data-year="{{ year }}">
+      {{ year }}
+    </button>
+  {% endfor %}
+</div>
+
+<!-- Camps & Tournaments List grouped by year -->
+<div id="campsContainer" class="container" style="margin-bottom:100px;">
+  {% for year, items in camps_by_year.items %}
+    <div class="camp-year-panel {% if not forloop.first %}camp-year-panel--hidden{% endif %}"
+         data-year-panel="{{ year }}">
+      {% for camp in items %}
         {% if request.user.is_superuser or camp.organization == request.user.organization %}
-            <div class="camp-card">
-                <div class="camp-card-header">{{ camp.name }}</div>
-                <div class="camp-card-body">
-                    <p><strong>Type:</strong> {{ camp.get_camp_type_display }}</p>
-                    <p><strong>Start Date:</strong> {{ camp.start_date }}</p>
-                    <p><strong>End Date:</strong> {{ camp.end_date|default:"N/A" }}</p>
-                    <p><strong>Venue:</strong> {{ camp.venue|default:"N/A" }}</p>
-                </div>
-                <div class="camp-actions">
-                    <a href="{% url 'organization_camp_detail' camp.id %}" class="btn btn-primary">View</a>
-                    <a href="{% url 'organization_edit_camp' camp.id %}" class="btn btn-secondary">Edit</a>
-                    <a href="{% url 'organization_delete_camp' camp.id %}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this camp?');">Delete</a>
-                </div>
+          <div class="camp-card">
+            <div class="camp-card-header">{{ camp.name }}</div>
+            <div class="camp-card-body">
+              <p><strong>Type:</strong> {{ camp.get_camp_type_display }}</p>
+              <p><strong>Start Date:</strong> {{ camp.start_date }}</p>
+              <p><strong>End Date:</strong> {{ camp.end_date|default:"N/A" }}</p>
+              <p><strong>Venue:</strong> {{ camp.venue|default:"N/A" }}</p>
             </div>
+            <div class="camp-actions">
+              <a href="{% url 'organization_camp_detail' camp.id %}" class="btn btn-primary">View</a>
+              <a href="{% url 'organization_edit_camp' camp.id %}" class="btn btn-secondary">Edit</a>
+              <a href="{% url 'organization_delete_camp' camp.id %}" class="btn btn-danger"
+                 onclick="return confirm('Are you sure you want to delete this camp?');">Delete</a>
+            </div>
+          </div>
         {% endif %}
-    {% endfor %}
+      {% endfor %}
+    </div>
+  {% endfor %}
 </div>
 
 <script>
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        var searchValue = this.value.toLowerCase();
-        var campCards = document.querySelectorAll('.camp-card');
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('searchInput');
+  const yearTabs    = document.querySelectorAll('.camp-year-tab');
+  const yearPanels  = document.querySelectorAll('.camp-year-panel');
 
-        campCards.forEach(function(card) {
-            var name = card.querySelector('.camp-card-header').textContent.toLowerCase();
-            if (name.includes(searchValue)) {
-                card.style.display = 'inline-block';
-            } else {
-                card.style.display = 'none';
-            }
-        });
+  function filterBySearch() {
+    const q = (searchInput.value || '').toLowerCase().trim();
+
+    // Only filter visible year's cards
+    yearPanels.forEach(panel => {
+      if (panel.classList.contains('camp-year-panel--hidden')) return;
+      const cards = panel.querySelectorAll('.camp-card');
+      cards.forEach(card => {
+        const name = card.querySelector('.camp-card-header').textContent.toLowerCase();
+        card.style.display = (!q || name.includes(q)) ? 'inline-block' : 'none';
+      });
     });
+  }
+
+  // Search typing
+  if (searchInput) {
+    searchInput.addEventListener('keyup', filterBySearch);
+  }
+
+  // Year tab switching
+  yearTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const year = tab.dataset.year;
+
+      yearTabs.forEach(t => t.classList.remove('camp-year-tab--active'));
+      tab.classList.add('camp-year-tab--active');
+
+      yearPanels.forEach(panel => {
+        const matches = panel.dataset.yearPanel === year;
+        panel.classList.toggle('camp-year-panel--hidden', !matches);
+        if (matches) {
+          // reset visibility when switching year
+          panel.querySelectorAll('.camp-card').forEach(card => {
+            card.style.display = 'inline-block';
+          });
+        }
+      });
+
+      // Re-apply current search term to the new visible year
+      filterBySearch();
+    });
+  });
+
+  // Initial run
+  filterBySearch();
+});
 </script>
 
 {% endblock %}

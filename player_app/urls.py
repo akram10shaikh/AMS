@@ -91,7 +91,7 @@ urlpatterns = [
                   path('add-test-results/<str:test_name>/', views.add_test_results, name='add_test_results'),
 
                   path('organization/dashboard/', views.organization_dashboard_org, name='organization_dashboard_org'),
-                 
+                  path('org/players-by-category/', views.players_by_category, name='players_by_category'),           
 
                   path('teams-dashboard/', views.teams_dashboard, name='teams_dashboard'),
 
@@ -137,7 +137,8 @@ urlpatterns = [
                   path('runa3-view/<str:test_name>/',views.runa3_test_view, name='runa3_test_view'),
 
                   # Daily Activity of Coachs
-                  path('daily-log/',views.daily_activity_coach_log,name='daily_activity_coach_log'),
+                  path('daily-log/<int:id>/',views.daily_activity_coach_log,name='daily_activity_coach_log'),
                   path('daily-snc-camp-detail/<int:pk>/',views.daily_snc_camp_detail, name='daily_snc_camp_detail'),
+                  path('daily-log-list/<int:camp_id>/', views.daily_snc_camp_logs_list, name='daily_snc_camp_logs_list'),
 
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

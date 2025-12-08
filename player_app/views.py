@@ -1089,22 +1089,25 @@ def organization_camps_tournaments(request):
     else:
         return HttpResponseForbidden(
             "You must belong to an organization or have the necessary permissions to view camps and tournaments.")
-  
+    
+    camps_qs = camps.annotate(year=ExtractYear('start_date')).order_by('-year', 'start_date')
 
+    camps_by_year = defaultdict(list)
+    for camp in camps_qs:
+        camps_by_year[camp.year].append(camp)
 
+    # sort years descending
+    camps_by_year = dict(sorted(camps_by_year.items(), reverse=True))
+
+    
     return render(request, 'player_app/organization/organization_camps_tournaments.html', {
         'camps': camps,
+        'camps_by_year': camps_by_year,
         'male_players': male_players,
         'female_players': female_players,
         'organizations': organizations if request.user.is_superuser else None
     })
 
-def organization_camp_detail(request, camp_id):
-    """
-    Displays details of a specific camp/tournament.
-    """
-    camp = get_object_or_404(CampTournament, id=camp_id)
-    return render(request, 'player_app/organization/organization_camp_detail.html', {'camp': camp})
 
 def organization_edit_camp(request, camp_id):
     """
@@ -1251,6 +1254,13 @@ def organization_delete_camp(request, camp_id):
     messages.success(request, 'Camp/Tournament deleted successfully.')
     return redirect('organization_camps_tournaments')
 
+def organization_camp_detail(request, camp_id):
+    """
+    Displays details of a specific camp/tournament.
+    """
+    camp = get_object_or_404(CampTournament, id=camp_id)
+    return render(request, 'player_app/organization/organization_camp_detail.html', {'camp': camp})
+
 # Daily Activities of S&C Coach's Log
 ACTIVITY_NAMES = [
     "Match",
@@ -1274,8 +1284,11 @@ def _slugify_activity(name: str) -> str:
     slug = re.sub(r"[^a-z0-9_]", "", slug)
     return slug
 
-# Daily Activity log view
-def daily_activity_coach_log(request):
+# Daily Activity log view for S&C Coach's
+def daily_activity_coach_log(request,id):
+    camp = get_object_or_404(CampTournament, id=id)
+    organization = get_object_or_404(Organization, user=request.user)
+    
     if request.method == "POST":
         team = request.POST.get("team", "").strip()
         coach_name = request.POST.get("coach_name", "").strip()
@@ -1292,13 +1305,13 @@ def daily_activity_coach_log(request):
             messages.error(request, "Team, coach name and date are required.")
             return render(
                 request,
-                "snc/daily_log_camp_form.html",
-                {"activities": ACTIVITY_NAMES},
+                "player_app/camps/daily_activity.html",  # ✅ Use existing template
+                {"activities": ACTIVITY_NAMES, "camp": camp, "organization": organization},
             )
-
+        teams = CampTournament.objects.get(name=team)
         # create / update header row (unique team + date)
         log, created = DailySncLogCamps.objects.update_or_create(
-            team=team,
+            team=teams,
             date=date,
             defaults={
                 "user": request.user,
@@ -1334,7 +1347,7 @@ def daily_activity_coach_log(request):
         return redirect("daily_snc_camp_detail", pk=log.pk)
 
     # GET
-    return render(request,"player_app/camps/daily_activity.html",{"activities": ACTIVITY_NAMES},)
+    return render(request,"player_app/camps/daily_activity.html",{"activities": ACTIVITY_NAMES,"camp":camp,"organization":organization},)
 
 
 # Daily Activity log view page
@@ -1349,6 +1362,33 @@ def daily_snc_camp_detail(request, pk):
             label = item.replace("_", " ").strip().title()
             recovery_list.append(label)
     return render(request,"player_app/camps/daily_log_camp_detail.html", {"log": log, "activities": activities,"recovery_list": recovery_list,},)
+
+
+def daily_snc_camp_logs_list(request, camp_id):
+    """List all daily S&C logs for a camp with sorting by date."""
+    camp = get_object_or_404(CampTournament, id=camp_id)
+    organization = get_object_or_404(Organization, user=request.user)
+    
+    # Get all logs for this camp's teams
+    camp_teams = CampTournament.objects.filter(id=camp_id).values_list('name', flat=True)
+    logs = DailySncLogCamps.objects.filter(
+        team__name__in=camp_teams
+    ).select_related('user').prefetch_related('activities').order_by('-date')
+    
+    # Sorting by date (newest first by default)
+    sort_order = request.GET.get('sort', '-date')
+    logs = logs.order_by(sort_order)
+    
+    context = {
+        'camp': camp,
+        'organization': organization,
+        'logs': logs,
+        'sort_order': sort_order,
+    }
+    return render(request, 'player_app/camps/daily_snc_camp_logs_list.html', context)
+
+
+# -----------------------------------------------------------------------------------------------------------
 
 from django.db.models import Avg
 from django.db.models import Min, Max
@@ -1475,112 +1515,126 @@ from itertools import chain
 from collections import OrderedDict
 from itertools import chain
 from django.db.models import Count, Q
+from django.db.models.functions import ExtractYear
 
 @login_required
 def organization_dashboard_org(request):
-    # Fetch filters from GET params or default to 'all'
     selected_category = request.GET.get('category', 'all')
     selected_gender = request.GET.get('gender', 'all')
 
-    # Determine organization based on user role
+    # Determine organization
     if request.user.role == "Staff":
         organization = request.user.staff.organization
     elif request.user.role == "OrganizationAdmin":
         organization = get_object_or_404(Organization, user=request.user)
+    else:
+        organization = None
 
-        # Base queryset for players and injuries (unfiltered for cards)
+    if not organization:
+        return render(request, 'error.html', {'message': 'No organization access'})
+
+    # Base querysets
     all_players = Player.objects.filter(organization=organization)
     all_injuries = Injury.objects.filter(player__organization=organization)
 
-    # Cards definitions aligned with your Age_category_choices and Player model
+    # ✅ NEW: Build category_players for tooltips
+    category_players = defaultdict(list)
+    for player in all_players:
+        category_players[player.age_category].append(player.name)
+    category_players = dict(category_players)
+
+    # Cards definitions - FIXED keys match age_category values
     CATEGORY_CARDS = OrderedDict([
-        ("B - U14",    {'gender': 'M', 'age_category': 'boys_under-15',    'label': "B - U14"}),
-        ("B - U16",    {'gender': 'M', 'age_category': 'boys_under-16',    'label': "B - U16"}),  # Add to your model choices if missing
-        ("B - U19",    {'gender': 'M', 'age_category': 'boys_under-19',    'label': "B - U19"}),
-        ("B - U23",    {'gender': 'M', 'age_category': 'men_under-23',     'label': "B - U23"}),
-        ("M - SENIOR", {'gender': 'M', 'age_category': 'men_senior',       'label': "M - SENIOR"}),
-        ("W - U15",    {'gender': 'F', 'age_category': 'girls_under-15',   'label': "W - U15"}),
-        ("G - U19",    {'gender': 'F', 'age_category': 'girls_under-19',   'label': "G - U19"}),
-        ("W - U23",    {'gender': 'F', 'age_category': 'women_under-23',   'label': "W - U23"}),
-        ("W - SENIOR", {'gender': 'F', 'age_category': 'women_senior',     'label': "W - SENIOR"}),
+        ("boys_under-15", {'gender': 'M', 'label': "B - U14"}),
+        ("boys_under-16", {'gender': 'M', 'label': "B - U16"}),
+        ("boys_under-19", {'gender': 'M', 'label': "B - U19"}),
+        ("men_under-23",  {'gender': 'M', 'label': "B - U23"}),
+        ("men_senior",    {'gender': 'M', 'label': "M - SENIOR"}),
+        ("girls_under-15", {'gender': 'F', 'label': "W - U15"}),
+        ("girls_under-19", {'gender': 'F', 'label': "G - U19"}),
+        ("women_under-23", {'gender': 'F', 'label': "W - U23"}),
+        ("women_senior",  {'gender': 'F', 'label': "W - SENIOR"}),
     ])
 
     category_cards = []
-    for key, card_cat in CATEGORY_CARDS.items():
+    for age_category, card_cat in CATEGORY_CARDS.items():
         players_qs = all_players.filter(
             gender=card_cat['gender'],
-            age_category=card_cat['age_category']
+            age_category=age_category
         ).distinct()
 
-        total_players = players_qs.values('id').distinct().count()
-        full_participation = players_qs.filter(player_status__iexact="full participation").values('id').distinct().count()
-        limited_participation = players_qs.filter(player_status__iexact="limited participation").values('id').distinct().count()
-        no_participation = players_qs.filter(player_status__iexact="no participation").values('id').distinct().count()
-        active_injury = all_injuries.filter(player__in=players_qs, status='open').values('player_id').distinct().count()
-
-        
         category_cards.append({
             'label': card_cat['label'],
-            'total': total_players,
-            'full': full_participation,
-            'limited': limited_participation,
-            'none': no_participation,
-            'active_injury': active_injury,
+            'age_category': age_category,  # ✅ CRITICAL for data-age-category
+            'total': players_qs.count(),
+            'full': players_qs.filter(player_status__iexact="full participation").count(),
+            'limited': players_qs.filter(player_status__iexact="limited participation").count(),
+            'none': players_qs.filter(player_status__iexact="no participation").count(),
+            'active_injury': all_injuries.filter(player__in=players_qs, status='open').values('player_id').distinct().count(),
         })
-    
-    test_org = Player.objects.filter(organization=organization)
-    
-    test_filter = Player.objects.filter(player_status__iexact="full participation",age_category="men_senior" ,organization=organization).count()
-    
 
-
-    # --- Dashboard filter (all other data below can use the filtered players/injuries) ---
+    # Filtered data for tables
     players = all_players
     injuries = all_injuries.select_related('player', 'reported_by')
 
-    # Filter by category if selected
     if selected_category != 'all':
         players = players.filter(age_category=selected_category)
         injuries = injuries.filter(player__age_category=selected_category)
-
-    # Filter by gender if selected
     if selected_gender != 'all':
         players = players.filter(gender=selected_gender)
         injuries = injuries.filter(player__gender=selected_gender)
 
-    # Total injuries and active injuries (filtered)
     total_injuries_count = injuries.count()
     active_injuries = injuries.filter(status='open')
     active_injuries_count = active_injuries.count()
 
-    # Participation types (filtered)
     participation_counts = CampTournament.objects.filter(
         participants__in=players
     ).annotate(
-        player_count=Count('participants', filter=Q(participants__in=players), distinct=True)
+        player_count=Count('participants', distinct=True)
     ).order_by('-player_count')
 
-    # Prefetch injuries (with notes)
-    players = players.prefetch_related('injuries__reported_by')
+    players = players.prefetch_related('injuries__reported_by', 'camps')
 
-    # Activity log setup
+    # Activity logs
     medical_logs = MedicalActivityLog.objects.filter(player__in=players).select_related('player', 'user', 'document')
     injury_logs = InjuryActivityLog.objects.filter(injury__in=injuries).select_related('injury', 'actor')
     player_logs = PlayerActivityLog.objects.filter(player__in=players).select_related('player', 'actor')
-    for log in medical_logs:
-        log.log_type = 'medical'
-    for log in injury_logs:
-        log.log_type = 'injury'
-    for log in player_logs:
-        log.log_type = 'player'
     
+    for log in chain(medical_logs, injury_logs, player_logs):
+        if hasattr(log, 'log_type'):
+            continue
+        if 'MedicalActivityLog' in str(type(log)):
+            log.log_type = 'medical'
+        elif 'InjuryActivityLog' in str(type(log)):
+            log.log_type = 'injury'
+        else:
+            log.log_type = 'player'
+
     combined_logs = sorted(
         chain(medical_logs, injury_logs, player_logs),
-        key=lambda log: getattr(log, 'timestamp', getattr(log, 'created_at', None)),
+        key=lambda log: getattr(log, 'timestamp', getattr(log, 'created_at', None)) or datetime.min,
         reverse=True
     )
 
+    camps_qs = (
+        CampTournament.objects.filter(participants__in=players)
+        .annotate(
+            year=ExtractYear('start_date'),  # or correct date field
+            player_count=Count('participants', filter=Q(participants__in=players), distinct=True),
+        )
+        .prefetch_related('participants')
+        .order_by('-year', 'name')
+    )
+
+    camps_by_year = defaultdict(list)
+    for camp in camps_qs:
+        camp.player_names = ", ".join(p.name for p in camp.participants.all())
+        camps_by_year[camp.year].append(camp)
+
+    camps_by_year = dict(sorted(camps_by_year.items(), reverse=True))
     
+
 
     context = {
         'selected_category': selected_category,
@@ -1591,9 +1645,12 @@ def organization_dashboard_org(request):
         'active_injuries': active_injuries,
         'participation_counts': participation_counts,
         'activity_logs': combined_logs,
-        'category_cards': category_cards,  # <-- ADD THIS LINE
+        'category_cards': category_cards,
+        'category_players': category_players, 
+        'camps_by_year': camps_by_year,
     }
     return render(request, 'player_app/organization/organization_dashboard.html', context)
+
 
 def logout_user(request):
     """
@@ -1602,6 +1659,79 @@ def logout_user(request):
     logout(request)
     messages.success(request, "You have been logged out successfully.")
     return redirect('home')  # Adjust to your login URL name
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from django.http import QueryDict
+
+@login_required
+def players_by_category(request):
+    """View to show all players filtered by age_category from dashboard card click"""
+    age_category = request.GET.get('age_category')
+    gender_filter = request.GET.get('gender', '')
+    search_query = request.GET.get('search', '').strip()
+    
+    # Determine organization
+    if request.user.role == "Staff":
+        organization = request.user.staff.organization
+    elif request.user.role == "OrganizationAdmin":
+        organization = get_object_or_404(Organization, user=request.user)
+    else:
+        return render(request, 'error.html', {'message': 'No organization access'})
+
+    # Base queryset
+    players = Player.objects.filter(organization=organization).select_related().prefetch_related('camps', 'injuries')
+
+    # Filter by age_category (from dashboard card click)
+    if age_category:
+        players = players.filter(age_category=age_category)
+
+    # Filter by gender
+    if gender_filter:
+        players = players.filter(gender=gender_filter)
+
+    # Filter by search
+    if search_query:
+        players = players.filter(
+            Q(name__icontains=search_query) |
+            Q(injuries__name__icontains=search_query)
+        ).distinct()
+
+    # Count active injuries per player for display
+    players = players.prefetch_related('injuries')
+
+    # Category labels for display
+    category_labels = {
+        'boys_under-15': 'Boys U14',
+        'boys_under-16': 'Boys U16', 
+        'boys_under-19': 'Boys U19',
+        'men_under-23': 'Men U23',
+        'men_senior': 'Men Senior',
+        'girls_under-15': 'Girls U15',
+        'girls_under-19': 'Girls U19',
+        'women_under-23': 'Women U23',
+        'women_senior': 'Women Senior',
+    }
+    
+    category_display = category_labels.get(age_category, 'All Players')
+    if not age_category:
+        category_display = f'All Players ({organization.name})'
+
+    total_players = players.count()
+
+    context = {
+        'players': players,
+        'age_category': age_category,
+        'gender_filter': gender_filter,
+        'search_query': search_query,
+        'category_display': category_display,
+        'total_players': total_players,
+        'request': request,  # For template filter preservation
+    }
+    return render(request, 'player_app/dashboard/players-by-category.html', context)
+
+
 # --------------------------------------------------------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------------------------------------------------------------------

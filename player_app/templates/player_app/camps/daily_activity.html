@@ -241,7 +241,7 @@
     </p>
   </header>
 
-  <form id="snc-log-form" method="post" action="{% url 'daily_activity_coach_log' %}">
+  <form id="snc-log-form" method="post" action="{% url 'daily_activity_coach_log' camp.id %}">
     {% csrf_token %}
 
     <!-- Session overview -->
@@ -249,10 +249,10 @@
       <h2 class="snc-card-title">Session overview</h2>
 
       <div class="snc-field-row">
-        <div class="snc-field">
+       <div class="snc-field">
           <label for="team">Team <span class="snc-required">*</span></label>
-          <input type="text" id="team" name="team" class="snc-input" required placeholder="Team name">
-          
+          <input type="hidden" name="team" value="{{ camp.name }}" required>
+          <div class="snc-input-display">{{ camp.name }}</div>  <!-- Visual only -->
         </div>
 
         <div class="snc-field">

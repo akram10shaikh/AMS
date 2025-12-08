@@ -1,0 +1,163 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+.log-list-wrapper { max-width: 1400px; margin: 0 auto; padding: 2rem 1rem;margin-bottom:100px; }
+.log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+.log-title { font-size: 2.5rem; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+.log-stats { display: flex; gap: 2rem; font-size: 0.95rem; color: #9ca3af; }
+.stat-item { display: flex; align-items: center; gap: 0.5rem;color:black; }
+.stat-number { font-weight: 700; font-size: 1.25rem; color: #010102ff; }
+.sort-container { display: flex; gap: 0.5rem; align-items: center; }
+.sort-btn { @apply px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 border border-gray-600 hover:border-blue-500 hover:bg-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 whitespace-nowrap; }
+.sort-btn.active { @apply bg-blue-500/20 border-blue-500 text-blue-300 font-semibold; }
+.log-table { width: 100%; border-collapse: separate; border-spacing: 0; background: rgba(15, 23, 42, 0.8); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0,0, 0.3), 0 10px 10px -5px rgba(0, 0,0, 0.2); }
+.log-table thead { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
+.log-table th { padding: 1.25rem 1rem; text-align: left; font-weight: 600; font-size: 0.875rem; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(148, 163, 184, 0.2); }
+.log-table td { padding: 1.25rem 1rem; border-bottom: 1px solid rgba(148, 163, 184, 0.1); vertical-align: top; }
+.log-table tr:hover { background: rgba(59, 130, 246, 0.1); }
+.date-cell { font-weight: 600; font-size: 1.1rem; color: #f8fafc; min-width: 140px; }
+.team-cell { font-weight: 600; color: #e2e8f0; }
+.coach-cell { color: #f6f9fcff; }
+.activities-count { color:white; }
+.niggles-badge { @apply px-3 py-1 text-xs font-semibold rounded-full; }
+.niggles-yes { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+.niggles-no { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+.recovery-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; color:white;}
+.recovery-tag { @apply px-2 py-1 bg-emerald-500/20 text-emerald-300 text-xs font-medium rounded-md border border-emerald-500/30; }
+.concerns-cell { max-width: 300px; }
+.concerns-text { @apply text-sm leading-relaxed line-clamp-3;color:white; }
+.concerns-empty { color: #64748b; font-style: italic; }
+.actions-cell { white-space: nowrap; }
+.action-btn { @apply px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 border border-gray-600 hover:border-blue-500 hover:bg-blue-500/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 mr-2; }
+.action-view { color: #3b82f6; }
+.action-edit { color: #eab308; }
+.no-logs { @apply text-center py-16 text-gray-400; }
+@media (max-width: 768px) { .log-table { font-size: 0.875rem; } .log-table th, .log-table td { padding: 0.75rem 0.5rem; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="log-list-wrapper">
+  <!-- Header -->
+  <div class="log-header">
+    <div>
+      <h1 class="log-title">Daily S&C Logs</h1>
+      <p class="log-subtitle" style="color: #0e0f11ff; margin-top: 0.25rem;">All daily activity logs for {{ camp.name }}</p>
+    </div>
+    
+    <div class="log-stats">
+      <div class="stat-item">
+        <span class="stat-number">{{ logs|length }}</span>
+        Total logs
+      </div>
+      <a href="{% url 'daily_activity_coach_log' camp.id %}" class="btn btn-primary btn-pill">
+        + New Log
+      </a>
+    </div>
+  </div>
+
+  <!-- Sorting -->
+  {% if logs %}
+  <div class="sort-container" style="margin-bottom: 1.5rem;">
+    <span style="color: #05090eff; font-size: 0.875rem; white-space: nowrap;">Sort by:</span>
+    <a href="?sort=-date" class="sort-btn {% if sort_order == '-date' %}active{% endif %}">Newest First</a>
+    <a href="?sort=date" class="sort-btn {% if sort_order == 'date' %}active{% endif %}">Oldest First</a>
+  </div>
+
+  <!-- Logs Table -->
+  <div class="log-table-container">
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Team</th>
+          <th>Coach</th>
+          <th>Activities</th>
+          <th>Niggles</th>
+          <th>Recovery</th>
+          <th>Concerns</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td class="date-cell">{{ log.date|date:"d M Y" }}</td>
+          <td class="team-cell">{{ log.team.name }}</td>
+          <td class="coach-cell">{{ log.coach_name }}{% if log.user %} <span >({{ log.user.username }})</span>{% endif %}</td>
+          <td>
+            <span style="color:white;">{{ log.activities.count }}</span>
+            {% if log.activities.count %}
+              <div style="font-size: 0.8rem; color: #f8f9faff; margin-top: 0.25rem;">
+                {{ log.activities.count|pluralize:"activity" }}
+              </div>
+            {% endif %}
+          </td>
+          <td>
+            <span class="niggles-badge {% if log.niggles %}niggles-yes{% else %}niggles-no{% endif %}">
+              {% if log.niggles %}⚠️ Issues{% else %}✅ Clear{% endif %}
+            </span>
+          </td>
+          <td>
+            {% if log.recovery_sessions %}
+                <div class="recovery-tags">
+                {% for item in log.recovery_sessions.split %}
+                    {% if item %}
+                    {% if 'ice_bath' in item %}
+                        <span class="recovery-tag">Ice Bath</span>
+                    {% elif 'swimming' in item %}
+                        <span class="recovery-tag">Swimming</span>
+                    {% elif 'stretching' in item %}
+                        <span class="recovery-tag">Stretching</span>
+                    {% elif 'none' in item %}
+                        <span class="recovery-tag">None</span>
+                    {% endif %}
+                    {% endif %}
+                {% endfor %}
+                </div>
+            {% else %}
+                <span style="color: #fbfbfcff; font-size: 0.8rem;">None</span>
+            {% endif %}
+            </td>
+
+          <td class="concerns-cell">
+            {% if log.concerns %}
+              <div class="concerns-text">{{ log.concerns }}</div>
+            {% else %}
+              <span class="concerns-empty">No concerns noted</span>
+            {% endif %}
+          </td>
+          <td class="actions-cell">
+            <a href="{% url 'daily_snc_camp_detail' log.pk %}" class="action-btn action-view">
+              View
+            </a>
+            <!-- Add edit/delete as needed -->
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="no-logs">
+            <div style="font-size: 1.25rem; margin-bottom: 1rem;">📝 No logs yet</div>
+            <p>Start tracking daily S&C activities for this camp.</p>
+            <a href="{% url 'daily_activity_coach_log' camp.id %}" class="btn btn-primary btn-lg mt-4">
+              Create First Log
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="no-logs">
+    <div style="font-size: 1.25rem; margin-bottom: 1rem;">📝 No daily logs yet</div>
+    <p>This camp has no S&C activity logs recorded.</p>
+    <a href="{% url 'daily_activity_coach_log' camp.id %}" class="btn btn-primary btn-lg mt-4">
+      Create First Log
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

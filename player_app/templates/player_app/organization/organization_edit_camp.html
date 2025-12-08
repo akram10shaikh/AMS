@@ -4,7 +4,7 @@
 {% block title %}Edit Camp/Tournament{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
 <style>
     /* Container customization */
     .container {
@@ -147,18 +147,18 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Edit Camp/Tournament</h1>
+<div class="container" style="margin-bottom:200px;">
+    <h1 style='color:white;'>Edit Camp/Tournament</h1>
 
     <form method="post" novalidate>
         {% csrf_token %}
         <div class="form-group">
-            <label for="campName">Camp/Tournament Name:</label>
+            <label for="campName" style='color:white;'>Camp/Tournament Name:</label>
             <input type="text" class="form-control" id="campName" name="name" value="{{ camp.name }}" required>
         </div>
 
         <div class="form-group">
-            <label for="campType">Type:</label>
+            <label for="campType" style='color:white;'>Type:</label>
             <select class="form-control" id="campType" name="camp_type" required>
                 <option value="camp" {% if camp.camp_type == "camp" %}selected{% endif %}>Camp</option>
                 <option value="tournament" {% if camp.camp_type == "tournament" %}selected{% endif %}>Tournament</option>
@@ -166,24 +166,24 @@
         </div>
 
         <div class="form-group">
-            <label for="startDate">Start Date:</label>
+            <label for="startDate" style='color:white;'>Start Date:</label>
             <input type="date" class="form-control" id="startDate" name="start_date"
                    value="{{ camp.start_date|date:'Y-m-d' }}" readonly>
         </div>
 
         <div class="form-group">
-            <label for="endDate">End Date:</label>
+            <label for="endDate" style='color:white;'>End Date:</label>
             <input type="date" class="form-control" id="endDate" name="end_date"
                    value="{{ camp.end_date|date:'Y-m-d' }}" min="{{ camp.start_date|date:'Y-m-d' }}">
         </div>
 
         <div class="form-group">
-            <label for="venue">Venue:</label>
+            <label for="venue" style='color:white;'>Venue:</label>
             <input type="text" class="form-control" id="venue" name="venue" value="{{ camp.venue }}">
         </div>
 
         <div class="form-group">
-            <label for="participants">Participants:</label>
+            <label for="participants" style='color:white;'>Participants:</label>
             <select class="form-control" id="participants" name="participants" multiple>
                 {% for player in participants %}
                     {% if player.organization == camp.organization %}

@@ -23,7 +23,7 @@ User = get_user_model()  # Use the CustomUser model if defined
 # Player model
 class Player(models.Model):
     Age_category_choices = [
-        ('boys_under-15', 'Boys under 15'),
+        ('boys_under-16', 'Boys under 16'),
         ('boys_under-19', 'Boys under 19'),
         ('men_under-23', 'Men Under 23'),
         ('men_senior', 'Men Senior'),
@@ -593,7 +593,7 @@ def update_aggregates(sender, instance, **kwargs):
 
 class Team(models.Model):
     category_choices = [
-        ('boys_under-15', 'Boys under 15'),
+        ('boys_under-16', 'Boys under 16'),
         ('boys_under-19', 'Boys under 19'),
         ('men_under-23', 'Men Under 23'),
         ('men_senior', 'Men Senior'),
@@ -699,7 +699,7 @@ class DailySncLogCamps(models.Model):
     Holds: session overview, wellbeing & logistics, niggles, recovery.
     One row per team + date.
     """
-    team = models.CharField(blank=True,null=True)
+    team = models.ForeignKey(CampTournament, on_delete=models.CASCADE,null=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='snc_logs')
     coach_name = models.CharField(max_length=100, null=True)
     date = models.DateField(null=True)

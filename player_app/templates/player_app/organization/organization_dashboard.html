@@ -134,6 +134,29 @@
     font-size: 1.2rem;
     color: #023e7d;
   }
+    .year-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+  .year-tab {
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    background: #f1f3f7;
+    color: #333;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .year-tab.active {
+    background: #fff;
+    border-bottom: 3px solid #28a745;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+  }
+  .year-panel.hidden {
+    display: none;
+  }
   .view-more {
     margin-left: 12px;
     text-decoration: none;
@@ -207,6 +230,188 @@
       max-width: 100%;
     }
   }
+
+    .custom-tooltip {  /* ← ADD THE DOT */
+      position: absolute;
+      background: #222;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      max-width: 260px;
+      z-index: 9999;
+      white-space: pre-line;
+      display: none;
+   }
+
+     .tooltip-trigger {
+    position: relative;
+    cursor: help;
+  }
+  .tooltip-box {
+    position: absolute;
+    background: #222;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    max-width: 260px;
+    white-space: normal;
+    z-index: 9999;
+    display: none;
+  }
+  
+  .camp-section {
+    margin: 35px 0 45px 0;
+  }
+
+  .camp-section__title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #013a63;
+    margin-bottom: 18px;
+  }
+
+  /* Tabs */
+  .camp-tabs {
+    display: inline-flex;
+    gap: 10px;
+    padding: 4px;
+    border-radius: 999px;
+    background: #f1f3f7;
+    margin-bottom: 18px;
+  }
+
+  .camp-tabs__tab {
+    border: none;
+    padding: 8px 20px;
+    border-radius: 999px;
+    background: transparent;
+    color: #495057;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .camp-tabs__tab:hover {
+    background: #e5f3ff;
+  }
+
+  .camp-tabs__tab--active {
+    background: #ffffff;
+    color: #198754;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  /* List */
+  .camp-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .camp-list--hidden {
+    display: none;
+  }
+
+  .camp-list__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    background: #ffffff;
+    padding: 12px 16px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    margin-bottom: 10px;
+  }
+
+  .camp-list__item:hover {
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+  }
+
+  .camp-list__info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .camp-list__name {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 0.98rem;
+  }
+
+  .camp-list__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .camp-list__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: help;
+    white-space: nowrap;
+  }
+
+  .camp-list__badge--players {
+    background: #e7f5ff;
+    color: #1c7ed6;
+  }
+
+  .camp-list__badge--staff {
+    background: #fff3bf;
+    color: #d9480f;
+  }
+
+  .camp-list__link {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #2563eb;
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #e0edff;
+  }
+
+  .camp-list__link:hover {
+    background: #c7ddff;
+  }
+
+  /* Tooltip */
+  .tooltip-box {
+    position: absolute;
+    background: #111827;
+    color: #f9fafb;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    max-width: 260px;
+    z-index: 9999;
+    display: none;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.35);
+    white-space: normal;
+  }
+
+  @media (max-width: 768px) {
+    .camp-list__item {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .camp-tabs {
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+  }
+
+
 </style>
 {% endblock %}
 
@@ -216,7 +421,12 @@
 <div style="background:white;padding:35px 0 25px 0;">
   <div class="cards" style="gap: 18px; justify-content:center; flex-wrap:wrap;">
     {% for cat in category_cards %}
-      <div style="background:#36a9e1;border-radius:7px;width:170px;display:inline-block;padding:17px 10px 9px 10px;margin:0 7px;">
+      <div class="category-card"
+           data-age-category="{{ cat.age_category }}"
+           style="background:#36a9e1;border-radius:7px;width:170px;display:inline-block;padding:17px 10px 9px 10px;margin:0 7px;cursor:pointer;">
+        <p align="center">
+          <img src="{% static 'ams.svg' %}" width="50px" height="50px" alt="AMS logo">
+        </p>
         <div style="font-size:21px;color:#fff;font-weight:700;margin-bottom:7px;text-align:center;letter-spacing:1px;">
           {{ cat.label }}
         </div>
@@ -224,11 +434,25 @@
           {{ cat.total }}
         </div>
         <div style="display:flex;justify-content:center;gap:7px;margin-bottom:8px;">
-          <div style="background:#36e156;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">{{ cat.full }}</div>
-          <div style="background:#ffe346;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">{{ cat.limited }}</div>
-          <div style="background:#ff3939;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">{{ cat.none }}</div>
+          <div class="status-pill"
+               data-status="full"
+               style="background:#36e156;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">
+            {{ cat.full }}
+          </div>
+          <div class="status-pill"
+               data-status="limited"
+               style="background:#ffe346;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">
+            {{ cat.limited }}
+          </div>
+          <div class="status-pill"
+               data-status="none"
+               style="background:#ff3939;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">
+            {{ cat.none }}
+          </div>
         </div>
-        <div style="color:#fff;font-size:1em;text-align:center;">Active Injury: <b style="color:#fff;">{{ cat.active_injury }}</b></div>
+        <div style="color:#fff;font-size:1em;text-align:center;">
+          Active Injury: <b style="color:#fff;">{{ cat.active_injury }}</b>
+        </div>
       </div>
     {% endfor %}
   </div>
@@ -248,16 +472,16 @@
     <option value="men_senior">Men Senior</option>
   </select>
 
-  <label for="filterGender">Gender:</label>
+  {% comment %} <label for="filterGender">Gender:</label>
   <select id="filterGender" name="gender" aria-describedby="filterGenderHelp">
     <option value="all">All Genders</option>
     <option value="M">Male</option>
     <option value="F">Female</option>
     <option value="O">Other</option>
-  </select>
+  </select> {% endcomment %}
 
-  <label for="searchInput">Search:</label>
-  <input type="search" id="searchInput" placeholder="Player or Injury name..." aria-label="Search player or injury names" />
+  {% comment %} <label for="searchInput">Search:</label>
+  <input type="search" id="searchInput" placeholder="Player or Injury name..." aria-label="Search player or injury names" /> {% endcomment %}
 
   <button type="button" id="resetFilters" aria-label="Reset filters">Reset</button>
 </form>
@@ -275,17 +499,99 @@
 </div>
 
 <!-- Participation Types -->
-<section aria-labelledby="participationTitle">
-  <h3 id="participationTitle">Participation Types</h3>
-  <ul class="participation-list" id="participationList">
-    {% for pt in participation_counts %}
-      <li data-role="{{ pt.role|default:'N/A' }}">
-        {{ pt.name }}: <span class="count">{{ pt.player_count }}</span>
-        <a href="{% url 'organization_camp_detail' camp_id=pt.id %}" target="_blank" class="view-more" tabindex="0">View More</a>
-      </li>
+<section aria-labelledby="campSectionTitle" class="camp-section">
+  <h3 id="campSectionTitle" class="camp-section__title">Camp / Tournament</h3>
+
+  <!-- Year tabs -->
+  <div class="camp-tabs" id="campYearTabs">
+    {% for year, items in camps_by_year.items %}
+      <button type="button"
+              class="camp-tabs__tab {% if forloop.first %}camp-tabs__tab--active{% endif %}"
+              data-year="{{ year }}">
+        {{ year }}
+      </button>
     {% endfor %}
-  </ul>
+  </div>
+
+  <!-- Lists per year -->
+  {% for year, items in camps_by_year.items %}
+    <ul class="camp-list camp-list--year {% if not forloop.first %}camp-list--hidden{% endif %}"
+        data-year-panel="{{ year }}">
+      {% for pt in items %}
+        <li class="camp-list__item" data-role="{{ pt.role|default:'N/A' }}">
+          <div class="camp-list__info">
+            <span class="camp-list__name">{{ forloop.counter }}.  {{ pt.name }}</span>
+          </div>
+
+          <div class="camp-list__meta">
+            <span class="camp-list__badge camp-list__badge--players tooltip-trigger"
+                  data-tooltip="{{ pt.player_names|default:'No players' }}">
+              {{ pt.player_count }} athletes
+            </span>
+
+            <span class="camp-list__badge camp-list__badge--staff tooltip-trigger"
+                  data-tooltip="{{ pt.staff_names|default:'No staff' }}">
+              {{ pt.staff_count }} staff
+            </span>
+
+            <a href="{% url 'organization_camp_detail' camp_id=pt.id %}"
+               target="_blank"
+               class="camp-list__link">
+              View details
+            </a>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endfor %}
 </section>
+
+<!-- Search & Date Filters (affects Player Details + Active Injuries) -->
+<section aria-labelledby="searchFilterTitle">
+  <h3 id="searchFilterTitle">Search & Filters</h3>
+
+  <form class="filter-form" onsubmit="return false;">
+    <!-- Search text -->
+    <label for="searchInput">Search:</label>
+    <input type="search"
+           id="searchInput"
+           placeholder="Search player or injury..."
+           aria-label="Search active injuries" />
+
+    <!-- Date filter selector -->
+    <label for="dateFilterType">Date Filter:</label>
+    <select id="dateFilterType">
+      <option value="none">All time</option>
+      <option value="last_3">Last 3 months</option>
+      <option value="last_6">Last 6 months</option>
+      <option value="season">Season</option>
+      <option value="custom">Custom range</option>
+    </select>
+
+    <!-- Season dropdown -->
+    <select id="seasonSelect" style="display:none;">
+      <option value="">Select season</option>
+      <option value="2022-2023">2022–2023</option>
+      <option value="2023-2024">2023–2024</option>
+      <option value="2024-2025">2024–2025</option>
+      <option value="2025-2026">2025–2026</option>
+    </select>
+
+    <!-- Custom date range -->
+    <div id="customRange" style="display:none; gap:8px; align-items:center;">
+      <label for="startDate">From:</label>
+      <input type="date" id="startDate">
+      <label for="endDate">To:</label>
+      <input type="date" id="endDate">
+    </div>
+
+    <!-- Reset -->
+    <button type="button" id="resetFilters">Reset</button>
+  </form>
+</section>
+
+
+
 
 <!-- Active Injuries Table -->
 <section aria-labelledby="activeInjuriesTitle">
@@ -294,6 +600,7 @@
     <caption id="activeInjuriesDesc" class="sr-only">List of currently active injuries</caption>
     <thead>
       <tr>
+        <th scope="col">No</th>
         <th scope="col">Player</th>
         <th scope="col">Injury Name</th>
         <th scope="col">Severity Rating</th>
@@ -303,7 +610,8 @@
     </thead>
     <tbody>
       {% for injury in active_injuries %}
-      <tr data-category="{{ injury.player.age_category|default:'none' }}" data-gender="{{ injury.player.gender|default:'none' }}">
+      <tr data-date="{{ injury.injury_date|date:'Y-m-d' }}">
+        <td class="player-no">{{ forloop.counter }}</td>
         <td class="player-name">{{ injury.player.name }}</td>
         <td class="injury-name">{{ injury.name }}</td>
         <td>{{ injury.severity_rating|default:"-" }}</td>
@@ -317,27 +625,35 @@
   </table>
 </section>
 
+
 <!-- Player Details Table -->
-<section aria-labelledby="playerDetailsTitle">
+{% comment %} <section aria-labelledby="playerDetailsTitle">
   <h3 id="playerDetailsTitle">Player Details</h3>
   <table id="playerDetailsTable" role="grid" aria-describedby="playerDetailsDesc">
     <caption id="playerDetailsDesc" class="sr-only">List of players with participation types and injury notes</caption>
     <thead>
       <tr>
+        <th scope="col">No</th>
         <th scope="col">Name</th>
-        <th scope="col">Participation Type (Role)</th>
-        <th scope="col">Notes</th>
+        <th scope="col">Category</th>
+        <th scope="col">Role</th>
+        <th scope="col">Participation Status</th>
       </tr>
     </thead>
     <tbody>
       {% for player in players %}
       <tr data-category="{{ player.age_category|default:'none' }}" data-gender="{{ player.gender|default:'none' }}">
+        <td class="player-name">{{ forloop.counter }}</td>
         <td class="player-name">{{ player.name }}</td>
-        <td> {% for camp in player.camps.all %}
-      {{ camp.name }}{% if not forloop.last %}, {% endif %}
-    {% empty %}
-      No camps
-    {% endfor %}</td>
+        <td class="player-name">{{ player.age_category }}</td>
+        <td class="player-name">{{ player.role }}</td>
+        <td class="player-name">{{ player.player_status}}</td>
+        <!-- <td> {% for camp in player.camps.all %}
+                {{ camp.name }}{% if not forloop.last %}, {% endif %}
+              {% empty %}
+                No camps
+              {% endfor %}
+        </td>
         <td>
           {% if player.injuries.all %}
             <ul style="padding-left: 16px; margin: 0;">
@@ -355,12 +671,60 @@
           {% else %}
             <em>No injuries/notes</em>
           {% endif %}
+        </td> -->
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section> {% endcomment %}
+
+<section aria-labelledby="playerDetailsTitle">
+  <h3 id="playerDetailsTitle">Player Details</h3>
+  <table id="playerDetailsTable" role="grid" aria-describedby="playerDetailsDesc">
+    <caption id="playerDetailsDesc" class="sr-only">
+      List of players with category, role and participation status
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col">No</th>
+        <th scope="col">Name</th>
+        <th scope="col">Category</th>
+        <th scope="col">Role</th>
+        <th scope="col">Participation Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for player in players %}
+      <tr data-category="{{ player.age_category|default:'none' }}"
+          data-gender="{{ player.gender|default:'none' }}">
+        <td>{{ forloop.counter }}</td>
+        <td class="player-name">{{ player.name }}</td>
+        <td>{{ player.age_category }}</td>
+        <td>{{ player.role }}</td>
+        <td>
+          {% if player.player_status == 'full participation' %}
+            <span style="background:#36e156;color:#fff;padding:4px 10px;border-radius:12px;font-size:0.85rem;font-weight:600;">
+              FULL PARTICIPATION
+            </span>
+          {% elif player.player_status == 'limited participation' %}
+            <span style="background:#ffe346;color:#333;padding:4px 10px;border-radius:12px;font-size:0.85rem;font-weight:600;">
+              LIMITED PARTICIPATION
+            </span>
+          {% elif player.player_status == 'no participation' %}
+            <span style="background:#ff3939;color:#fff;padding:4px 10px;border-radius:12px;font-size:0.85rem;font-weight:600;">
+              NO PARTICIPATION
+            </span>
+          {% else %}
+            <span style="color:#666;">{{ player.player_status|default:"N/A" }}</span>
+          {% endif %}
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </section>
+
+
 <h3>Recent Activity Logs</h3>
 <table>
   <thead>
@@ -450,114 +814,381 @@
 
 <!-- JavaScript for filtering -->
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const filterCategory = document.getElementById('filterCategory');
-    const filterGender = document.getElementById('filterGender');
-    const searchInput = document.getElementById('searchInput');
-    const resetBtn = document.getElementById('resetFilters');
+document.addEventListener('DOMContentLoaded', () => {
+  // ========================================
+  // 1. TABLE FILTERING (players + injuries)
+  // ========================================
+  const filterCategory = document.getElementById('filterCategory');
+  const filterGender = document.getElementById('filterGender');
+  const searchInput = document.getElementById('searchInput');
+  const resetBtn = document.getElementById('resetFilters');
 
-    const playerRows = Array.from(document.querySelectorAll('#playerDetailsTable tbody tr'));
-    const injuryRows = Array.from(document.querySelectorAll('#activeInjuriesTable tbody tr')).filter(r => r.querySelector('.player-name'));// Ignore empty row
-    const totalInjuriesCountEl = document.getElementById('totalInjuriesCount');
-    const activeInjuriesCountEl = document.getElementById('activeInjuriesCount');
-    const participationListItems = Array.from(document.querySelectorAll('#participationList li'));
+  const playerRows = Array.from(document.querySelectorAll('#playerDetailsTable tbody tr'));
+  const injuryRows = Array.from(
+    document.querySelectorAll('#activeInjuriesTable tbody tr')
+  ).filter(r => r.querySelector('.player-name'));
+  const totalInjuriesCountEl = document.getElementById('totalInjuriesCount');
+  const activeInjuriesCountEl = document.getElementById('activeInjuriesCount');
+  const participationListItems = Array.from(document.querySelectorAll('#participationList li'));
 
-    function normalize(text) {
-      return (text || '').toString().toLowerCase().trim();
-    }
+  function normalize(text) {
+    return (text || '').toString().toLowerCase().trim();
+  }
 
-    function filter() {
-      const selectedCategory = normalize(filterCategory.value);
-      const selectedGender = normalize(filterGender.value);
-      const searchTerm = normalize(searchInput.value);
+  function filterTables() {
+    const selectedCategory = normalize(filterCategory?.value || 'all');
+    const selectedGender = normalize(filterGender?.value || 'all');
+    const searchTerm = normalize(searchInput?.value || '');
 
-      // Filter player rows
-      let visiblePlayers = 0;
-      playerRows.forEach(row => {
-        const cat = normalize(row.getAttribute('data-category'));
-        const gender = normalize(row.getAttribute('data-gender'));
-        const playerName = normalize(row.querySelector('.player-name').textContent);
-        const notesCell = row.querySelector('td:nth-child(3)');
-        const notesText = normalize(notesCell ? notesCell.textContent : '');
+    // Filter player rows
+    let visiblePlayers = 0;
+    playerRows.forEach(row => {
+      const cat = normalize(row.getAttribute('data-category'));
+      const gender = normalize(row.getAttribute('data-gender'));
+      const playerName = normalize(row.querySelector('.player-name')?.textContent || '');
+      const notesCell = row.querySelector('td:nth-child(3)');
+      const notesText = normalize(notesCell ? notesCell.textContent : '');
 
-        const categoryMatch = (selectedCategory === 'all' || cat === selectedCategory);
-        const genderMatch = (selectedGender === 'all' || gender === selectedGender);
-        const searchMatch = !searchTerm || playerName.includes(searchTerm) || notesText.includes(searchTerm);
+      const categoryMatch = (selectedCategory === 'all' || cat === selectedCategory);
+      const genderMatch = (selectedGender === 'all' || gender === selectedGender);
+      const searchMatch = !searchTerm || playerName.includes(searchTerm) || notesText.includes(searchTerm);
 
-        if (categoryMatch && genderMatch && searchMatch) {
-          row.style.display = '';
-          visiblePlayers++;
-        } else {
-          row.style.display = 'none';
-        }
-      });
-
-      // Filter injury rows
-      let visibleInjuries = 0;
-      injuryRows.forEach(row => {
-        const cat = normalize(row.getAttribute('data-category'));
-        const gender = normalize(row.getAttribute('data-gender'));
-        const playerName = normalize(row.querySelector('.player-name').textContent);
-        const injuryName = normalize(row.querySelector('.injury-name').textContent);
-
-        const categoryMatch = (selectedCategory === 'all' || cat === selectedCategory);
-        const genderMatch = (selectedGender === 'all' || gender === selectedGender);
-        const searchMatch = !searchTerm || playerName.includes(searchTerm) || injuryName.includes(searchTerm);
-
-        if (categoryMatch && genderMatch && searchMatch) {
-          row.style.display = '';
-          visibleInjuries++;
-        } else {
-          row.style.display = 'none';
-        }
-      });
-
-      // Update counts with filtered stats
-      totalInjuriesCountEl.textContent = visibleInjuries + ' (filtered)';
-      activeInjuriesCountEl.textContent = visibleInjuries + ' (filtered)';
-
-      // Update participation counts dynamically
-      participationListItems.forEach(li => {
-        const role = normalize(li.getAttribute('data-role'));
-        const count = playerRows.filter(row => {
-          const rowRole = normalize(row.querySelector('td:nth-child(2)').textContent);
-          const cat = normalize(row.getAttribute('data-category'));
-          const gender = normalize(row.getAttribute('data-gender'));
-          return row.style.display !== 'none' &&
-                 (selectedCategory === 'all' || cat === selectedCategory) &&
-                 (selectedGender === 'all' || gender === selectedGender) &&
-                 (role === 'n/a' ? (rowRole === '' || rowRole === 'n/a') : rowRole === role);
-        }).length;
-        const countSpan = li.querySelector('.count');
-        if(countSpan) countSpan.textContent = count;
-      });
-    }
-
-    // Hook event listeners
-    filterCategory.addEventListener('change', filter);
-    filterGender.addEventListener('change', filter);
-    searchInput.addEventListener('input', filter);
-    resetBtn.addEventListener('click', () => {
-      filterCategory.value = 'all';
-      filterGender.value = 'all';
-      searchInput.value = '';
-      filter();
+      if (categoryMatch && genderMatch && searchMatch) {
+        row.style.display = '';
+        visiblePlayers++;
+      } else {
+        row.style.display = 'none';
+      }
     });
 
-    // Initial filter run to sync counts
-    filter();
+    // Filter injury rows
+    let visibleInjuries = 0;
+    injuryRows.forEach(row => {
+      const cat = normalize(row.getAttribute('data-category'));
+      const gender = normalize(row.getAttribute('data-gender'));
+      const playerName = normalize(row.querySelector('.player-name')?.textContent || '');
+      const injuryName = normalize(row.querySelector('.injury-name')?.textContent || '');
+
+      const categoryMatch = (selectedCategory === 'all' || cat === selectedCategory);
+      const genderMatch = (selectedGender === 'all' || gender === selectedGender);
+      const searchMatch = !searchTerm || playerName.includes(searchTerm) || injuryName.includes(searchTerm);
+
+      if (categoryMatch && genderMatch && searchMatch) {
+        row.style.display = '';
+        visibleInjuries++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // Update counts (cards have <p> inside)
+    if (totalInjuriesCountEl) {
+      const p = totalInjuriesCountEl.querySelector('p');
+      if (p) p.textContent = visibleInjuries;
+    }
+    if (activeInjuriesCountEl) {
+      const p = activeInjuriesCountEl.querySelector('p');
+      if (p) p.textContent = visibleInjuries;
+    }
+
+    // Update participation counts
+    participationListItems.forEach(li => {
+      const role = normalize(li.getAttribute('data-role'));
+      const count = playerRows.filter(row => {
+        if (row.style.display === 'none') return false;
+        const rowRole = normalize(row.querySelector('td:nth-child(2)')?.textContent || '');
+        const cat = normalize(row.getAttribute('data-category'));
+        const gender = normalize(row.getAttribute('data-gender'));
+        return (selectedCategory === 'all' || cat === selectedCategory) &&
+               (selectedGender === 'all' || gender === selectedGender) &&
+               (role === 'n/a' ? (rowRole === '' || rowRole === 'n/a') : rowRole.includes(role));
+      }).length;
+
+      const countSpan = li.querySelector('.count');
+      if (countSpan) countSpan.textContent = count;
+    });
+  }
+
+  if (filterCategory) filterCategory.addEventListener('change', filterTables);
+  if (filterGender) filterGender.addEventListener('change', filterTables);
+  if (searchInput)  searchInput.addEventListener('input', filterTables);
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (filterCategory) filterCategory.value = 'all';
+      if (filterGender)  filterGender.value = 'all';
+      if (searchInput)   searchInput.value = '';
+      filterTables();
+    });
+  }
+
+  // ========================================
+  // 2. CATEGORY CARDS (top blue cards)
+  // ========================================
+  const CATEGORY_PLAYERS = {{ category_players|safe }};
+
+  // Tooltip for category cards
+  let catTooltip = document.createElement('div');
+  catTooltip.className = 'custom-tooltip';
+  document.body.appendChild(catTooltip);
+
+  function showCatTooltip(target, text) {
+    if (!text || text === 'No players') return;
+    catTooltip.textContent = text;
+    const rect = target.getBoundingClientRect();
+    catTooltip.style.left = (window.scrollX + rect.left) + 'px';
+    catTooltip.style.top  = (window.scrollY + rect.bottom + 5) + 'px';
+    catTooltip.style.display = 'block';
+  }
+
+  function hideCatTooltip() {
+    catTooltip.style.display = 'none';
+  }
+
+  document.querySelectorAll('.status-pill').forEach(pill => {
+    pill.style.cursor = 'help';
+    pill.title = 'Hover for player list';
+
+    pill.addEventListener('mouseenter', e => {
+      const card = e.target.closest('.category-card');
+      if (!card) return;
+      const ageCat = card.getAttribute('data-age-category');
+      const players = CATEGORY_PLAYERS[ageCat] || [];
+      const text = players.length ? players.slice(0, 8).join('\n') : 'No players';
+      showCatTooltip(e.target, text);
+    });
+
+    pill.addEventListener('mouseleave', hideCatTooltip);
   });
+
+  document.querySelectorAll('.category-card').forEach(card => {
+    card.style.transition = 'transform 0.2s ease';
+    card.style.cursor = 'pointer';
+
+    card.addEventListener('mouseenter', () => {
+      card.style.transform = 'scale(1.02)';
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'scale(1)';
+    });
+
+    card.addEventListener('click', e => {
+      e.stopPropagation();
+      const ageCat = card.getAttribute('data-age-category');
+      if (!ageCat) return;
+      const url = "{% url 'players_by_category' %}?age_category=" + encodeURIComponent(ageCat);
+      window.open(url, '_blank');
+    });
+  });
+
+  // ========================================
+  // 3. CAMP / TOURNAMENT YEAR TABS + TOOLTIP
+  // ========================================
+  const yearTabs  = document.querySelectorAll('.camp-tabs__tab, .year-tab');
+  const yearPanels = document.querySelectorAll('.camp-list--year, .year-panel');
+
+  yearTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const year = tab.dataset.year || tab.getAttribute('data-year');
+
+      yearTabs.forEach(t => t.classList.remove('camp-tabs__tab--active', 'active'));
+      tab.classList.add('camp-tabs__tab--active', 'active');
+
+      yearPanels.forEach(p => {
+        const panelYear = p.dataset.yearPanel || p.getAttribute('data-year-panel');
+        p.classList.toggle('camp-list--hidden', panelYear !== year);
+        p.classList.toggle('hidden',          panelYear !== year);
+      });
+    });
+  });
+
+  // Shared tooltip for camp counts (athletes / staff)
+  const tooltip = document.createElement('div');
+  tooltip.className = 'tooltip-box';
+  document.body.appendChild(tooltip);
+
+  function showTooltip(el) {
+    const text = el.getAttribute('data-tooltip');
+    if (!text) return;
+    tooltip.textContent = text;
+    const rect = el.getBoundingClientRect();
+    tooltip.style.left = window.scrollX + rect.left + 'px';
+    tooltip.style.top  = window.scrollY + rect.bottom + 6 + 'px';
+    tooltip.style.display = 'block';
+  }
+
+  function hideTooltipBox() {
+    tooltip.style.display = 'none';
+  }
+
+  document.querySelectorAll('.tooltip-trigger').forEach(el => {
+    el.addEventListener('mouseenter', () => showTooltip(el));
+    el.addEventListener('mouseleave', hideTooltipBox);
+  });
+
+  // ========================================
+  // 4. INITIAL RUN + DEBUG
+  // ========================================
+  filterTables();
+  console.log('✅ Dashboard JS initialized');
+});
 </script>
 
-<!-- Screen reader only helper for accessible captions -->
-<style>
-  .sr-only {
-    position: absolute !important;
-    height: 1px; width: 1px;
-    overflow: hidden;
-    clip: rect(1px, 1px, 1px, 1px);
-    white-space: nowrap;
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput    = document.getElementById('searchInput');
+  const resetBtn       = document.getElementById('resetFilters');
+
+  const dateFilterType = document.getElementById('dateFilterType');
+  const seasonSelect   = document.getElementById('seasonSelect');
+  const customRange    = document.getElementById('customRange');
+  const startDateInput = document.getElementById('startDate');
+  const endDateInput   = document.getElementById('endDate');
+
+  const injuryRows = Array.from(
+    document.querySelectorAll('#activeInjuriesTable tbody tr')
+  ).filter(r => r.querySelector('.player-name'));   // ignore empty row
+  const playerRows = Array.from(
+    document.querySelectorAll('#playerDetailsTable tbody tr')
+  );
+
+  function normalize(text) {
+    return (text || '').toString().toLowerCase().trim();
   }
-</style>
+
+  function parseYMD(str) {
+    if (!str) return null;
+    const parts = str.split('-');
+    if (parts.length !== 3) return null;
+    const [y, m, d] = parts.map(Number);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  }
+
+  function getDateBounds() {
+    const now = new Date();
+    let from = null;
+    let to   = null;
+
+    switch (dateFilterType.value) {
+      case 'last_3':
+        from = new Date(now);
+        from.setMonth(from.getMonth() - 3);
+        break;
+      case 'last_6':
+        from = new Date(now);
+        from.setMonth(from.getMonth() - 6);
+        break;
+      case 'season':
+        if (seasonSelect.value) {
+          const [y1, y2] = seasonSelect.value.split('-').map(Number);
+          from = new Date(y1, 3, 1);  // 1 Apr y1
+          to   = new Date(y2, 2, 31); // 31 Mar y2
+        }
+        break;
+      case 'custom':
+        from = parseYMD(startDateInput.value);
+        to   = parseYMD(endDateInput.value);
+        break;
+      default:
+        break;
+    }
+    return { from, to };
+  }
+
+  function dateMatches(rowDateStr, bounds) {
+    if (!bounds.from && !bounds.to) return true;
+    const d = parseYMD(rowDateStr);
+    if (!d) return false;
+    if (bounds.from && d < bounds.from) return false;
+    if (bounds.to   && d > bounds.to)   return false;
+    return true;
+  }
+
+  function applyFilters() {
+    const q      = normalize(searchInput ? searchInput.value : '');
+    const bounds = getDateBounds();
+
+    // 1) Filter injuries by search + date
+    injuryRows.forEach(row => {
+      const playerEl = row.querySelector('.player-name');
+      const injuryEl = row.querySelector('.injury-name');
+      const rowDate  = row.getAttribute('data-date') || '';
+
+      const rowText = normalize(
+        (playerEl ? playerEl.textContent : '') + ' ' +
+        (injuryEl ? injuryEl.textContent : '')
+      );
+
+      const searchMatch = !q || rowText.includes(q);
+      const dateMatch   = dateMatches(rowDate, bounds);
+
+      row.style.display = (searchMatch && dateMatch) ? '' : 'none';
+    });
+
+    // 2) Filter players by search only on player.name
+    playerRows.forEach(row => {
+      const nameEl = row.querySelector('.player-name');
+      const playerName = normalize(nameEl ? nameEl.textContent : '');
+      const searchMatch = !q || playerName.includes(q);
+      row.style.display = searchMatch ? '' : 'none';
+    });
+  }
+
+  // UI wiring for date filter (injuries only)
+  if (dateFilterType) {
+    dateFilterType.addEventListener('change', () => {
+      if (dateFilterType.value === 'season') {
+        seasonSelect.style.display = 'inline-block';
+        customRange.style.display  = 'none';
+      } else if (dateFilterType.value === 'custom') {
+        seasonSelect.style.display = 'none';
+        customRange.style.display  = 'flex';
+      } else {
+        seasonSelect.style.display = 'none';
+        customRange.style.display  = 'none';
+      }
+      applyFilters();
+    });
+  }
+  if (seasonSelect)   seasonSelect.addEventListener('change', applyFilters);
+  if (startDateInput) startDateInput.addEventListener('change', applyFilters);
+  if (endDateInput)   endDateInput.addEventListener('change', applyFilters);
+
+  if (searchInput)    searchInput.addEventListener('input', applyFilters);
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      // 1) clear search text
+      if (searchInput) searchInput.value = '';
+
+      // 2) reset date filter type
+      if (dateFilterType) dateFilterType.value = 'none';
+
+      // 3) clear season + custom dates
+      if (seasonSelect)   seasonSelect.value = '';
+      if (startDateInput) startDateInput.value = '';
+      if (endDateInput)   endDateInput.value = '';
+
+      // 4) hide extra controls
+      if (seasonSelect) seasonSelect.style.display = 'none';
+      if (customRange)  customRange.style.display  = 'none';
+
+      // 5) show all rows explicitly (in case anything is cached)
+      injuryRows.forEach(row => { row.style.display = ''; });
+      playerRows.forEach(row => { row.style.display = ''; });
+
+      // 6) run filters once more with empty state (will keep everything visible)
+      applyFilters();
+    });
+  }
+
+  // initial run
+  applyFilters();
+});
+</script>
+
+
 
 {% endblock %}
