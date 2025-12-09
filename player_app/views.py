@@ -1588,6 +1588,8 @@ def organization_dashboard_org(request):
     active_injuries = injuries.filter(status='open')
     active_injuries_count = active_injuries.count()
 
+    recovered_injuries = injuries.filter(status='closed')  # or 'closed' etc.
+    recovered_injuries_count = recovered_injuries.count()
     participation_counts = CampTournament.objects.filter(
         participants__in=players
     ).annotate(
@@ -1641,6 +1643,7 @@ def organization_dashboard_org(request):
         'selected_gender': selected_gender,
         'players': players,
         'total_injuries_count': total_injuries_count,
+        'recovered_injuries_count': recovered_injuries_count,
         'active_injuries_count': active_injuries_count,
         'active_injuries': active_injuries,
         'participation_counts': participation_counts,
