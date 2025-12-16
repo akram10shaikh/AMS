@@ -411,6 +411,21 @@
     }
   }
 
+    .filter-btn.active, .filter-btn-year.active {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 6px 20px rgba(54, 169, 225, 0.4) !important;
+      }
+      .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+      }
 
 </style>
 {% endblock %}
@@ -488,17 +503,17 @@
 
 <!-- Cards -->
 <div class="cards" role="region" aria-label="Summary statistics">
-  <div class="card" aria-live="polite" aria-atomic="true">
+  <div class="card total-injuries-card" aria-live="polite" aria-atomic="true">
     <h3>Total Injuries</h3>
-    <p >{{ total_injuries_count }}</p>
+    <p id="totalInjuriesCount">{{ total_injuries_count }}</p>
   </div>
-  <div class="card" aria-live="polite" aria-atomic="true">
+  <div class="card active-injuries-card" aria-live="polite" aria-atomic="true">
     <h3>Active Injuries</h3>
-    <p >{{ active_injuries_count }}</p>
+    <p id="activeInjuriesCount">{{ active_injuries_count }}</p>
   </div>
-  <div class="card" aria-live="polite" aria-atomic="true">
+  <div class="card recovered-injuries-card" aria-live="polite" aria-atomic="true">
     <h3>Recovered Injuries</h3>
-    <p>{{ recovered_injuries_count }}</p>
+    <p id="recoveredInjuriesCount">{{ recovered_injuries_count }}</p>
   </div>
 </div>
 
@@ -551,46 +566,60 @@
 </section>
 
 <!-- Search & Date Filters (affects Player Details + Active Injuries) -->
+<!-- Search & Filter Section -->
 <section aria-labelledby="searchFilterTitle">
   <h3 id="searchFilterTitle">Search & Filters</h3>
 
-  <form class="filter-form" onsubmit="return false;">
-    <!-- Search text -->
-    <label for="searchInput">Search:</label>
-    <input type="search"
-           id="searchInput"
-           placeholder="Search player or injury..."
-           aria-label="Search active injuries" />
-
-    <!-- Date filter selector -->
-    <label for="dateFilterType">Date Filter:</label>
-    <select id="dateFilterType">
-      <option value="none">All time</option>
-      <option value="last_3">Last 3 months</option>
-      <option value="last_6">Last 6 months</option>
-      <option value="season">Season</option>
-      <option value="custom">Custom range</option>
-    </select>
-
-    <!-- Season dropdown -->
-    <select id="seasonSelect" style="display:none;">
-      <option value="">Select season</option>
-      <option value="2022-2023">2022–2023</option>
-      <option value="2023-2024">2023–2024</option>
-      <option value="2024-2025">2024–2025</option>
-      <option value="2025-2026">2025–2026</option>
-    </select>
-
-    <!-- Custom date range -->
-    <div id="customRange" style="display:none; gap:8px; align-items:center;">
-      <label for="startDate">From:</label>
-      <input type="date" id="startDate">
-      <label for="endDate">To:</label>
-      <input type="date" id="endDate">
+  <form class="filter-form" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    
+    <!-- Search Input -->
+    <div style="display: flex; flex-direction: column; gap: 5px; min-width: 200px;">
+      <label for="searchInput" style="font-weight: 600; color: #333; font-size: 14px;">Search:</label>
+      <input type="search"
+             id="searchInput"
+             name="search"
+             placeholder="Search player or injury..."
+             aria-label="Search active injuries"
+             style="padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 14px; transition: border-color 0.3s;" />
     </div>
 
-    <!-- Reset -->
-    <button type="button" id="resetFilters">Reset</button>
+    <!-- Date Filter -->
+    <div style="display: flex; flex-direction: column; gap: 5px; min-width: 180px;">
+      <label for="dateFilterType" style="font-weight: 600; color: #333; font-size: 14px;">Date Filter:</label>
+      <select id="dateFilterType" style="padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 14px;">
+        <option value="none">All time</option>
+        <option value="last_3">Last 3 months</option>
+        <option value="last_6">Last 6 months</option>
+        <option value="season">Season</option>
+        <option value="custom">Custom range</option>
+      </select>
+    </div>
+
+    <!-- Season Dropdown -->
+    <div style="display: flex; flex-direction: column; gap: 5px; min-width: 160px;">
+      <label for="seasonSelect" style="font-weight: 600; color: #333; font-size: 14px;">Season:</label>
+      <select id="seasonSelect" style="padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 14px; display: none;">
+        <option value="">Select season</option>
+        <option value="2022-2023">2022–2023</option>
+        <option value="2023-2024">2023–2024</option>
+        <option value="2024-2025">2024–2025</option>
+        <option value="2025-2026">2025–2026</option>
+      </select>
+    </div>
+
+    <!-- Custom Date Range -->
+    <div id="customRange" style="display: none; gap: 10px; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+      <label for="startDate" style="font-weight: 600; color: #333; font-size: 14px; white-space: nowrap;">From:</label>
+      <input type="date" id="startDate" style="padding: 8px; border: 2px solid #e9ecef; border-radius: 6px;" />
+      <label for="endDate" style="font-weight: 600; color: #333; font-size: 14px; white-space: nowrap;">To:</label>
+      <input type="date" id="endDate" style="padding: 8px; border: 2px solid #e9ecef; border-radius: 6px;" />
+    </div>
+
+    <!-- Reset Button -->
+    <button type="button" id="resetFilters" 
+            style="background: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: 25px; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.3s;">
+      Reset Filters
+    </button>
   </form>
 </section>
 
@@ -601,12 +630,14 @@
 <section aria-labelledby="activeInjuriesTitle">
   <h3 id="activeInjuriesTitle">Active Injuries</h3>
   <table id="activeInjuriesTable" role="grid" aria-describedby="activeInjuriesDesc">
-    <caption id="activeInjuriesDesc" class="sr-only">List of currently active injuries</caption>
+    <caption id="activeInjuriesDesc" class="sr-only">
+      List of currently active injuries
+    </caption>
     <thead>
       <tr>
         <th scope="col">No</th>
         <th scope="col">Player</th>
-        <th scope="col">Injury Name</th>
+        <th scope="col">Title</th>
         <th scope="col">Severity Rating</th>
         <th scope="col">Status</th>
         <th scope="col">Injury Date</th>
@@ -614,20 +645,35 @@
     </thead>
     <tbody>
       {% for injury in active_injuries %}
-      <tr data-date="{{ injury.injury_date|date:'Y-m-d' }}">
+      <tr
+        data-date="{{ injury.injury_date|date:'Y-m-d' }}"
+        data-status="{{ injury.status }}"  >
         <td class="player-no">{{ forloop.counter }}</td>
         <td class="player-name">{{ injury.player.name }}</td>
-        <td class="injury-name">{{ injury.name }}</td>
+        <td class="injury-name">
+          <a href="{% url 'organization_injury_detail' injury.id %}">
+            {{ injury.name }}
+          </a>
+        </td>
         <td>{{ injury.severity_rating|default:"-" }}</td>
-        <td>{{ injury.status|default:"-" }}</td>
+        <td>
+          <span class="status-badge {% if injury.status == 'open' %}status-open{% elif injury.status == 'closed' %}status-closed{% endif %}">
+            {{ injury.get_status_display|default:"-" }}
+          </span>
+        </td>
         <td>{{ injury.injury_date }}</td>
       </tr>
       {% empty %}
-      <tr><td colspan="5" style="text-align:center; font-style: italic;">No active injuries found.</td></tr>
+      <tr>
+        <td colspan="6" style="text-align:center; font-style: italic;">
+          No active injuries found.
+        </td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
 </section>
+
 
 
 <!-- Player Details Table -->
@@ -682,6 +728,51 @@
   </table>
 </section> {% endcomment %}
 
+<section aria-labelledby="playerFiltersTitle" style="margin-bottom: 25px;">
+  <h3 id="playerFiltersTitle" class="sr-only">Player Filters</h3>
+  
+  <div class="filter-controls" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <div style="display: flex; gap: 30px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+      
+      <!-- Participation Status Filter -->
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-weight: 600; color: #333; font-size: 14px;">Participation Status:</label>
+        <div class="status-filters" style="display: flex; gap: 8px;">
+          <button class="filter-btn active" data-status="all" style="background: #36a9e1; color: white; padding: 8px 16px; border: none; border-radius: 25px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+            All
+          </button>
+          <button class="filter-btn" data-status="full" style="background: #36e156; color: white; padding: 8px 16px; border: none; border-radius: 25px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+            Full Participation
+          </button>
+          <button class="filter-btn" data-status="limited" style="background: #ffe346; color: #333; padding: 8px 16px; border: none; border-radius: 25px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+            Limited
+          </button>
+          <button class="filter-btn" data-status="no" style="background: #ff3939; color: white; padding: 8px 16px; border: none; border-radius: 25px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+            No Participation
+          </button>
+        </div>
+      </div>
+
+      <!-- Year Range Filter -->
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-weight: 600; color: #333; font-size: 14px;">Created Year:</label>
+        <div class="year-filters" style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="filter-btn-year active" data-year="all" style="background: #6c757d; color: white; padding: 8px 12px; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.3s;">
+            All Years
+          </button>
+          <!-- Dynamic year buttons will be added by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Results Counter -->
+      <div id="resultsCounter" style="font-weight: 600; color: #36a9e1; font-size: 16px; min-width: 150px;">
+        Showing <span id="totalCount">0</span> players
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Player Details Table (Your existing table) -->
 <section aria-labelledby="playerDetailsTitle">
   <h3 id="playerDetailsTitle">Player Details</h3>
   <table id="playerDetailsTable" role="grid" aria-describedby="playerDetailsDesc">
@@ -692,6 +783,7 @@
       <tr>
         <th scope="col">No</th>
         <th scope="col">Name</th>
+        <th scope="col">Created</th>
         <th scope="col">Category</th>
         <th scope="col">Role</th>
         <th scope="col">Participation Status</th>
@@ -700,22 +792,26 @@
     <tbody>
       {% for player in players %}
       <tr data-category="{{ player.age_category|default:'none' }}"
-          data-gender="{{ player.gender|default:'none' }}">
-        <td>{{ forloop.counter }}</td>
+          data-gender="{{ player.gender|default:'none' }}"
+          data-status="{% if player.player_status == 'full participation' %}full{% elif player.player_status == 'limited participation' %}limited{% elif player.player_status == 'no participation' %}no{% else %}other{% endif %}"
+          data-year="{{ player.created_at|date:'Y' }}"
+          data-year-range="{{ player.created_at|date:'Y' }}-{{ player.created_at|date:'Y'|add:1 }}">
+        <td class="row-number">{{ forloop.counter }}</td>
         <td class="player-name">{{ player.name }}</td>
+        <td>{{ player.created_at|date:"d-m-Y" }}</td>
         <td>{{ player.age_category }}</td>
         <td>{{ player.role }}</td>
         <td>
           {% if player.player_status == 'full participation' %}
-            <span style="background:#36e156;color:#fff;padding:4px 10px;border-radius:12px;font-size:0.85rem;font-weight:600;">
+            <span class="status-badge full" style="background:#36e156;color:#fff;padding:4px 10px;border-radius:12px;font-size:0.85rem;font-weight:600;">
               FULL PARTICIPATION
             </span>
           {% elif player.player_status == 'limited participation' %}
-            <span style="background:#ffe346;color:#333;padding:4px 10px;border-radius:12px;font-size:0.85rem;font-weight:600;">
+            <span class="status-badge limited" style="background:#ffe346;color:#333;padding:4px 10px;border-radius:12px;font-size:0.85rem;font-weight:600;">
               LIMITED PARTICIPATION
             </span>
           {% elif player.player_status == 'no participation' %}
-            <span style="background:#ff3939;color:#fff;padding:4px 10px;border-radius:12px;font-size:0.85rem;font-weight:600;">
+            <span class="status-badge no" style="background:#ff3939;color:#fff;padding:4px 10px;border-radius:12px;font-size:0.85rem;font-weight:600;">
               NO PARTICIPATION
             </span>
           {% else %}
@@ -1043,16 +1139,20 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
   const searchInput    = document.getElementById('searchInput');
   const resetBtn       = document.getElementById('resetFilters');
-
   const dateFilterType = document.getElementById('dateFilterType');
   const seasonSelect   = document.getElementById('seasonSelect');
   const customRange    = document.getElementById('customRange');
   const startDateInput = document.getElementById('startDate');
   const endDateInput   = document.getElementById('endDate');
 
+  // Card elements with proper IDs
+  const totalInjuriesCard = document.getElementById('totalInjuriesCount');
+  const activeInjuriesCard = document.getElementById('activeInjuriesCount');
+  const recoveredInjuriesCard = document.getElementById('recoveredInjuriesCount');
+
   const injuryRows = Array.from(
     document.querySelectorAll('#activeInjuriesTable tbody tr')
-  ).filter(r => r.querySelector('.player-name'));   // ignore empty row
+  ).filter(r => r.querySelector('.player-name'));
   const playerRows = Array.from(
     document.querySelectorAll('#playerDetailsTable tbody tr')
   );
@@ -1073,9 +1173,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function getDateBounds() {
     const now = new Date();
     let from = null;
-    let to   = null;
+    let to = null;
 
-    switch (dateFilterType.value) {
+    switch (dateFilterType?.value) {
       case 'last_3':
         from = new Date(now);
         from.setMonth(from.getMonth() - 3);
@@ -1085,17 +1185,15 @@ document.addEventListener('DOMContentLoaded', () => {
         from.setMonth(from.getMonth() - 6);
         break;
       case 'season':
-        if (seasonSelect.value) {
+        if (seasonSelect?.value) {
           const [y1, y2] = seasonSelect.value.split('-').map(Number);
-          from = new Date(y1, 3, 1);  // 1 Apr y1
-          to   = new Date(y2, 2, 31); // 31 Mar y2
+          from = new Date(y1, 3, 1);
+          to = new Date(y2, 2, 31);
         }
         break;
       case 'custom':
-        from = parseYMD(startDateInput.value);
-        to   = parseYMD(endDateInput.value);
-        break;
-      default:
+        from = parseYMD(startDateInput?.value);
+        to = parseYMD(endDateInput?.value);
         break;
     }
     return { from, to };
@@ -1106,19 +1204,91 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = parseYMD(rowDateStr);
     if (!d) return false;
     if (bounds.from && d < bounds.from) return false;
-    if (bounds.to   && d > bounds.to)   return false;
+    if (bounds.to && d > bounds.to) return false;
     return true;
   }
 
+  // ✅ PERFECT: Exact status counting
+  function countVisibleInjuriesByStatus() {
+    const q = normalize(searchInput?.value || '');
+    const bounds = getDateBounds();
+    
+    let totalVisible = 0;
+    let openCount = 0;    // Active = open
+    let closedCount = 0;  // Recovered = closed
+
+    injuryRows.forEach(row => {
+      // Get row data
+      const playerEl = row.querySelector('.player-name');
+      const injuryEl = row.querySelector('.injury-name');
+      const rowDate = row.getAttribute('data-date') || '';
+      const statusAttr = row.getAttribute('data-status') || '';
+      
+      // Status detection - PRIORITY ORDER:
+      // 1. data-status attribute (most reliable)
+      // 2. status badge text
+      // 3. status cell text
+      let rowStatus = '';
+      const statusEl = row.querySelector('.status-badge, [class*="status"], td:last-child');
+      if (statusEl) {
+        rowStatus = normalize(statusEl.textContent || statusEl.getAttribute('data-status') || '');
+      }
+
+      // Check if row matches search + date filters
+      const rowText = normalize(
+        (playerEl ? playerEl.textContent : '') + ' ' +
+        (injuryEl ? injuryEl.textContent : '')
+      );
+
+      const searchMatch = !q || rowText.includes(q);
+      const dateMatch = dateMatches(rowDate, bounds);
+
+      if (searchMatch && dateMatch) {
+        totalVisible++;
+        
+        // ✅ EXACT STATUS CHECKING
+        if (statusAttr === 'open' || statusAttr === 'active' || 
+            rowStatus.includes('open') || rowStatus.includes('active')) {
+          openCount++;      // Active injuries
+        } else if (statusAttr === 'closed' || statusAttr === 'recovered' || 
+                   rowStatus.includes('closed') || rowStatus.includes('recovered')) {
+          closedCount++;    // Recovered injuries
+        }
+      }
+    });
+
+    return { 
+      total: totalVisible, 
+      active: openCount,    // Only OPEN injuries
+      recovered: closedCount // Only CLOSED injuries
+    };
+  }
+
+  function updateInjuryCards() {
+    const counts = countVisibleInjuriesByStatus();
+    
+    // Update all 3 cards
+    if (totalInjuriesCard) totalInjuriesCard.textContent = counts.total;
+    if (activeInjuriesCard) activeInjuriesCard.textContent = counts.active;
+    if (recoveredInjuriesCard) recoveredInjuriesCard.textContent = counts.recovered;
+    
+    // Debug (remove in production)
+    console.log('📊 Counts:', {
+      total: counts.total,
+      active_open: counts.active,
+      recovered_closed: counts.recovered
+    });
+  }
+
   function applyFilters() {
-    const q      = normalize(searchInput ? searchInput.value : '');
+    const q = normalize(searchInput ? searchInput.value : '');
     const bounds = getDateBounds();
 
-    // 1) Filter injuries by search + date
+    // Filter injuries table rows
     injuryRows.forEach(row => {
       const playerEl = row.querySelector('.player-name');
       const injuryEl = row.querySelector('.injury-name');
-      const rowDate  = row.getAttribute('data-date') || '';
+      const rowDate = row.getAttribute('data-date') || '';
 
       const rowText = normalize(
         (playerEl ? playerEl.textContent : '') + ' ' +
@@ -1126,73 +1296,186 @@ document.addEventListener('DOMContentLoaded', () => {
       );
 
       const searchMatch = !q || rowText.includes(q);
-      const dateMatch   = dateMatches(rowDate, bounds);
+      const dateMatch = dateMatches(rowDate, bounds);
 
       row.style.display = (searchMatch && dateMatch) ? '' : 'none';
     });
 
-    // 2) Filter players by search only on player.name
+    // Filter players table rows
     playerRows.forEach(row => {
       const nameEl = row.querySelector('.player-name');
       const playerName = normalize(nameEl ? nameEl.textContent : '');
       const searchMatch = !q || playerName.includes(q);
       row.style.display = searchMatch ? '' : 'none';
     });
+
+    // Update all 3 cards
+    updateInjuryCards();
   }
 
-  // UI wiring for date filter (injuries only)
+  // Event listeners (unchanged)
   if (dateFilterType) {
     dateFilterType.addEventListener('change', () => {
       if (dateFilterType.value === 'season') {
         seasonSelect.style.display = 'inline-block';
-        customRange.style.display  = 'none';
+        customRange.style.display = 'none';
       } else if (dateFilterType.value === 'custom') {
         seasonSelect.style.display = 'none';
-        customRange.style.display  = 'flex';
+        customRange.style.display = 'flex';
       } else {
         seasonSelect.style.display = 'none';
-        customRange.style.display  = 'none';
+        customRange.style.display = 'none';
       }
       applyFilters();
     });
   }
-  if (seasonSelect)   seasonSelect.addEventListener('change', applyFilters);
-  if (startDateInput) startDateInput.addEventListener('change', applyFilters);
-  if (endDateInput)   endDateInput.addEventListener('change', applyFilters);
 
-  if (searchInput)    searchInput.addEventListener('input', applyFilters);
+  [seasonSelect, startDateInput, endDateInput, searchInput].forEach(el => {
+    if (el) el.addEventListener('change', applyFilters);
+  });
+  if (searchInput) searchInput.addEventListener('input', applyFilters);
 
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
-      // 1) clear search text
       if (searchInput) searchInput.value = '';
-
-      // 2) reset date filter type
       if (dateFilterType) dateFilterType.value = 'none';
-
-      // 3) clear season + custom dates
-      if (seasonSelect)   seasonSelect.value = '';
+      if (seasonSelect) { seasonSelect.value = ''; seasonSelect.style.display = 'none'; }
       if (startDateInput) startDateInput.value = '';
-      if (endDateInput)   endDateInput.value = '';
+      if (endDateInput) endDateInput.value = '';
+      if (customRange) customRange.style.display = 'none';
 
-      // 4) hide extra controls
-      if (seasonSelect) seasonSelect.style.display = 'none';
-      if (customRange)  customRange.style.display  = 'none';
-
-      // 5) show all rows explicitly (in case anything is cached)
-      injuryRows.forEach(row => { row.style.display = ''; });
-      playerRows.forEach(row => { row.style.display = ''; });
-
-      // 6) run filters once more with empty state (will keep everything visible)
+      injuryRows.forEach(row => row.style.display = '');
+      playerRows.forEach(row => row.style.display = '');
+      updateInjuryCards();
       applyFilters();
     });
   }
 
-  // initial run
+  // Initial run
   applyFilters();
 });
+
+
 </script>
 
+
+{% comment %} For player filter table {% endcomment %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const rows = document.querySelectorAll('#playerDetailsTable tbody tr');
+  const statusBtns = document.querySelectorAll('.filter-btn');
+  const yearBtns = document.querySelectorAll('.filter-btn-year');
+  const totalCountEl = document.getElementById('totalCount');
+  
+  let currentStatusFilter = 'all';
+  let currentYearFilter = 'all';
+  
+  // Generate Year Range Buttons (2021-2022, 2022-2023, etc.)
+  function createYearButtons() {
+    const yearContainer = document.querySelector('.year-filters');
+    const years = {};
+    
+    // Collect all years from data
+    rows.forEach(row => {
+      const year = row.dataset.year;
+      if (year) years[year] = true;
+    });
+    
+    // Clear existing year buttons (except All)
+    const existingBtns = yearContainer.querySelectorAll('.filter-btn-year:not([data-year="all"])');
+    existingBtns.forEach(btn => btn.remove());
+    
+    // Create year range buttons
+    Object.keys(years).sort((a, b) => b - a).forEach(year => {
+      const range = `${year}-${parseInt(year) + 1}`;
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn-year';
+      btn.dataset.year = range;
+      btn.textContent = range;
+      btn.style.cssText = `
+        background: #e9ecef; color: #495057; padding: 8px 12px; 
+        border: none; border-radius: 20px; font-weight: 600; cursor: pointer; 
+        font-size: 13px; transition: all 0.3s; border: 2px solid transparent;
+      `;
+      yearContainer.appendChild(btn);
+    });
+  }
+  
+  // Filter function
+  function filterRows() {
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+      const statusMatch = currentStatusFilter === 'all' || row.dataset.status === currentStatusFilter;
+      const yearMatch = currentYearFilter === 'all' || row.dataset.yearRange === currentYearFilter;
+      
+      if (statusMatch && yearMatch) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+    
+    // Update counter and row numbers
+    totalCountEl.textContent = visibleCount;
+    updateRowNumbers();
+    
+    // Update active buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.filter-btn-year').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-status="${currentStatusFilter}"]`).classList.add('active');
+    document.querySelector(`[data-year="${currentYearFilter}"]`).classList.add('active');
+  }
+  
+  // Update row numbers
+  function updateRowNumbers() {
+    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+    visibleRows.forEach((row, index) => {
+      row.querySelector('.row-number').textContent = index + 1;
+    });
+  }
+  
+  // Status filter event listeners
+  statusBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      currentStatusFilter = this.dataset.status;
+      filterRows();
+    });
+  });
+  
+  // Dynamic year filter event listeners (add after creating buttons)
+  function attachYearListeners() {
+    document.querySelectorAll('.filter-btn-year:not([data-year="all"])').forEach(btn => {
+      btn.addEventListener('click', function() {
+        currentYearFilter = this.dataset.year;
+        filterRows();
+      });
+    });
+  }
+  
+  // Initialize
+  createYearButtons();
+  attachYearListeners();
+  filterRows();
+  
+  // Hover effects
+  document.querySelectorAll('.filter-btn, .filter-btn-year').forEach(btn => {
+    btn.addEventListener('mouseenter', function() {
+      if (!this.classList.contains('active')) {
+        this.style.transform = 'translateY(-2px)';
+        this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+      }
+    });
+    btn.addEventListener('mouseleave', function() {
+      if (!this.classList.contains('active')) {
+        this.style.transform = '';
+        this.style.boxShadow = '';
+      }
+    });
+  });
+});
+</script>
 
 
 {% endblock %}

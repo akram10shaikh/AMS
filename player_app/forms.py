@@ -219,18 +219,25 @@ class OrganizationPlayerFormUpdate(forms.ModelForm):
         ('Left-arm unorthodox spin (chinaman)','Left-arm unorthodox spin (chinaman)'),
         ('Other (Specify)','Other (Specify)'),
     ]
+    BATTING_CHOICES =  [
+        ('None','None'),
+        ('Right Arm Batter','Right Arm Batter'),
+        ('Left Arm Batter','Left Arm Batter'),
+    ]
+
     new_password = forms.CharField(
         label="Set New Password", required=False,
         widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'})
     )
     bowling_style = forms.ChoiceField(choices=BOWLING_CHOICES, required=False)
+    batting_style = forms.ChoiceField(choices=BATTING_CHOICES, required=False)
     class Meta:
         model = Player
         fields = [
             'name', 'image', 'email', 'date_of_birth',
             'primary_contact_number', 'secondary_contact_number', 'gender','state',
             'role', 'batting_style', 'bowling_style','player_status','handedness', 'age_category',
-            'guardian_name', 'relation', 'guardian_mobile_number',
+            'guardian_name', 'relation', 'guardian_mobile_number','skill_status','traning_status',
         ]
         widgets = {'date_of_birth': forms.DateInput(attrs={'type': 'date'})}
 

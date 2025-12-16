@@ -283,22 +283,23 @@
     </div>
 {% endif %}
 
-<!-- Camps & Tournaments List -->
+<!-- Camps & Tournaments Year Range Tabs -->
 <div class="camp-year-tabs" id="campYearTabs">
-  {% for year, items in camps_by_year.items %}
+  {% for range_key in camps_by_range.keys %}
     <button type="button"
             class="camp-year-tab {% if forloop.first %}camp-year-tab--active{% endif %}"
-            data-year="{{ year }}">
-      {{ year }}
+            data-year="{{ range_key }}">
+      {{ range_key }}
     </button>
   {% endfor %}
 </div>
 
-<!-- Camps & Tournaments List grouped by year -->
+
+<!-- Camps & Tournaments List grouped by year range -->
 <div id="campsContainer" class="container" style="margin-bottom:100px;">
-  {% for year, items in camps_by_year.items %}
+  {% for range_key, items in camps_by_range.items %}
     <div class="camp-year-panel {% if not forloop.first %}camp-year-panel--hidden{% endif %}"
-         data-year-panel="{{ year }}">
+         data-year-panel="{{ range_key }}">
       {% for camp in items %}
         {% if request.user.is_superuser or camp.organization == request.user.organization %}
           <div class="camp-card">
@@ -321,6 +322,7 @@
     </div>
   {% endfor %}
 </div>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {

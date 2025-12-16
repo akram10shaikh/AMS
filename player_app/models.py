@@ -156,7 +156,10 @@ class Player(models.Model):
     password = models.CharField(max_length=100, default=False)
 
     player_status = models.CharField(max_length=40, choices=PLAYERS_STATAUS,null=True)
+    skill_status = models.CharField(max_length=500, null=True, blank=True)
+    traning_status = models.CharField(max_length=500, null=True, blank=True)
 
+    created_at = models.DateTimeField(auto_now_add=True,null=True)
     def save(self, *args, **kwargs):
         if self.date_of_birth:
             self.current_age = age_for_current_season(self.date_of_birth)
@@ -289,6 +292,7 @@ class Injury(models.Model):
     created_at = models.DateTimeField(auto_now_add=True,null=True)
     unknown_injury_date = models.BooleanField(default=False)
 
+
     def __str__(self):
         return f"{self.player.name} - {self.nature_of_injury} ({self.severity})"
     
@@ -406,7 +410,13 @@ class TestAndResult(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
     # Run A 3x6 specific fields
-    run_a_3x6_attempts = models.IntegerField(null=True, blank=True)
+    run_a_3x6_attempt1 = models.IntegerField(null=True, blank=True)
+    run_a_3x6_attempt2 = models.IntegerField(null=True, blank=True)
+    run_a_3x6_attempt3 = models.IntegerField(null=True, blank=True)
+    run_a_3x6_attempt4 = models.IntegerField(null=True, blank=True)
+    run_a_3x6_attempt5 = models.IntegerField(null=True, blank=True)
+    run_a_3x6_attempt6 = models.IntegerField(null=True, blank=True)
+    run_a_3x6_average = models.FloatField(null=True, blank=True)
 
     # S/L Glute Bridges specific fields
     sl_right = models.FloatField(null=True, blank=True)

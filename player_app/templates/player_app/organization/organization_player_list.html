@@ -202,6 +202,8 @@
                 <th class="col-batting">Batting Style</th>
                 <th class="col-bowling">Bowling Style</th>
                 <th class="col-handedness">Handedness</th>
+                <th class="col-skill">Skill Status</th>
+                <th class="col-traning">Training Status</th>
                 <th class="col-age">Age Category</th>
                 <th class="col-email">Email</th>
                 <th class="col-dob">D.O.B</th>
@@ -230,6 +232,8 @@
                 <td class="col-batting">{{ player.batting_style }}</td>
                 <td class="col-bowling">{{ player.bowling_style }}</td>
                 <td class="col-handedness">{{ player.get_handedness_display }}</td>
+                <td class="col-skill">{{ player.skill_status }}</td>
+                <td class="col-traning">{{ player.traning_status }}</td>
                 <td class="col-age">{% if player.age_category %}{{ player.get_age_category_display }}{% endif %}</td>
                 <td class="col-email">{{ player.email }}</td>
                 <td class="col-dob">{% if player.date_of_birth %}{{ player.date_of_birth|date:"d M Y" }}{% endif %}</td>

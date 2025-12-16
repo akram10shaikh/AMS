@@ -423,16 +423,28 @@ def organization_player_delete(request, pk):
     return redirect('organization_player_list')
 
 from django.db.models import Q
+from django.db.models import Q
+from collections import defaultdict
 
 @login_required
 def organization_player_detail(request, pk):
     player = get_object_or_404(Player, pk=pk)
-    injuries = player.injuries.select_related('reported_by').all().order_by('-injury_date')  # You may want order
+    injuries = player.injuries.select_related('reported_by').all().order_by('-injury_date')
     documents = (
         player.medical_documents
         .filter(Q(view_option="profile") | Q(view_option="injury_profile"))
         .order_by('-date', '-uploaded_at')
     )
+    
+    # NEW: Group test results by test type
+    test_results = defaultdict(list)
+    test_choices_dict = dict(TestAndResult.TEST_CHOICES)
+    
+    player_tests = player.testandresult_set.all().order_by('-created_at')
+    for test in player_tests:
+        test_name = test_choices_dict.get(test.test, test.test)
+        test_results[test_name].append(test)
+    
     # Dynamic status
     injury_status = "Injured" if player.injuries.filter(status='open').exists() else "Fit"
     participation_status = "Benched" if injury_status == "Injured" else "Available"
@@ -446,7 +458,6 @@ def organization_player_detail(request, pk):
             doc.user = request.user                
             doc.save()
 
-            # Log the upload
             MedicalActivityLog.objects.create(
                 player=player,
                 document=doc,
@@ -463,6 +474,7 @@ def organization_player_detail(request, pk):
         "player": player,
         "injuries": injuries,
         "documents": documents,
+        "test_results": dict(test_results),  # Convert defaultdict to dict
         "injury_status": injury_status,
         "participation_status": participation_status,
         "doc_form": doc_form,
@@ -1048,7 +1060,6 @@ def organization_injury_export(request):
     return response
 
 # Camps & Tournaments views
-
 def organization_camps_tournaments(request):
     """
     Displays a list of camps/tournaments.
@@ -1059,7 +1070,7 @@ def organization_camps_tournaments(request):
 
     # Super Admin: Sees all camps
     if request.user.is_superuser:
-        organizations = Organization.objects.all()  # Allow filtering by organization
+        organizations = Organization.objects.all()
         selected_org = request.GET.get('organization')
 
         if selected_org:
@@ -1067,7 +1078,7 @@ def organization_camps_tournaments(request):
             male_players = Player.objects.filter(organization_id=selected_org, gender='Male')
             female_players = Player.objects.filter(organization_id=selected_org, gender='Female')
         else:
-            camps = CampTournament.objects.filter(is_deleted=False)  # Show all camps
+            camps = CampTournament.objects.filter(is_deleted=False)
             male_players = Player.objects.filter(gender='Male')
             female_players = Player.objects.filter(gender='Female')
 
@@ -1080,33 +1091,38 @@ def organization_camps_tournaments(request):
 
     # Regular users: See only camps in their organization
     elif hasattr(request.user, 'organization') and request.user.organization:
-        org = request.user.staff.organization
-        camps = CampTournament.objects.filter(organization=request.user.organization, is_deleted=False)
+        org = request.user.organization  # Fixed: was request.user.staff.organization
+        camps = CampTournament.objects.filter(organization=org, is_deleted=False)
         male_players = Player.objects.filter(organization=org, gender='Male')
         female_players = Player.objects.filter(organization=org, gender='Female')
 
-    # No Access: Deny access if the user doesn’t meet the criteria
+    # No Access: Deny access
     else:
         return HttpResponseForbidden(
             "You must belong to an organization or have the necessary permissions to view camps and tournaments.")
     
-    camps_qs = camps.annotate(year=ExtractYear('start_date')).order_by('-year', 'start_date')
+    camps_qs = camps.annotate(
+        year=ExtractYear('start_date')
+    ).order_by('-start_date')
 
-    camps_by_year = defaultdict(list)
+    # Group camps by year range (year to year+1)
+    camps_by_range = defaultdict(list)
     for camp in camps_qs:
-        camps_by_year[camp.year].append(camp)
+        year = camp.year
+        range_key = f"{year}-{year + 1}" if year else "No Year"
+        camps_by_range[range_key].append(camp)
 
-    # sort years descending
-    camps_by_year = dict(sorted(camps_by_year.items(), reverse=True))
-
+    # Sort year ranges descending
+    sorted_ranges = sorted(camps_by_range.items(), key=lambda x: int(x[0].split('-')[0]), reverse=True)
     
     return render(request, 'player_app/organization/organization_camps_tournaments.html', {
         'camps': camps,
-        'camps_by_year': camps_by_year,
+        'camps_by_range': dict(sorted_ranges),  # Changed from camps_by_year
         'male_players': male_players,
         'female_players': female_players,
         'organizations': organizations if request.user.is_superuser else None
     })
+
 
 
 def organization_edit_camp(request, camp_id):
@@ -1550,7 +1566,7 @@ def organization_dashboard_org(request):
         ("boys_under-19", {'gender': 'M', 'label': "B - U19"}),
         ("men_under-23",  {'gender': 'M', 'label': "B - U23"}),
         ("men_senior",    {'gender': 'M', 'label': "M - SENIOR"}),
-        ("girls_under-15", {'gender': 'F', 'label': "W - U15"}),
+        ("girls_under-15", {'gender': 'F', 'label': "G - U15"}),
         ("girls_under-19", {'gender': 'F', 'label': "G - U19"}),
         ("women_under-23", {'gender': 'F', 'label': "W - U23"}),
         ("women_senior",  {'gender': 'F', 'label': "W - SENIOR"}),
@@ -1622,20 +1638,35 @@ def organization_dashboard_org(request):
     camps_qs = (
         CampTournament.objects.filter(participants__in=players)
         .annotate(
-            year=ExtractYear('start_date'),  # or correct date field
+            year=ExtractYear('start_date'),
             player_count=Count('participants', filter=Q(participants__in=players), distinct=True),
         )
         .prefetch_related('participants')
         .order_by('-year', 'name')
     )
 
-    camps_by_year = defaultdict(list)
-    for camp in camps_qs:
-        camp.player_names = ", ".join(p.name for p in camp.participants.all())
-        camps_by_year[camp.year].append(camp)
-
-    camps_by_year = dict(sorted(camps_by_year.items(), reverse=True))
     
+
+    camps_by_year_range = defaultdict(list)
+
+    for camp in camps_qs:
+        base_year = camp.year  # e.g. 2021
+        if base_year is None:
+            range_key = "Unknown"
+        else:
+            range_key = f"{base_year}-{base_year + 1}"  # e.g. "2021-2022"
+        camp.player_names = ", ".join(p.name for p in camp.participants.all())
+        camps_by_year_range[range_key].append(camp)
+
+    # sort ranges by starting year desc
+    camps_by_year_range = dict(
+        sorted(
+            camps_by_year_range.items(),
+            key=lambda item: int(item[0].split('-')[0]) if item[0] != "Unknown" else -1,
+            reverse=True,
+        )
+    )
+        
 
 
     context = {
@@ -1650,7 +1681,7 @@ def organization_dashboard_org(request):
         'activity_logs': combined_logs,
         'category_cards': category_cards,
         'category_players': category_players, 
-        'camps_by_year': camps_by_year,
+        'camps_by_year': camps_by_year_range,
     }
     return render(request, 'player_app/organization/organization_dashboard.html', context)
 
@@ -1665,8 +1696,9 @@ def logout_user(request):
 
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.http import QueryDict
+
 
 @login_required
 def players_by_category(request):
@@ -1683,8 +1715,11 @@ def players_by_category(request):
     else:
         return render(request, 'error.html', {'message': 'No organization access'})
 
-    # Base queryset
-    players = Player.objects.filter(organization=organization).select_related().prefetch_related('camps', 'injuries')
+    # Base queryset with optimized prefetching
+    players = Player.objects.filter(organization=organization).select_related().prefetch_related(
+        Prefetch('injuries', queryset=Injury.objects.filter(status='open').only('id', 'status'), to_attr='open_injuries'),
+        Prefetch('camps', queryset=CampTournament.objects.only('id', 'name'), to_attr='recent_camps')
+    )
 
     # Filter by age_category (from dashboard card click)
     if age_category:
@@ -1701,9 +1736,6 @@ def players_by_category(request):
             Q(injuries__name__icontains=search_query)
         ).distinct()
 
-    # Count active injuries per player for display
-    players = players.prefetch_related('injuries')
-
     # Category labels for display
     category_labels = {
         'boys_under-15': 'Boys U14',
@@ -1716,6 +1748,25 @@ def players_by_category(request):
         'women_under-23': 'Women U23',
         'women_senior': 'Women Senior',
     }
+    
+    category_display = category_labels.get(age_category, 'All Players')
+    if not age_category:
+        category_display = f'All Players ({organization.name})'
+
+    total_players = players.count()
+
+    context = {
+        'players': players,
+        'age_category': age_category,
+        'gender_filter': gender_filter,
+        'search_query': search_query,
+        'category_display': category_display,
+        'total_players': total_players,
+        'request': request,
+    }
+    return render(request, 'player_app/dashboard/players-by-category.html', context)
+
+
     
     category_display = category_labels.get(age_category, 'All Players')
     if not age_category:
@@ -2812,7 +2863,7 @@ def player_info(request, player_id, test, start, end):
     if min_max_formula == "all_players":
         min_value = TestAndResult.objects.filter(test=test).aggregate(Min('best'))['best__min']
         max_value = TestAndResult.objects.filter(test=test).aggregate(Max('best'))['best__max']
-       
+    
     elif min_max_formula == "all_players_by_gender":
         min_value = TestAndResult.objects.filter(test=test, player__gender=player.gender).aggregate(Min('best'))['best__min']
         max_value = TestAndResult.objects.filter(test=test, player__gender=player.gender).aggregate(Max('best'))['best__max']
@@ -3301,6 +3352,72 @@ def add_run_3x6_test(request,test_name=None):
     events = CampTournament.objects.filter(is_deleted=False)
     staff = Staff.objects.filter(organization=user_organization)
 
+    if request.method == "POST":
+        player_id = request.POST.get('player')
+        test = request.POST.get('test')
+        date = request.POST.get('date')
+        phase = request.POST.get('phase')
+        run_a_3x6_attempt1 = request.POST.get('trial1')
+        run_a_3x6_attempt2 = request.POST.get('trial2')
+        run_a_3x6_attempt3 = request.POST.get('trial3')
+        run_a_3x6_attempt4 = request.POST.get('trial4')
+        run_a_3x6_attempt5 = request.POST.get('trial5')
+        run_a_3x6_attempt6 = request.POST.get('trial6')
+        run_a_3x6_average = request.POST.get('run_a_average')
+
+        notes = request.POST.get('notes')
+        reported_by_id = request.POST.get('reported_by')
+
+        # Basic field validation (add your own as needed)
+        errors = []
+        if not player_id: errors.append("Player is required.")
+        if not test: errors.append("Test is required.")
+        if not date: errors.append("Date is required.")
+        if not phase: errors.append("Phase is required.")
+        if not run_a_3x6_attempt1: errors.append("Trial 1 is required.")
+        if not run_a_3x6_attempt2: errors.append("Trial 2 is required.")
+        if not run_a_3x6_attempt3: errors.append("Trial 3 is required.")
+        if not run_a_3x6_attempt4: errors.append("Trial 4 is required.")
+        if not run_a_3x6_attempt5: errors.append("Trial 5 is required.")
+        if not run_a_3x6_attempt6: errors.append("Trial 6 is required.")
+        if not run_a_3x6_average: errors.append("Average is required.")
+        if not reported_by_id: errors.append("Reported by is required.")
+
+
+        # If no errors, save the result
+        if not errors:
+            phase_data = CampTournament.objects.get(id=int(phase))
+            
+
+            player = Player.objects.get(pk=player_id)
+            reported_by = User.objects.get(pk=reported_by_id)
+            TestAndResult.objects.create(
+                player=player,
+                test=test,
+                date=date,
+                phase=phase_data,
+                run_a_3x6_attempt1=run_a_3x6_attempt1,
+                run_a_3x6_attempt2=run_a_3x6_attempt2,
+                run_a_3x6_attempt3=run_a_3x6_attempt3,
+                run_a_3x6_attempt4=run_a_3x6_attempt4,
+                run_a_3x6_attempt5=run_a_3x6_attempt5,
+                run_a_3x6_attempt6=run_a_3x6_attempt6,
+                run_a_3x6_average=run_a_3x6_average,
+                notes=notes,
+                reported_by=reported_by
+            )
+            return redirect('test_dashboard_new')
+        # Pass errors back to template if any
+        else:
+            return render(request, 'player_app/tests/runa3x6.html', {
+                'test_name': test_name,
+                'errors': errors,
+                'players': players,
+                'events': events,
+                'staff':staff, 
+                # you may need players/staff for dropdowns
+            })
+
 
     return render(request, 'player_app/tests/runa3x6.html',{
             'test_name': test_name,
@@ -3309,6 +3426,30 @@ def add_run_3x6_test(request,test_name=None):
             'staff':staff,
             # you may need players/staff for dropdowns
         })
+
+# Run A 3x6 test views
+def run_3x6_test_view(request,test_name=None):
+    test_name = 'Run A 3x6'
+    search_query = request.GET.get('search', '').strip()
+    results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
+
+    # Filter by player name if search query is present
+    if search_query:
+        results = results.filter(player__name__icontains=search_query)
+
+    paginator = Paginator(results, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    player_ids = results.values_list('player_id', flat=True).distinct()
+
+    context = {
+        'test_name': test_name,
+        'page_obj': page_obj,
+        'total_results': paginator.count,
+        'search_query': search_query,  # pass to template for form value retention
+    }
+    return render(request, 'player_app/tests/runa3x6_data.html', context)
 
 # Glute Bridges Test views
 def add_glute_bridges_test(request,test_name=None):
@@ -4460,3 +4601,44 @@ def runa3_test_view(request,test_name=None):
     }
     return render(request, 'player_app/tests/runa3_data.html', context)
 
+
+# Organization Player Tests view for all test types
+@login_required
+def organization_player_tests(request, player_id):
+    player = get_object_or_404(Player, pk=player_id)
+
+    # Optional org-safety check (adapt to your roles/relations)
+    if hasattr(request.user, 'staff') and player.organization_id != request.user.staff.organization_id:
+        return render(request, 'error.html', {'message': 'No access to this player'})
+
+    base_qs = TestAndResult.objects.filter(player=player).order_by('-date', '-created_at')
+
+    context = {
+        "player": player,
+
+        # Simple time/distance tests
+        "tests_10m":          base_qs.filter(test='10m'),
+        "tests_20m":          base_qs.filter(test='20m'),
+        "tests_40m":          base_qs.filter(test='40m'),
+        "tests_yoyo":         base_qs.filter(test='YoYo'),
+        "tests_sbj":          base_qs.filter(test='SBJ'),
+        "tests_run_a_3":      base_qs.filter(test='Run A 3'),
+        "tests_run_a_3x6":    base_qs.filter(test='Run A 3x6'),
+        "tests_1_mile":       base_qs.filter(test='1 Mile'),
+        "tests_pushups":      base_qs.filter(test='Push-ups'),
+        "tests_2km":          base_qs.filter(test='2 KM'),
+
+        # Asymmetry tests
+        "tests_glute_bridges": base_qs.filter(test='S/L Glute Bridges'),
+        "tests_lunge_calf":    base_qs.filter(test='SL Lunge Calf Raises'),
+        "tests_mb_rot":        base_qs.filter(test='MB Rotational Throws'),
+        "tests_copenhagen":    base_qs.filter(test='Copenhagen'),
+        "tests_sl_hop":        base_qs.filter(test='S/L Hop'),
+
+        # Complex / lab tests
+        "tests_cmj":           base_qs.filter(test='CMJ Scores'),
+        "tests_anthro":        base_qs.filter(test='Anthropometry Test'),
+        "tests_blood":         base_qs.filter(test='Blood Work'),
+        "tests_dexa":          base_qs.filter(test='DEXA Scan Test'),
+    }
+    return render(request, 'player_app/tests/organization_player_tests.html', context)

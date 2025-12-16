@@ -3,158 +3,166 @@
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-  /* Banner and headline */
-  .profile-banner {
-    display: flex;
-    align-items: center;
-    gap:30px;
-    background:#f3f3fa;
-    padding:30px 34px 18px 42px;
-    border-radius:18px;
-    box-shadow:0 2px 18px #abaadd25;
-    margin-bottom:18px;
-  }
-  .profile-image {
-    width: 118px; height: 118px;
-    border-radius:16px;
-    object-fit: cover;
-    border:4px solid #efeaee;
-    background:#fff;
-  }
-  .profile-summary h2 {
-    font-weight:800;
-    font-size:2em;
-    margin:0 0 9px 0;
-  }
-  .status-row { margin-top:8px; }
-  .status-indicator {
-    display:inline-block;
-    border-radius:9px;
-    padding:6px 20px;
-    font-weight:700;
-    margin-right:16px;
-    font-size:1.11em;
-    background: #f3f4fa;
-    color:#523acd;
-  }
-  .injury-status.injured { background: #ffe0df; color: #d13418; border:1.3px solid #f26c4f;}
-  .injury-status.fit { background: #e3fbea; color: #28a745; border:1.3px solid #1abe60;}
-  .participation-status b { color: #2c2694; }
+    /* Banner and headline */
+    .profile-banner {
+      display: flex;
+      align-items: center;
+      gap:30px;
+      background:#f3f3fa;
+      padding:30px 34px 18px 42px;
+      border-radius:18px;
+      box-shadow:0 2px 18px #abaadd25;
+      margin-bottom:18px;
+    }
+    .profile-image {
+      width: 118px; height: 118px;
+      border-radius:16px;
+      object-fit: cover;
+      border:4px solid #efeaee;
+      background:#fff;
+    }
+    .profile-summary h2 {
+      font-weight:800;
+      font-size:2em;
+      margin:0 0 9px 0;
+    }
+    .status-row { margin-top:8px; }
+    .status-indicator {
+      display:inline-block;
+      border-radius:9px;
+      padding:6px 20px;
+      font-weight:700;
+      margin-right:16px;
+      font-size:1.11em;
+      background: #f3f4fa;
+      color:#523acd;
+    }
+    .injury-status.injured { background: #ffe0df; color: #d13418; border:1.3px solid #f26c4f;}
+    .injury-status.fit { background: #e3fbea; color: #28a745; border:1.3px solid #1abe60;}
+    .participation-status b { color: #2c2694; }
 
-  /* Player full details card */
-  .player-details-full {
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 2px 7px #816cf311;
-    padding: 27px 24px 20px 28px;
-    margin-bottom: 27px;
-  }
-  .player-details-full h4 {
-    color: #694fd8;
-    font-weight: 800;
-    font-size: 1.31em;
-    letter-spacing: .01em;
-    margin-bottom: 15px;
-  }
-  .detail-fields-wrap { width:100%; font-size:1.06em; }
-  .fields-columns {
-    display: flex;
-    gap: 36px;
-    flex-wrap: wrap;
-  }
-  .fields-columns > div {
-    flex: 1 1 300px;
-    min-width: 200px;
-  }
-  .label {
-    color: #a593ef;
-    font-size: 0.96em;
-    font-weight: 600;
-    margin: 2.5px 0 0 0;
-    letter-spacing: 0.009em;
-  }
-  .value {
-    color: #302d4b;
-    font-size: 1.08em;
-    font-weight: 500;
-    background: #f9faff;
-    border-radius: 6px;
-    margin-bottom: 6px;
-    margin-top: 1px;
-    padding: 7px 10px 6px 9px;
-    box-shadow: 0 1px 2px #e1dcff20;
-    word-break: break-word;
-  }
-  .section-card {
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 2px 8px #aaa3ef16;
-    padding:22px 27px 18px 27px;
-    margin-bottom:22px;
-  }
-  .injury-list-table, .docs-table {
-    width:100%;
-    border-collapse:separate;
-    border-spacing:0 5px;
-    margin-bottom:0;
-  }
-  .injury-list-table th, .docs-table th {
-    background: #f6e5e2; color: #ac4000;
-    padding:12px 8px; font-size:.98em; font-weight:700;
-    border-bottom:2.5px solid #f7d2cf;
-  }
-  .injury-list-table td, .docs-table td {
-    background: #fff; padding:10px 8px; font-size:1.01em;
-  }
-  .injury-link { color:#963e00; font-weight:600; }
-  .section-card h4 { color: #c24400; font-weight:800; letter-spacing:.01em;}
-  .upload-doc-card{
-    background:#fafaff;
-    border-radius:14px;
-    padding:24px 19px 8px 23px;
-    margin-bottom:13px;
-  }
-  .btn-primary {
-    background:#7232fa; color:#fff; border:none;
-    border-radius:5px; font-weight:700;
-    padding:11px 36px; margin-top:11px;
-  }
-  .form-row { display:flex; gap:24px; }
-  .form-group{flex:1;}
+    /* Player full details card */
+    .player-details-full {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 7px #816cf311;
+      padding: 27px 24px 20px 28px;
+      margin-bottom: 27px;
+    }
+    .player-details-full h4 {
+      color: #694fd8;
+      font-weight: 800;
+      font-size: 1.31em;
+      letter-spacing: .01em;
+      margin-bottom: 15px;
+    }
+    .detail-fields-wrap { width:100%; font-size:1.06em; }
+    .fields-columns {
+      display: flex;
+      gap: 36px;
+      flex-wrap: wrap;
+    }
+    .fields-columns > div {
+      flex: 1 1 300px;
+      min-width: 200px;
+    }
+    .label {
+      color: #a593ef;
+      font-size: 0.96em;
+      font-weight: 600;
+      margin: 2.5px 0 0 0;
+      letter-spacing: 0.009em;
+    }
+    .value {
+      color: #302d4b;
+      font-size: 1.08em;
+      font-weight: 500;
+      background: #f9faff;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      margin-top: 1px;
+      padding: 7px 10px 6px 9px;
+      box-shadow: 0 1px 2px #e1dcff20;
+      word-break: break-word;
+    }
+    .section-card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px #aaa3ef16;
+      padding:22px 27px 18px 27px;
+      margin-bottom:22px;
+    }
+    .injury-list-table, .docs-table {
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0 5px;
+      margin-bottom:0;
+    }
+    .injury-list-table th, .docs-table th {
+      background: #f6e5e2; color: #ac4000;
+      padding:12px 8px; font-size:.98em; font-weight:700;
+      border-bottom:2.5px solid #f7d2cf;
+    }
+    .injury-list-table td, .docs-table td {
+      background: #fff; padding:10px 8px; font-size:1.01em;
+    }
+    .injury-link { color:#963e00; font-weight:600; }
+    .section-card h4 { color: #c24400; font-weight:800; letter-spacing:.01em;}
+    .upload-doc-card{
+      background:#fafaff;
+      border-radius:14px;
+      padding:24px 19px 8px 23px;
+      margin-bottom:13px;
+    }
+    .btn-primary {
+      background:#7232fa; color:#fff; border:none;
+      border-radius:5px; font-weight:700;
+      padding:11px 36px; margin-top:11px;
+    }
+    .form-row { display:flex; gap:24px; }
+    .form-group{flex:1;}
 
-  @media (max-width:1000px) {
-    .fields-columns{ flex-direction:column; gap:0;}
-    .player-details-full{ padding:16px 3vw 10px 3vw;}
+    @media (max-width:1000px) {
+      .fields-columns{ flex-direction:column; gap:0;}
+      .player-details-full{ padding:16px 3vw 10px 3vw;}
+    }
+    @media (max-width:840px) {
+      .profile-banner{flex-direction:column; gap:18px; padding:19px 6vw 11px 5vw;}
+      .profile-summary h2{font-size:1.2em;}
+    }
+
+    /* Existing status-indicator class stays as-is */
+
+  .training-status {
+    background: #fff4e3;
+    color: #e48a07;
+    border: 1.3px solid #f2b950;
   }
-  @media (max-width:840px) {
-    .profile-banner{flex-direction:column; gap:18px; padding:19px 6vw 11px 5vw;}
-    .profile-summary h2{font-size:1.2em;}
+
+  .participation-status {
+    background: #e3fbea;
+    color: #1ab85b;
+    border: 1.3px solid #1abe60;
   }
-
-  /* Existing status-indicator class stays as-is */
-
-.training-status {
-  background: #fff4e3;
-  color: #e48a07;
-  border: 1.3px solid #f2b950;
-}
-
-.participation-status {
-  background: #e3fbea;
-  color: #1ab85b;
-  border: 1.3px solid #1abe60;
-}
-.participation-status2 {
-  background: #e6e3fbff;
-  color: #1a22b8ff;
-  border: 1.3px solid #1a2abeff;
-}
-.participation-status3 {
-  background: #fbe3e3ff;
-  color: #b81a1aff;
-  border: 1.3px solid #be1a1aff;
-}
-</style>
+  .participation-status2 {
+    background: #e6e3fbff;
+    color: #1a22b8ff;
+    border: 1.3px solid #1a2abeff;
+  }
+  .participation-status3 {
+    background: #fbe3e3ff;
+    color: #b81a1aff;
+    border: 1.3px solid #be1a1aff;
+  }
+  .participation-status4 {
+    background: #c8cef2ff;
+    color: #000e6cff;
+    border: 1.3px solid #000e6cff;
+  }
+  .main-container{
+    margin-bottom:100px;
+  }
+  </style>
 {% endblock %}
 
 
@@ -171,7 +179,7 @@
           Injury Status: {{ injury_status }}
         </span>
         <span class="status-indicator training-status">
-          Training Participation: {{ training_participation_status }}
+          Training Status: {{ player.traning_status }}
         </span>
         
           {% if player.player_status == 'full participation'%}
@@ -189,7 +197,12 @@
               Participation: {{ player.player_status }}
             </span>
           {% endif %}
-        
+            <span class="status-indicator participation-status4">
+              Skill Status: {{ player.skill_status }}
+        </span>
+        <span class="status-indicator">
+          <a href="{% url 'organization_player_tests' player.id %}">View All Test Results</a>
+        </span>
       </div>
       <div style="margin-top:15px;">
         <b>Role:</b> {{ player.role }} |
@@ -305,6 +318,83 @@
       </tbody>
     </table>
   </div>
+
+    <!-- Test Results Section -->
+  {% if test_results %}
+  <div class="test-results-section section-card" style="margin-top: 30px;">
+    <h4 style="color: #36a9e1; margin-bottom: 20px;">Test Results</h4>
+    
+    {% for test_name, results in test_results.items %}
+      {% if results %}
+      <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #36a9e1;">
+        <h5 style="color: #36a9e1; margin-bottom: 15px; font-size: 16px; font-weight: 600;">
+          {{ test_name }} 
+          <span style="color: #666; font-size: 14px; font-weight: 400;">({{ results|length }} tests)</span>
+        </h5>
+        
+        <div class="table-container" style="overflow-x: auto;">
+          <table class="test-results-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <thead style="background: #36a9e1; color: white;">
+              <tr>
+                <th style="padding: 12px 10px; text-align: left; font-weight: 600;">Date</th>
+                <th style="padding: 12px 10px; text-align: left; font-weight: 600;">Result</th>
+                <th style="padding: 12px 10px; text-align: left; font-weight: 600;">Status</th>
+                <th style="padding: 12px 10px; text-align: left; font-weight: 600;">Notes</th>
+                <th style="padding: 12px 10px; text-align: center; font-weight: 600;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for result in results %}
+              <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 12px 10px; color: #666; font-weight: 500;">
+                  {{ result.created_at|date:"M d, Y" }}
+                </td>
+                <td style="padding: 12px 10px; font-weight: 600; color: #333;">
+                  {{ result.result|default:"—" }}
+                </td>
+                <td style="padding: 12px 10px;">
+                  {% if result.result %}
+                    <span style="background: #36e156; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 700;">
+                      Recorded
+                    </span>
+                  {% else %}
+                    <span style="background: #ffaa00; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 700;">
+                      Pending
+                    </span>
+                  {% endif %}
+                </td>
+                <td style="padding: 12px 10px; color: #666; max-width: 200px; word-break: break-word;">
+                  {{ result.notes|truncatechars:50|default:"—" }}
+                </td>
+                <td style="padding: 12px 10px; text-align: center;">
+                  <a href="#" onclick="alert('Test detail view coming soon! ID: {{ result.id }}'); return false;" 
+                    title="View {{ test_name }} Details" 
+                    style="color: #36a9e1; text-decoration: none; font-size: 16px;">
+                    <i class="fa fa-eye"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <!-- No Test Results -->
+  <div class="section-card" style="margin-top: 30px;">
+    <h4 style="color: #36a9e1;">Test Results</h4>
+    <div style="padding: 30px; text-align: center; color: #999;">
+      <i class="fa fa-chart-line" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+      <p>No test results recorded for this player yet.</p>
+    </div>
+  </div>
+  {% endif %}
+
+
+
 
   <!-- Medical Document Upload -->
   <div class="upload-doc-card mt-4">

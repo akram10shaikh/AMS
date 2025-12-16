@@ -173,6 +173,14 @@ form {
         {% for error in form.relation.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
       </div>
       <div class="form-group">
+        {{ form.skill_status.label_tag }}{{ form.skill_status }}
+        {% for error in form.skill_status.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.traning_status.label_tag }}{{ form.traning_status }}
+        {% for error in form.traning_status.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
         {{ form.guardian_mobile_number.label_tag }}{{ form.guardian_mobile_number }}
         {% for error in form.guardian_mobile_number.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
       </div>

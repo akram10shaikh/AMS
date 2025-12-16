@@ -47,7 +47,7 @@
           <th scope="col" style="padding: 15px 12px; text-align: left; font-weight: 700;">Age Category</th>
           <th scope="col" style="padding: 15px 12px; text-align: left; font-weight: 700;">Gender</th>
           <th scope="col" style="padding: 15px 12px; text-align: left; font-weight: 700;">Participation Status</th>
-          <th scope="col" style="padding: 15px 12px; text-align: left; font-weight: 700;">Active Injuries</th>
+          <th scope="col" style="padding: 15px 12px; text-align: left; font-weight: 700;">Injuries Title</th>
           <th scope="col" style="padding: 15px 12px; text-align: left; font-weight: 700;">Camps</th>
           <th scope="col" style="padding: 15px 12px; text-align: center; font-weight: 700;">Actions</th>
         </tr>
@@ -75,20 +75,24 @@
               <span style="color: #999;">N/A</span>
             {% endif %}
           </td>
-          <td style="padding: 15px 12px;">
-            {% if player.injuries.all %}
-              {% for injury in player.injuries.all %}
-                {% if injury.status == 'open' %}
-                  <span style="background: #ff3939; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; display: block;">●</span>
-                {% endif %}
-              {% endfor %}
-              {% if not player.injuries.all|length > 0 %}
+         <td style="padding: 15px 12px;">
+            {% with open_injuries=player.open_injuries %}
+              {% if open_injuries %}
+                {% for injury in open_injuries %}
+                  <div style="margin-bottom: 2px;">
+                    <a href="{% url 'organization_injury_detail' injury.id %}" 
+                      style="background: linear-gradient(45deg, #ff3939, #ff6b6b); color: white; padding: 3px 7px; border-radius: 10px; font-size: 11px; font-weight: 700; text-decoration: none; display: inline-block; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"
+                      target="_blank">
+                      #{{ injury.id }}
+                    </a>
+                  </div>
+                {% endfor %}
+              {% else %}
                 <span style="background: #36e156; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;">0</span>
               {% endif %}
-            {% else %}
-              <span style="background: #36e156; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;">0</span>
-            {% endif %}
+            {% endwith %}
           </td>
+
           <td style="padding: 15px 12px;">
             {% if player.camps.all %}
               <ul style="margin: 0; padding-left: 20px; font-size: 14px;">

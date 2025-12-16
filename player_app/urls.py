@@ -123,8 +123,10 @@ urlpatterns = [
                   path('dexa-scan/<str:test_name>/', views.add_dexa_scan_test, name='add_dexa_scan_test'),
                   path('blood-test/<str:test_name>/', views.add_blood_test, name='add_blood_tests_test'),
                   path('runa3/<str:test_name>/', views.add_runa3_test, name='add_runa3_test'),
+                  path('organization/<int:player_id>/all-tests/', views.organization_player_tests,name='organization_player_tests'),
 
                   # Test Data View URLs
+                  path('run-3x6-view/<str:test_name>/', views.run_3x6_test_view, name='run_3x6_test_view'),
                   path('glute-bridges-view/<str:test_name>/', views.glute_bridges_test_view, name='glute_bridges_test_view'),
                   path('lunge-calf-raises-view/<str:test_name>/', views.lunge_calf_raises_test_view, name='lunge_calf_raises_test_view'),
                   path('mb-rotational-throw-view/<str:test_name>/', views.mb_rotational_throw_test_view, name='mb_rotational_throw_test_view'),
