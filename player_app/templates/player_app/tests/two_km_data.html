@@ -57,11 +57,9 @@
                 <th>Player</th>
                 <th>Date</th>
                 <th>Phase</th>
-                <th>SL Right</th>
-                <th>SL Left</th>
-                <th>SL Difference</th>
-                <th>SLG Ratio</th>
+                <th>Best</th>
                 <th>Notes</th>
+                <th>Individual Average</th>
             </tr>
         </thead>
         <tbody>
@@ -71,15 +69,13 @@
                 <td class="player-name">{{ result.player.name }}</td>
                 <td>{{ result.date }}</td>
                 <td>{{ result.phase }}</td>
-                <td>{{ result.sl_right }}</td>
-                <td>{{ result.sl_left }}</td>
-                <td>{{ result.sl_difference }}</td>
-                <td>{{ result.slg_ratio }}</td>
+                <td>{{ result.best }}</td>
                 <td>{{ result.notes|default:"-" }}</td>
+                <td>{{ latest_indv_avgs|get_item:result.player.id|default:"-" }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="9">No results found for {{ test_name }}.</td>
+                <td colspan="7">No results found for {{ test_name }}.</td>
             </tr>
             {% endfor %}
         </tbody>

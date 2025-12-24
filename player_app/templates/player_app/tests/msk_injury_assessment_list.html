@@ -1,0 +1,254 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+{% load dict_extras %}
+
+{% block title %}MSK Injury Assessments{% endblock %}
+
+{% block extra_head %}
+    <style>
+        .table-wrapper {
+            overflow-x: auto;
+            max-width: 100%;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+        }
+        table { 
+            width: 100%; 
+            min-width: 2500px;  /* Force horizontal scroll */
+            margin: 0;
+            border-collapse: collapse; 
+            font-size: 13px;
+        }
+        th, td { 
+            padding: 8px 6px; 
+            border-right: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            text-align: center; 
+            white-space: nowrap;
+        }
+        th { 
+            background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+            font-weight: 600;
+            font-size: 12px;
+            position: sticky; 
+            top: 0; 
+            z-index: 10;
+            border-top: 2px solid #dee2e6;
+        }
+        th:last-child, td:last-child { border-right: none; }
+        .table-info {
+            background: #e3f2fd;
+            font-weight: 500;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        #searchInput {
+            width: 300px; padding: 10px; font-size: 16px; 
+            border: 1px solid #ddd; border-radius: 6px;
+        }
+        .search-btn {
+            padding: 10px 20px; margin-left: 10px; 
+            background: #1976d2; color: white; 
+            border: none; border-radius: 6px; cursor: pointer;
+        }
+        .search-btn:hover { background: #1565c0; }
+        .pagination { text-align: center; margin: 2em 0; }
+        .pagination a, .pagination strong {
+            display: inline-block; padding: 8px 14px; margin: 0 4px;
+            border: 1px solid #ddd; background: #f9f9f9; color: #333; 
+            text-decoration: none; border-radius: 4px;
+        }
+        .pagination strong { background: #1976d2; color: white; }
+        form.search-form { text-align: center; margin: 2em auto 1em auto; }
+        .scroll-hint {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h2 style="text-align:center;">MSK Injury Assessment Results</h2>
+
+    <form method="get" class="search-form" aria-label="Search Player / Physio Form">
+        <input type="text" name="search" id="searchInput" placeholder="Search player or physio..."
+               value="{{ search_query }}">
+        <button type="submit" class="search-btn">Search</button>
+    </form>
+
+    <div class="table-info">
+        Total rows: {{ total_results }} | Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        <span style="float: right; font-size: 12px; color: #666;">
+            ↔ Scroll horizontally to view all columns
+        </span>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th style="width: 4%;">No</th>
+                    <th style="width: 7%;">Player</th>
+                    <th style="width: 6%;">Date</th>
+                    <th style="width: 6%;">Phase</th>
+                    <th style="width: 8%;">Physio</th>
+                    
+                    <!-- BASIC MEASUREMENTS -->
+                    <th style="width: 5%;">Height</th>
+                    <th style="width: 5%;">Weight</th>
+                    
+                    <!-- GENERAL -->
+                    <th style="width: 6%;">Dominant</th>
+                    <th style="width: 6%;">Lead Leg</th>
+                    <th style="width: 7%;">Category</th>
+                    <th style="width: 6%;">LLD</th>
+                    
+                    <!-- FOOT POSTURE -->
+                    <th style="width: 6%;">Rear R</th>
+                    <th style="width: 6%;">Rear L</th>
+                    <th style="width: 6%;">Mid R</th>
+                    <th style="width: 6%;">Mid L</th>
+                    
+                    <!-- RANGE OF MOTION -->
+                    <th style="width: 5%;">DF R</th>
+                    <th style="width: 5%;">DF L</th>
+                    <th style="width: 5%;">Tibial R</th>
+                    <th style="width: 5%;">Tibial L</th>
+                    <th style="width: 5%;">HipIR R</th>
+                    <th style="width: 5%;">HipIR L</th>
+                    <th style="width: 5%;">FABER R</th>
+                    <th style="width: 5%;">FABER L</th>
+                    <th style="width: 5%;">ShldrIR R</th>
+                    <th style="width: 5%;">ShldrIR L</th>
+                    <th style="width: 5%;">ShldrER R</th>
+                    <th style="width: 5%;">ShldrER L</th>
+                    <th style="width: 5%;">Pec R</th>
+                    <th style="width: 5%;">Pec L</th>
+                    <th style="width: 5%;">Thor R</th>
+                    <th style="width: 5%;">Thor L</th>
+                    <th style="width: 5%;">Thom1 R</th>
+                    <th style="width: 5%;">Thom1 L</th>
+                    <th style="width: 6%;">Thom3 R</th>
+                    <th style="width: 6%;">Thom3 L</th>
+                    <th style="width: 5%;">Thom4 R</th>
+                    <th style="width: 5%;">Thom4 L</th>
+                    
+                    <!-- CLINICAL TESTS -->
+                    <th style="width: 6%;">AntApp R</th>
+                    <th style="width: 6%;">AntApp L</th>
+                    <th style="width: 6%;">Reloc R</th>
+                    <th style="width: 6%;">Reloc L</th>
+                    <th style="width: 6%;">GIRD R</th>
+                    <th style="width: 6%;">GIRD L</th>
+                    <th style="width: 6%;">HK R</th>
+                    <th style="width: 6%;">HK L</th>
+                    <th style="width: 6%;">OBrien R</th>
+                    <th style="width: 6%;">OBrien L</th>
+                    
+                    <!-- MISC -->
+                    <th style="width: 8%;">Skills</th>
+                    <th style="width: 10%;">Comments</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in page_obj %}
+                <tr>
+                    <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                    <td style="font-weight: 500;">{{ result.player.name|default:"-" }}</td>
+                    <td>{{ result.date|date:"Y-m-d"|default:"-" }}</td>
+                    <td>{{ result.phase.name|default:"-" }}</td>
+                    <td title="{{ result.physiotherapist_name }}">{{ result.physiotherapist_name|truncatechars:12|default:"-" }}</td>
+                    
+                    <!-- BASIC -->
+                    <td>{{ result.height|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.weight|floatformat:1|default:"-" }}</td>
+                    
+                    <!-- GENERAL -->
+                    <td>{{ result.dominant_side|default:"-" }}</td>
+                    <td>{{ result.lead_leg|default:"-" }}</td>
+                    <td title="{{ result.participation_category }}">{{ result.participation_category|truncatechars:6|default:"-" }}</td>
+                    <td>{{ result.lld|default:"-" }}</td>
+                    
+                    <!-- FOOT -->
+                    <td>{{ result.rear_foot_right|default:"-" }}</td>
+                    <td>{{ result.rear_foot_left|default:"-" }}</td>
+                    <td>{{ result.mid_foot_right|default:"-" }}</td>
+                    <td>{{ result.mid_foot_left|default:"-" }}</td>
+                    
+                    <!-- ROM TESTS -->
+                    <td>{{ result.df_lunge_right|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.df_lunge_left|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.tibial_dial_right|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.tibial_dial_left|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.hip_ir_90_supine_right|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.hip_ir_90_supine_left|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.fabers_right|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.fabers_left|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.shoulder_ir_90_right|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.shoulder_ir_90_left|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.shoulder_er_90_right|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.shoulder_er_90_left|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.pec_minor_length_right|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.pec_minor_length_left|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.thoracic_rotation_right|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.thoracic_rotation_left|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.thomas_pos1_right|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.thomas_pos1_left|floatformat:1|default:"-" }}</td>
+                    <td title="{{ result.thomas_pos3_right }}">{{ result.thomas_pos3_right|truncatechars:6|default:"-" }}</td>
+                    <td title="{{ result.thomas_pos3_left }}">{{ result.thomas_pos3_left|truncatechars:6|default:"-" }}</td>
+                    <td>{{ result.thomas_pos4_right|floatformat:1|default:"-" }}</td>
+                    <td>{{ result.thomas_pos4_left|floatformat:1|default:"-" }}</td>
+                    
+                    <!-- CLINICAL -->
+                    <td>{{ result.anterior_apprehension_right|default:"-" }}</td>
+                    <td>{{ result.anterior_apprehension_left|default:"-" }}</td>
+                    <td>{{ result.relocation_right|default:"-" }}</td>
+                    <td>{{ result.relocation_left|default:"-" }}</td>
+                    <td>{{ result.gird_erg_right|default:"-" }}</td>
+                    <td>{{ result.gird_erg_left|default:"-" }}</td>
+                    <td>{{ result.hk_test_right|default:"-" }}</td>
+                    <td>{{ result.hk_test_left|default:"-" }}</td>
+                    <td>{{ result.obriens_right|default:"-" }}</td>
+                    <td>{{ result.obriens_left|default:"-" }}</td>
+                    
+                    <!-- MISC -->
+                    <td title="{{ result.skills }}">{{ result.skills|truncatechars:8|default:"-" }}</td>
+                    <td title="{{ result.comments }}">{{ result.comments|truncatechars:15|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="60" style="padding: 50px; font-style: italic; color: #666; background: #f8f9fa;">
+                        No MSK assessments found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">« First</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Prev</a>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+                <strong>{{ num }}</strong>
+            {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last »</a>
+        {% endif %}
+    </div>
+{% endblock %}

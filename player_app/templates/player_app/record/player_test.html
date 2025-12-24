@@ -1,0 +1,920 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Player Record{% endblock %}
+
+{% block extra_head %}
+    <style>
+        :root {
+            --color-primary: #0f172a;
+            --color-secondary: #007CF0;
+            --color-accent: #00DFD8;
+            --color-background: #f4f6fa;
+            --color-card-bg: #fff;
+            --color-text-dark: #1a202c;
+            --color-text-light: #fff;
+            --color-border-light: #d1d5db;
+            --color-border-dark: #e5e7eb;
+            --color-highlight: #d9f7be;
+            --color-input-bg: #f9fafb;
+            --color-dark-green: #1b4d2e;
+            --color-orange: #f59e0b;
+            --color-gray: #363636;
+            --color-light-gray: #f8fafc;
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--color-background);
+            line-height: 1.6;
+        }
+        .welcome-section {
+            height: 260px;
+            background: linear-gradient(to right, var(--color-secondary), var(--color-accent));
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 var(--space-xl);
+        }
+        .welcome-section h1 {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--color-text-light);
+            margin: 0;
+        }
+        .main-card {
+            max-width: 1200px;
+            margin: -80px auto var(--space-xl) auto;
+            background-color: var(--color-card-bg);
+            border-radius: 12px;
+            padding: var(--space-xl);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            position: relative;
+            z-index: 10;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-lg);
+        }
+        .import-button {
+            display: inline-flex;
+            align-items: center;
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            text-decoration: none;
+        }
+        .import-button:hover { background-color: #1e293b; }
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xl);
+            margin-bottom: var(--space-xl);
+        }
+        .form-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            padding: var(--space-xl);
+            background-color: var(--color-card-bg);
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--color-border-dark);
+        }
+        .form-fields label {
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .input {
+            padding: 0.75rem 1rem;
+            font-size: 15px;
+            font-weight: 500;
+            border: 1px solid var(--color-border-light);
+            border-radius: 12px;
+            background-color: var(--color-input-bg);
+            transition: all 0.2s ease-in-out;
+            color: #111827;
+            width: 100%;
+        }
+        select.input { width: 100%; }
+        .input:focus,
+        select.input:focus {
+            outline: none;
+            border-color: #2563eb;
+            background-color: var(--color-card-bg);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        button {
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+            font-weight: 700;
+            font-size: 15px;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%;
+        }
+        button:hover { background-color: #1e293b; transform: translateY(-1px); }
+        .player-info-section {
+            margin-top: var(--space-xl);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+            background-color: var(--color-dark-green);
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            padding: var(--space-md);
+        }
+        .player-info-title {
+            color: var(--color-text-light);
+            text-align: center;
+            font-style: italic;
+            font-weight: 700;
+            margin: 0;
+            padding-bottom: var(--space-sm);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .player-info-card {
+            border-top: 15px solid var(--color-orange);
+            border-bottom: 15px solid var(--color-orange);
+            color: var(--color-text-light);
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: var(--space-md);
+            flex-wrap: wrap;
+        }
+        .player-photo {
+            background-color: var(--color-dark-green);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: 176px;
+            width: 170px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .player-info-table {
+            flex-grow: 1;
+            border-collapse: collapse;
+            font-size: 14px;
+            color: var(--color-text-light);
+            margin-left: 1rem;
+        }
+        .player-info-table th,
+        .player-info-table td {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem;
+            text-align: left;
+        }
+        .player-info-table th {
+            font-weight: normal;
+            background-color: #114224;
+            text-align: center;
+            width: 40%;
+        }
+        .coach-name {
+            align-self: flex-start;
+            padding: var(--space-md);
+            background-color: #114224;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-width: 150px;
+            height: 145px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .chart-container {
+            width: 85%;
+            margin: 2rem auto;
+        }
+        .chart-legend {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 2rem;
+        }
+        table.stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin-top: 1rem;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        table.stats-table thead {
+            background-color: #0f172a;
+            color: #fff;
+        }
+        table.stats-table th, table.stats-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+            vertical-align: middle;
+            font-size: 14px;
+        }
+        table.stats-table tbody tr:hover { background-color: #f9fafb; }
+        .right-align {
+            text-align: right;
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+        }
+        .date-filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .date-filter-group input[type="radio"] { margin-right: 0.5rem; }
+        .select-wrapper { display: flex; flex-direction: column; }
+        .button-wrapper { display: flex; flex-direction: column; }
+        @media (max-width: 900px) {
+            .form-container,
+            .chart-container,
+            .player-info-card { flex-direction: column; }
+            .player-info-table {
+                margin-left: 0;
+                margin-top: 1rem;
+            }
+        }
+
+
+        .card-header {
+            background: linear-gradient(135deg, #ffffffff, #ffffffff);
+            border-radius: 16px 16px 0 0;
+            padding: 16px 24px;
+        }
+
+        .report-settings-card {
+            background: #ffffff;
+            color: #333;
+            border-radius: 12px;
+            padding: 8px 12px;
+            min-width: 260px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+
+        .status-pill {
+            background: #e3f2fd;
+            color: #0d47a1;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .clear-link {
+            font-size: 11px;
+            color: #d32f2f;
+            text-decoration: none;
+        }
+
+        .settings-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .pill {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(0,0,0,0.06);
+            white-space: nowrap;
+        }
+
+        .pill-blue   { background: #e3f2fd; color: #0d47a1; }
+        .pill-green  { background: #e8f5e9; color: #1b5e20; }
+        .pill-purple { background: #f3e5f5; color: #4a148c; }
+
+        .settings-edit-link {
+            display: inline-block;
+            font-size: 11px;
+            color: #1976d2;
+            text-decoration: underline;
+        }
+
+
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="welcome-section">
+        <h1>Welcome</h1>
+    </div>
+
+ <main class="main-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+    <h2 class="mb-0 fw-bold black-white">Player Records</h2>
+
+    <div class="settings-section ms-auto">
+        {% if has_session_settings %}
+            <div class="report-settings-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="status-pill">⚙️ Active</span>
+                    <a href="{% url 'delete_session' %}" class="clear-link">Clear</a>
+                </div>
+
+                <div class="settings-pills">
+                    <span class="pill pill-blue">
+                        Min/Max: {{ min_max_formula|title }}
+                    </span>
+                    <span class="pill pill-green">
+                        {{ min_is_better|yesno:"Min Better,Max Better" }}
+                    </span>
+                    <span class="pill pill-purple">
+                        Group: {{ grp_avg_option|default:"Standard"|title }}
+                    </span>
+                </div>
+
+                <a href="{% url 'report_settings' %}" class="settings-edit-link">
+                    Change in Report Settings
+                </a>
+            </div>
+        {% else %}
+            <a href="{% url 'report_settings' %}" class="btn btn-outline-light btn-sm">
+                ⚙️ Configure Report Settings
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+
+
+
+        <!-- Form -->
+        <form id="reportForm"
+              class="form-container"
+              method="post"
+              action="{% url 'player_report' %}">
+            {% csrf_token %}
+            <div class="form-fields">
+                <div class="date-filter-group">
+                <label>Date Option:</label><br>
+                <label><input type="radio" id="range" name="date_option" value="range" onclick="toggleDateInputs('range')"> Start Date – End Date</label><br>
+                <label><input type="radio" id="1month" name="date_option" value="1month" onclick="toggleDateInputs('preset')"> Last 1 Month</label><br>
+                <label><input type="radio" id="3months" name="date_option" value="3months" onclick="toggleDateInputs('preset')"> Last 3 Months</label><br>
+                <label><input type="radio" id="6months" name="date_option" value="6months" onclick="toggleDateInputs('preset')"> Last 6 Months</label><br>
+                <label><input type="radio" id="fy" name="date_option" value="fy" onclick="toggleDateInputs('preset')"> Financial Year (Apr 1 – Mar 31)</label><br>
+                <div id="date-range-fields" style="display:none; margin-top:12px;">
+                    <label for="startDateInput">Start Date:</label>
+                    <input type="date" id="startDateInput" name="start_date" class="input" disabled />
+                    <label for="endDateInput">End Date:</label>
+                    <input type="date" id="endDateInput" name="end_date" class="input" disabled />
+                </div>
+            </div>
+                <div class="select-wrapper">
+                    <label for="testSelect">Tests:</label>
+                    <select id="testSelect" name="test_name" class="input" required>
+                        <option value="" disabled {% if not selected_test %}selected{% endif %}>-- Select Test --</option>
+                        <option value="10m" {% if selected_test == '10m' %}selected{% endif %}>10m</option>
+                        <option value="20m" {% if selected_test == '20m' %}selected{% endif %}>20m</option>
+                        <option value="40m" {% if selected_test == '40m' %}selected{% endif %}>40m</option>
+                        <option value="1 Mile" {% if selected_test == '1 Mile' %}selected{% endif %}>1 Mile</option>
+                        <option value="2 KM" {% if selected_test == '2 KM' %}selected{% endif %}>2 KM</option>
+                        <option value="Push-ups" {% if selected_test == 'Push-ups' %}selected{% endif %}>Push-ups</option>
+                        <option value="YoYo" {% if selected_test == 'YoYo' %}selected{% endif %}>YoYo</option>
+                        <option value="Run A 3" {% if selected_test == 'Run A 3' %}selected{% endif %}>Run A 3</option>
+                        <option value="SBJ" {% if selected_test == 'SBJ' %}selected{% endif %}>SBJ</option>
+                        <option value="CMJ Scores" {% if selected_test == 'CMJ Scores' %}selected{% endif %}>CMJ Scores</option>
+                        <option value="MSK Injury Assessment" {% if selected_test == 'MSK Injury Assessment' %}selected{% endif %}>MSK Injury Assessment</option>
+                        <option value="Blood Test" {% if selected_test == 'Blood Test' %}selected{% endif %}>Blood Test</option>
+                        <option value="Anthropometry Test" {% if selected_test == 'Anthropometry Test' %}selected{% endif %}>Anthropometry Test</option>
+                        <option value="DEXA Scan Test" {% if selected_test == 'DEXA Scan Test' %}selected{% endif %}>DEXA Scan Test</option>
+                        <option value="S/L Glute Bridges" {% if selected_test == 'S/L Glute Bridges' %}selected{% endif %}>S/L Glute Bridges</option>
+                        <option value="S/L Hop Tests" {% if selected_test == 'S/L Hop Tests' %}selected{% endif %}>S/L Hop Tests</option>
+                        <option value="MB Rotational Throws" {% if selected_test == 'MB Rotational Throws' %}selected{% endif %}>MB Rotational Throws</option>
+                        <option value="Copenhagen" {% if selected_test == 'Copenhagen' %}selected{% endif %}>Copenhagen</option>
+                        <option value="SL Lunge Calf Raises" {% if selected_test == 'SL Lunge Calf Raises' %}selected{% endif %}>SL Lunge Calf Raises</option>
+                       
+                    </select>
+                </div>
+
+                <div class="select-wrapper">
+                    <label for="playerSelect">Select Player:</label>
+                    <select id="playerSelect" name="player_id" class="input" required>
+                        <option value="" disabled {% if not selected_player_id %}selected{% endif %}>-- Select Player --</option>
+                        {% for p in players %}
+                            <option value="{{ p.id }}" {% if selected_player_id == p.id %}selected{% endif %}>
+                                {{ p.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="select-wrapper">
+                    <label for="numTestsToShow">Show Last N Tests:</label>
+                    <select id="numTestsToShow" name="num_tests" class="input" required>
+                        <option value="" disabled {% if not num_tests %}selected{% endif %}>-- Select Number --</option>
+                        <option value="1"  {% if num_tests == 1 %}selected{% endif %}>1</option>
+                        <option value="3"  {% if num_tests == 3 %}selected{% endif %}>3</option>
+                        <option value="5"  {% if num_tests == 5 %}selected{% endif %}>5</option>
+                        <option value="10" {% if num_tests == 10 %}selected{% endif %}>10</option>
+                    </select>
+                </div>
+
+                <div class="button-wrapper">
+                    <button type="submit">Fetch Report</button>
+                </div>
+            </div>
+        </form>
+         <!-- Normal Test -->
+        {% if error %}
+            <p style="color:red;">{{ error }}</p>
+        {% endif %}
+    
+        {% if player_info %}
+        <div id="playerInfoSection" class="player-info-section">
+            <h3 class="player-info-title">
+                Individual Report - {{ player_info.name }}
+            </h3>
+            <div class="player-info-card" id="playerInfoCard">
+                <div class="player-photo">
+                    {% if player_info.image %}
+                        <img src="{{ player_info.image.url }}" alt="{{ player_info.name }}"
+                             style="max-width:100%;max-height:100%;object-fit:cover;">
+                    {% else %}
+                        No Image
+                    {% endif %}
+                </div>
+                <table class="player-info-table">
+                    <tr><th>Name</th><td>{{ player_info.name }}</td></tr>
+                    <tr><th>Age</th><td>{{ player_info.age }}</td></tr>
+                    <tr><th>Gender</th><td>{{ player_info.gender }}</td></tr>
+                    <tr><th>Role</th><td>{{ player_info.role }}</td></tr>
+                    <tr><th>Handness</th><td>{{ player_info.handedness }}</td></tr>
+                    <tr><th>Category</th><td>{{ player_info.age_category }}</td></tr>
+                    <tr><th>Batting Style</th><td>{{ player_info.batting_style }}</td></tr>
+                    <tr><th>Bowling Style</th><td>{{ player_info.bowling_style }}</td></tr>
+                    <tr><th>Player Status</th><td>{{ player_info.player_status }}</td></tr>
+                    <tr><th>Test</th><td>{{ selected_test }}</td></tr>
+                    <tr><th>Individual Average Score</th><td>{{ individual_averages }}</td></tr>
+                    <tr><th>Group Average Score</th><td>{{ group_average }}</td></tr>
+                    <tr><th>Min Score</th><td>{{ min_value }}</td></tr>
+                    <tr><th>Max Score</th><td>{{ max_value }}</td></tr>
+                    <tr><th>Normalized Scores</th><td>{{ normalized_scores|join:", " }}</td></tr>
+
+                </table>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Sepcial Test -->
+         {% if player_info_new %}
+        <div id="playerInfoSection" class="player-info-section">
+            <h3 class="player-info-title">
+                Individual Report - {{ player_info_new.name }}
+            </h3>
+            <div class="player-info-card" id="playerInfoCard">
+                <div class="player-photo">
+                    {% if player_info_new.image %}
+                        <img src="{{ player_info_new.image.url }}" alt="{{ player_info_new.name }}"
+                             style="max-width:100%;max-height:100%;object-fit:cover;">
+                    {% else %}
+                        No Image
+                    {% endif %}
+                </div>
+                <table class="player-info-table">
+                    <tr><th>Name</th><td>{{ player_info_new.name }}</td></tr>
+                    <tr><th>Age</th><td>{{ player_info_new.age }}</td></tr>
+                    <tr><th>Gender</th><td>{{ player_info_new.gender }}</td></tr>
+                    <tr><th>Role</th><td>{{ player_info_new.role }}</td></tr>
+                    <tr><th>Handness</th><td>{{ player_info_new.handedness }}</td></tr>
+                    <tr><th>Category</th><td>{{ player_info_new.age_category }}</td></tr>
+                    <tr><th>Batting Style</th><td>{{ player_info_new.batting_style }}</td></tr>
+                    <tr><th>Bowling Style</th><td>{{ player_info_new.bowling_style }}</td></tr>
+                    <tr><th>Player Status</th><td>{{ player_info_new.player_status }}</td></tr>
+                    <tr><th>Test</th><td>{{ selected_test }}</td></tr>
+                    <tr><th>Individual Average Score Left</th><td>{{ individual_averages_left }}</td><th>Individual Average Score Right</th><td>{{ individual_averages_right }}</td></tr>
+                    <tr><th>Group Average Score Left</th><td>{{ group_average_left }}</td><th>Group Average Score Right</th><td>{{ group_average_right }}</td></tr>
+                    <tr><th>Min Score Left</th><td>{{ min_value_left }}</td><th>Min Score Right</th><td>{{ min_value_right }}</td></tr>
+                    <tr><th>Max Score Left</th><td>{{ max_value_left }}</td><th>Max Score Right</th><td>{{ max_value_right }}</td></tr>
+                    <tr><th>Normalized Scores Left</th><td>{{ normalized_scores_left|join:", " }}</td><th>Normalized Scores Right</th><td>{{ normalized_scores_right|join:", " }}</td></tr>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Normal Test -->
+
+        {% if stats_data %}
+        <div class="table-container" id="statsTableContainer">
+            <table class="stats-table" id="statsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Gender</th>
+                        <th>Category</th>
+                        <th>Distance Covered</th>
+                        <th>Predicted VO2max</th>
+                        <th>Best</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in stats_data %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.phase }}</td>
+                        <td>{{ row.gender }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.distance_covered }}</td>
+                        <td>{{ row.predicted_vo2max }}</td>
+                        <td>{{ row.best }}</td>
+                        <td>{{ row.notes }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- Other Test -->
+           {% if error %}
+            <div class="error">{{ error }}</div>
+           {% else %}
+           {% if table_json %}
+            <h2>{{ selected_test }} Report</h2>
+            
+            <div class="table-container">
+                <table class="stats-table" id="testTable">
+                    <thead id="tableHead">
+                        <tr><th>Loading...</th></tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td>Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+           {% endif %}
+        
+           <!-- Special Test s-->
+        {% if stats_data_special %}
+        <div class="table-container" id="statsTableContainer">
+            <table class="stats-table" id="statsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Right</th>
+                        <th>Left</th>
+                        <th>Difference</th>
+                        <th>Ratio</th>
+                        <th>Gender</th>
+                        <th>Category</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in stats_data_special %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.phase }}</td>
+                        <td>{{ row.right }}</td>
+                        <td>{{ row.left }}</td>
+                        <td>{{ row.difference }}</td>
+                        <td>{{ row.ratio }}</td>
+                        <td>{{ row.gender }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.notes }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+
+    </main>
+
+<script>
+    const FETCH_PLAYERS_URL = "{% url 'fetch_players' %}";
+    const FETCH_REPORT_URL = "{% url 'fetch_report' %}";
+
+    let allPlayersData = {};
+
+    function toggleDateInputs(type) {
+        const dateRangeFields = document.getElementById('date-range-fields');
+        const startDateInput = document.getElementById('startDateInput');
+        const endDateInput = document.getElementById('endDateInput');
+
+        if (type === 'range') {
+            dateRangeFields.style.display = 'block';
+            startDateInput.disabled = false;
+            endDateInput.disabled = false;
+        } else {
+            dateRangeFields.style.display = 'none';
+            startDateInput.disabled = true;
+            endDateInput.disabled = true;
+        }
+    }
+
+    function populateNumTestsDropdown(playerTests) {
+        const numTestsSelect = document.getElementById('numTestsToShow');
+        numTestsSelect.innerHTML = '<option value="" disabled selected>-- Select Number --</option>';
+
+        if (playerTests && playerTests.length > 0) {
+            const maxTests = Math.min(playerTests.length, 10);
+            for (let i = 1; i <= maxTests; i++) {
+                numTestsSelect.innerHTML += `<option value="${i}">${i}</option>`;
+            }
+        }
+    }
+
+    document.getElementById('testSelect').addEventListener('change', function() {
+        const testName = this.value;
+        const playerSelect = document.getElementById('playerSelect');
+        const numTestsSelect = document.getElementById('numTestsToShow');
+
+        playerSelect.innerHTML = '<option value="" disabled selected>-- Select Player --</option>';
+        numTestsSelect.innerHTML = '<option value="" disabled selected>-- Select Number --</option>';
+
+        if (!testName) return;
+
+        const dateOption = document.querySelector('input[name="date_option"]:checked');
+        let startDate = '', endDate = '';
+
+        if (dateOption && dateOption.value === 'range') {
+            startDate = document.getElementById('startDateInput').value;
+            endDate = document.getElementById('endDateInput').value;
+        }
+
+        fetchPlayersForTest(testName, startDate, endDate);
+    });
+
+    function fetchPlayersForTest(testName, startDate, endDate) {
+        const formData = new FormData();
+        formData.append('test_name', testName);
+        formData.append('start_date', startDate);
+        formData.append('end_date', endDate);
+
+        fetch(FETCH_PLAYERS_URL, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                allPlayersData[testName] = data.players;
+                populatePlayerDropdown(data.players);
+            } else {
+                alert('Error fetching players: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to fetch players');
+        });
+    }
+
+    function populatePlayerDropdown(players) {
+        const playerSelect = document.getElementById('playerSelect');
+
+        players.forEach(player => {
+            const option = document.createElement('option');
+            option.value = player.id;
+            option.textContent = `${player.name} (${player.total_tests})`;
+            playerSelect.appendChild(option);
+        });
+
+        playerSelect.onchange = function() {
+            const testName = document.getElementById('testSelect').value;
+            const playerId = this.value;
+
+            if (testName && playerId && allPlayersData[testName]) {
+                const playerData = allPlayersData[testName].find(p => p.id == playerId);
+                if (playerData) {
+                    populateNumTestsDropdown(playerData.tests);
+                }
+            }
+        };
+    }
+
+    function fetchReport() {
+        const testName = document.getElementById('testSelect').value;
+        const playerId = document.getElementById('playerSelect').value;
+        const numTests = document.getElementById('numTestsToShow').value;
+
+        if (!testName || !playerId || !numTests) {
+            alert('Please select test, player, and number of tests');
+            return;
+        }
+
+        const dateOption = document.querySelector('input[name="date_option"]:checked');
+        let startDate = '', endDate = '';
+
+        if (dateOption && dateOption.value === 'range') {
+            startDate = document.getElementById('startDateInput').value;
+            endDate = document.getElementById('endDateInput').value;
+        }
+
+        const formData = new FormData();
+        formData.append('test_name', testName);
+        formData.append('player_id', playerId);
+        formData.append('num_tests', numTests);
+        formData.append('start_date', startDate);
+        formData.append('end_date', endDate);
+
+        fetch(FETCH_REPORT_URL, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayPlayerInfo(data.player_info);
+                displayChart(data.chart_data);
+                displayStatsTable(data.stats_data);
+            } else {
+                alert('Error fetching report: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to fetch report');
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function displayPlayerInfo(playerInfo) {
+        document.getElementById('playerNameTitle').textContent = playerInfo.name;
+        document.getElementById('playerInfoSection').style.display = 'block';
+        // add more info if needed
+    }
+
+    function displayChart(chartData) {
+        document.getElementById('chartContainer').style.display = 'block';
+        // plug Chart.js here
+    }
+
+    function displayStatsTable(statsData) {
+        document.getElementById('statsTableContainer').style.display = 'block';
+        const table = document.getElementById('statsTable');
+        table.innerHTML = '';
+
+        let thead = '<thead><tr><th>Date</th><th>Score</th><th>Rank</th></tr></thead>';
+        let tbody = '<tbody>';
+        statsData.forEach(row => {
+            tbody += `<tr><td>${row.date}</td><td>${row.score}</td><td>${row.rank || ''}</td></tr>`;
+        });
+        tbody += '</tbody>';
+
+        table.innerHTML = thead + tbody;
+    }
+
+    function openReportSettings() {
+        alert('Report settings modal would open here');
+    }
+    </script>
+    <script>
+        function displayStatsTable(statsData) {
+    const container = document.getElementById('statsTableContainer');
+    const table = document.getElementById('statsTable');
+
+    if (!statsData || statsData.length === 0) {
+        container.style.display = 'none';
+        table.innerHTML = '';
+        return;
+    }
+
+    container.style.display = 'block';
+
+    // Define columns for these tests
+    const headers = [
+        'Date', 'Phase', 'Gender', 'Category', 
+        'Distance Covered', 'Predicted VO2max','Best',
+        'Individual Avg','Min', 'Max','image',
+        'Notes',
+        'Reported By',
+        'Reporter Designation',
+        
+    ];
+
+    let thead = '<thead><tr>';
+    headers.forEach(h => {
+        thead += `<th>${h}</th>`;
+    });
+    thead += '</tr></thead>';
+
+    let tbody = '<tbody>';
+    statsData.forEach(r => {
+        tbody += `
+            <tr>
+                <td>${r.date}</td>
+                <td>${r.phase || ''}</td>
+                <td>${r.gender || ''}</td>
+                <td>${r.category || ''}</td>
+                <td>${r.distance_covered ?? ''}</td>
+                <td>${r.predicted_vo2max ?? ''}</td>
+                <td>${r.best ?? ''}</td>
+                <td>${r.individual_average ?? ''}</td>
+                <td>${r.min ?? ''}</td>
+                <td>${r.max ?? ''}</td>
+                <td>${r.notes || ''}</td>
+                <td>${r.reported_by || ''}</td>
+                <td>${r.reported_by_designation || ''}</td>
+                
+            </tr>
+        `;
+    });
+    tbody += '</tbody>';
+
+    table.innerHTML = thead + tbody;
+}
+
+</script>
+<!-- Other test script-->
+ <script>
+        const tableData = {{ table_json|safe }};
+        
+        // Build table immediately
+        const thead = document.getElementById('tableHead');
+        const tbody = document.getElementById('tableBody');
+        
+        // Clear loading
+        thead.innerHTML = '';
+        tbody.innerHTML = '';
+        
+        // Headers
+        const headerRow = document.createElement('tr');
+        tableData.fields.forEach(field => {
+            const th = document.createElement('th');
+            th.textContent = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        
+        // Rows
+        tableData.data.forEach(row => {
+            const tr = document.createElement('tr');
+            tableData.fields.forEach(field => {
+                const td = document.createElement('td');
+                let value = row[field] || '-';
+                
+                // Format numbers
+                if (!isNaN(value) && value !== '-' && value !== '') {
+                    td.textContent = parseFloat(value).toFixed(2);
+                } else {
+                    td.textContent = value;
+                }
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+    </script>
+
+{% endblock%}

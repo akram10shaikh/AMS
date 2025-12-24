@@ -9,7 +9,8 @@ from django.db.models import Avg
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 from .utils import age_for_current_season
-
+from django.db.models import Min, Max
+from django.db import transaction
 # Group model
 class Player_Group(models.Model):
     name = models.CharField(max_length=100)
@@ -23,14 +24,14 @@ User = get_user_model()  # Use the CustomUser model if defined
 # Player model
 class Player(models.Model):
     Age_category_choices = [
-        ('boys_under-16', 'Boys under 16'),
-        ('boys_under-19', 'Boys under 19'),
-        ('men_under-23', 'Men Under 23'),
-        ('men_senior', 'Men Senior'),
-        ('girls_under-15','Girls under 15'),
-        ('girls_under-19','Girls under 19'),
-        ('women_under-23','Women Under 23'),
-        ('women_senior','Women Senior'),
+        ('boys under 16', 'Boys under 16'),
+        ('boys under 19', 'Boys under 19'),
+        ('men under 23', 'Men Under 23'),
+        ('men senior', 'Men Senior'),
+        ('girls under 15','Girls under 15'),
+        ('girls under 19','Girls under 19'),
+        ('women under 23','Women Under 23'),
+        ('women senior','Women Senior'),
 
     ]
     ROLE_CHOICES = [
@@ -55,7 +56,7 @@ class Player(models.Model):
     date_of_birth = models.DateField(blank=True, null=True) 
     primary_contact_number = models.CharField(max_length=15, blank=True, null=True)
     secondary_contact_number = models.CharField(max_length=15, blank=True, null=True)
-    gender_choices = [('M', 'Male'), ('F', 'Female'), ('O', 'Other')]
+    gender_choices = [('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')]
     gender = models.CharField(max_length=10, choices=gender_choices, blank=True, null=True)
     pincode = models.CharField(max_length=10, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
@@ -117,8 +118,8 @@ class Player(models.Model):
     # Sports Related Information
     batting_style = models.CharField(max_length=100, blank=True, null=True)
     bowling_style = models.CharField(max_length=100, blank=True, null=True)
-    handedness_choices = [('R', 'Right'), ('L', 'Left')]
-    handedness = models.CharField(max_length=1, choices=handedness_choices, blank=True, null=True)
+    handedness_choices = [('Right', 'Right'), ('Left', 'Left')]
+    handedness = models.CharField(max_length=10, choices=handedness_choices, blank=True, null=True)
     aadhar_number = models.CharField(max_length=12, blank=True, null=True)
     sports_role = models.CharField(max_length=100, blank=True, null=True)
     id_card_number = models.CharField(max_length=50, blank=True, null=True)
@@ -380,7 +381,7 @@ class TestAndResult(models.Model):
         ('YoYo', 'YoYo'),
         ('SBJ', 'SBJ'),
         ('S/L Glute Bridges', 'S/L Glute Bridges (Sec)'),
-        ('SL Lunge Calf Raises', 'SL Lunge Calf Raises'),
+        ('S/L Lunge Calf Raises', 'S/L Lunge Calf Raises'),
         ('MB Rotational Throws', 'MB Rotational Throws'),
         ('Copenhagen', 'Copenhagen (Sec)'),
         ('S/L Hop', 'S/L Hop'),
@@ -393,6 +394,7 @@ class TestAndResult(models.Model):
         ('Anthropometry Test', 'Anthropometry Test'),
         ('Blood Work', 'Blood Work'),
         ('DEXA Scan Test', 'DEXA Scan Test'),
+        ('MSK Injury Assessment','MSK Injury Assessment'),
     ]
     test = models.CharField(max_length=32, choices=TEST_CHOICES, null=True)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
@@ -546,25 +548,70 @@ class TestAndResult(models.Model):
         return f"{self.player} - {self.test} ({self.date}) "
 
 
+
+
 class PlayerAggregate(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     test = models.CharField(max_length=32, choices=TestAndResult.TEST_CHOICES)
     individual_average = models.FloatField(null=True)
+    left_min = models.FloatField(null=True)
+    left_max = models.FloatField(null=True)
+    right_min = models.FloatField(null=True)
+    right_max = models.FloatField(null=True)
+    min = models.FloatField(null=True)
+    max = models.FloatField(null=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.player.name} - {self.test}"
 
 
 class GenderAggregate(models.Model):
     gender = models.CharField(max_length=10)  # e.g., Male, Female
     test = models.CharField(max_length=32, choices=TestAndResult.TEST_CHOICES)
     average = models.FloatField(null=True)
+    left_min = models.FloatField(null=True)
+    left_max = models.FloatField(null=True)
+    right_min = models.FloatField(null=True)
+    right_max = models.FloatField(null=True)
     updated_at = models.DateTimeField(auto_now=True)
+    min = models.FloatField(null=True)
+    max = models.FloatField(null=True)
+
+    def __str__(self):
+        return f"{self.gender} - {self.test}"
 
 
 class CategoryAggregate(models.Model):
     category = models.CharField(max_length=64)
     test = models.CharField(max_length=32, choices=TestAndResult.TEST_CHOICES)
     average = models.FloatField(null=True)
+    left_min = models.FloatField(null=True)
+    left_max = models.FloatField(null=True)
+    right_min = models.FloatField(null=True)
+    right_max = models.FloatField(null=True)
     updated_at = models.DateTimeField(auto_now=True)
+    min = models.FloatField(null=True)
+    max = models.FloatField(null=True)
+
+    def __str__(self):
+        return f"{self.category} - {self.test}"
+
+
+class CampAggregate(models.Model):
+    phase = models.CharField(max_length=64)
+    test = models.CharField(max_length=32, choices=TestAndResult.TEST_CHOICES)
+    average = models.FloatField(null=True)
+    left_min = models.FloatField(null=True)
+    left_max = models.FloatField(null=True)
+    right_min = models.FloatField(null=True)
+    right_max = models.FloatField(null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    min = models.FloatField(null=True)
+    max = models.FloatField(null=True)
+
+    def __str__(self):
+        return f"{self.phase} - {self.test}"
 
 
 # Signal receiver outside the model class
@@ -760,3 +807,2729 @@ class DailyActivityCamps(models.Model):
 
     def __str__(self):
         return f"{self.log} - {self.activity_name}"
+    
+class SLGluteBridges(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='sl_glute_bridges')
+    
+    # Renamed main fields
+    right = models.FloatField(null=True, blank=True)
+    left = models.FloatField(null=True, blank=True)
+    difference = models.FloatField(null=True, blank=True)
+    ratio = models.FloatField(null=True, blank=True)
+
+    # Renamed min/max fields
+    right_min = models.FloatField(null=True, blank=True)
+    right_max = models.FloatField(null=True, blank=True)
+    left_min = models.FloatField(null=True, blank=True)
+    left_max = models.FloatField(null=True, blank=True)
+
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    notes = models.TextField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    reported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    individual_average_left = models.FloatField(null=True, blank=True)
+    individual_average_right = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - set gender/category from player
+        - compute diff/ratio
+        - save
+        - update min/max + aggregates
+        """
+
+        # denormalize
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # compute diff/ratio (allow 0.0, only treat None as missing)
+        if self.right is not None and self.left is not None:
+            self.difference = abs(self.right - self.left)
+            if self.right > 0:
+                self.ratio = self.left / self.right
+
+        # first save (so we have pk)
+        super().save(*args, **kwargs)
+
+        # now update min/max + aggregates once (no recursion)
+        with transaction.atomic():
+            qs_player = SLGluteBridges.objects.filter(player=self.player)
+
+            # LEFT side: min, max, avg
+            if self.left is not None:
+                agg_left = qs_player.filter(left__isnull=False).aggregate(
+                    min_val=Min('left'),
+                    max_val=Max('left'),
+                    avg_val=Avg('left'),
+                )
+                self.left_min = agg_left['min_val']
+                self.left_max = agg_left['max_val']
+                self.individual_average_left = agg_left['avg_val']
+
+            # RIGHT side: min, max, avg
+            if self.right is not None:
+                agg_right = qs_player.filter(right__isnull=False).aggregate(
+                    min_val=Min('right'),
+                    max_val=Max('right'),
+                    avg_val=Avg('right'),
+                )
+                self.right_min = agg_right['min_val']
+                self.right_max = agg_right['max_val']
+                self.individual_average_right = agg_right['avg_val']
+
+            # persist updated min/max/avg (this save does not call extra logic)
+            super().save(update_fields=[
+                'left_min', 'left_max',
+                'right_min', 'right_max',
+                'individual_average_left', 'individual_average_right',
+            ])
+
+            # update aggregates
+            test_name = 'S/L Glute Bridges'
+
+            # PlayerAggregate
+            player_agg, _ = PlayerAggregate.objects.get_or_create(
+                player=self.player,
+                test=test_name,
+                defaults={'left_min': None, 'left_max': None, 'right_min': None, 'right_max': None},
+            )
+            player_agg.left_min = self.left_min
+            player_agg.left_max = self.left_max
+            player_agg.right_min = self.right_min
+            player_agg.right_max = self.right_max
+            player_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_players = Player.objects.filter(gender=self.gender)
+                gender_results = SLGluteBridges.objects.filter(player__in=gender_players)
+
+                g_left = gender_results.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                g_right = gender_results.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=test_name,
+                    defaults={'left_min': None, 'left_max': None, 'right_min': None, 'right_max': None},
+                )
+                gender_agg.left_min = g_left['min_val']
+                gender_agg.left_max = g_left['max_val']
+                gender_agg.right_min = g_right['min_val']
+                gender_agg.right_max = g_right['max_val']
+                gender_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_players = Player.objects.filter(age_category=self.category)
+                cat_results = SLGluteBridges.objects.filter(player__in=cat_players)
+
+                c_left = cat_results.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                c_right = cat_results.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=test_name,
+                    defaults={'left_min': None, 'left_max': None, 'right_min': None, 'right_max': None},
+                )
+                cat_agg.left_min = c_left['min_val']
+                cat_agg.left_max = c_left['max_val']
+                cat_agg.right_min = c_right['min_val']
+                cat_agg.right_max = c_right['max_val']
+                cat_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            if self.phase:
+                camp_qs = SLGluteBridges.objects.filter(phase=self.phase)
+
+                camp_left = camp_qs.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                camp_right = camp_qs.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                test_name = 'S/L Glute Bridges'
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),
+                    test=test_name,
+                    defaults={
+                        'left_min': None,
+                        'left_max': None,
+                        'right_min': None,
+                        'right_max': None,
+                    },
+                )
+
+                camp_agg.left_min = camp_left['min_val']
+                camp_agg.left_max = camp_left['max_val']
+                camp_agg.right_min = camp_right['min_val']
+                camp_agg.right_max = camp_right['max_val']
+                camp_agg.save(update_fields=[
+                    'left_min', 'left_max', 'right_min', 'right_max'
+                ])
+
+class SLLungeCalfRaises(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE,
+                              related_name='sl_lunge_calf_raises')
+
+    # Renamed main fields
+    right = models.FloatField(null=True, blank=True)
+    left = models.FloatField(null=True, blank=True)
+    difference = models.FloatField(null=True, blank=True)
+    ratio = models.FloatField(null=True, blank=True)
+
+    # Renamed min/max fields
+    right_min = models.FloatField(null=True, blank=True)
+    right_max = models.FloatField(null=True, blank=True)
+    left_min = models.FloatField(null=True, blank=True)
+    left_max = models.FloatField(null=True, blank=True)
+
+    individual_average_left = models.FloatField(null=True, blank=True)
+    individual_average_right = models.FloatField(null=True, blank=True)
+
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    notes = models.TextField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    reported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - set gender/category from player
+        - compute diff/ratio
+        - save
+        - update min/max + aggregates
+        """
+
+        # denormalize
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # compute diff/ratio
+        if self.right is not None and self.left is not None:
+            self.difference = abs(self.right - self.left)
+            if self.right > 0:
+                self.ratio = self.left / self.right
+
+        # first save (so we have pk)
+        super().save(*args, **kwargs)
+
+        # now update min/max + aggregates once (no recursion)
+        with transaction.atomic():
+            qs_player = SLLungeCalfRaises.objects.filter(player=self.player)
+
+            if self.left is not None:
+                agg_left = qs_player.filter(left__isnull=False).aggregate(
+                    min_val=Min('left'),
+                    max_val=Max('left'),
+                    avg_val=Avg('left'),
+                )
+                self.left_min = agg_left['min_val']
+                self.left_max = agg_left['max_val']
+                self.individual_average_left = agg_left['avg_val']
+
+            if self.right is not None:
+                agg_right = qs_player.filter(right__isnull=False).aggregate(
+                    min_val=Min('right'),
+                    max_val=Max('right'),
+                    avg_val=Avg('right'),
+                )
+                self.right_min = agg_right['min_val']
+                self.right_max = agg_right['max_val']
+                self.individual_average_right = agg_right['avg_val']
+
+            # persist updated min/max/avg (this save does not call extra logic)
+            super().save(update_fields=[
+                'left_min', 'left_max',
+                'right_min', 'right_max',
+                'individual_average_left', 'individual_average_right',
+            ])
+
+            # update aggregates
+            test_name = 'S/L Lunge Calf Raises'
+
+            # PlayerAggregate
+            player_agg, _ = PlayerAggregate.objects.get_or_create(
+                player=self.player,
+                test=test_name,
+                defaults={
+                    'left_min': None,
+                    'left_max': None,
+                    'right_min': None,
+                    'right_max': None,
+                },
+            )
+            player_agg.left_min = self.left_min
+            player_agg.left_max = self.left_max
+            player_agg.right_min = self.right_min
+            player_agg.right_max = self.right_max
+            player_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_players = Player.objects.filter(gender=self.gender)
+                gender_results = SLLungeCalfRaises.objects.filter(player__in=gender_players)
+
+                g_left = gender_results.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                g_right = gender_results.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=test_name,
+                    defaults={
+                        'left_min': None,
+                        'left_max': None,
+                        'right_min': None,
+                        'right_max': None,
+                    },
+                )
+                gender_agg.left_min = g_left['min_val']
+                gender_agg.left_max = g_left['max_val']
+                gender_agg.right_min = g_right['min_val']
+                gender_agg.right_max = g_right['max_val']
+                gender_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_players = Player.objects.filter(age_category=self.category)
+                cat_results = SLLungeCalfRaises.objects.filter(player__in=cat_players)
+
+                c_left = cat_results.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                c_right = cat_results.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=test_name,
+                    defaults={
+                        'left_min': None,
+                        'left_max': None,
+                        'right_min': None,
+                        'right_max': None,
+                    },
+                )
+                cat_agg.left_min = c_left['min_val']
+                cat_agg.left_max = c_left['max_val']
+                cat_agg.right_min = c_right['min_val']
+                cat_agg.right_max = c_right['max_val']
+                cat_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+            
+            if self.phase:
+                camp_qs = SLLungeCalfRaises.objects.filter(phase=self.phase)
+
+                camp_left = camp_qs.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                camp_right = camp_qs.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),
+                    test=test_name,
+                    defaults={
+                        'left_min': None,
+                        'left_max': None,
+                        'right_min': None,
+                        'right_max': None,
+                    },
+                )
+                camp_agg.left_min = camp_left['min_val']
+                camp_agg.left_max = camp_left['max_val']
+                camp_agg.right_min = camp_right['min_val']
+                camp_agg.right_max = camp_right['max_val']
+                camp_agg.save(update_fields=[
+                    'left_min', 'left_max', 'right_min', 'right_max'
+                ])
+
+
+
+class MBRotationalThrows(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE,
+                              related_name='mb_rotational_throws')
+
+    # Renamed main fields
+    right = models.FloatField(null=True, blank=True)
+    left = models.FloatField(null=True, blank=True)
+    difference = models.FloatField(null=True, blank=True)
+    ratio = models.FloatField(null=True, blank=True)
+
+    # Renamed min/max fields
+    right_min = models.FloatField(null=True, blank=True)
+    right_max = models.FloatField(null=True, blank=True)
+    left_min = models.FloatField(null=True, blank=True)
+    left_max = models.FloatField(null=True, blank=True)
+
+    individual_average_left = models.FloatField(null=True, blank=True)
+    individual_average_right = models.FloatField(null=True, blank=True)
+
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    notes = models.TextField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    reported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - set gender/category from player
+        - compute diff/ratio
+        - save
+        - update min/max + aggregates
+        """
+
+        # denormalize
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # compute diff/ratio
+        if self.right is not None and self.left is not None:
+            self.difference = abs(self.right - self.left)
+            if self.right > 0:
+                self.ratio = self.left / self.right
+
+        # first save (so we have pk)
+        super().save(*args, **kwargs)
+
+        # now update min/max + aggregates once (no recursion)
+        with transaction.atomic():
+            qs_player = MBRotationalThrows.objects.filter(player=self.player)
+
+            if self.left is not None:
+                agg_left = qs_player.filter(left__isnull=False).aggregate(
+                    min_val=Min('left'),
+                    max_val=Max('left'),
+                    avg_val=Avg('left'),
+                )
+                self.left_min = agg_left['min_val']
+                self.left_max = agg_left['max_val']
+                self.individual_average_left = agg_left['avg_val']
+
+            if self.right is not None:
+                agg_right = qs_player.filter(right__isnull=False).aggregate(
+                    min_val=Min('right'),
+                    max_val=Max('right'),
+                    avg_val=Avg('right'),
+                )
+                self.right_min = agg_right['min_val']
+                self.right_max = agg_right['max_val']
+                self.individual_average_right = agg_right['avg_val']
+
+            # persist updated min/max/avg (this save does not call extra logic)
+            super().save(update_fields=[
+                'left_min', 'left_max',
+                'right_min', 'right_max',
+                'individual_average_left', 'individual_average_right',
+            ])
+
+            # update aggregates
+            test_name = 'MB Rotational Throws'
+
+            # PlayerAggregate
+            player_agg, _ = PlayerAggregate.objects.get_or_create(
+                player=self.player,
+                test=test_name,
+                defaults={
+                    'left_min': None,
+                    'left_max': None,
+                    'right_min': None,
+                    'right_max': None,
+                },
+            )
+            player_agg.left_min = self.left_min
+            player_agg.left_max = self.left_max
+            player_agg.right_min = self.right_min
+            player_agg.right_max = self.right_max
+            player_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_players = Player.objects.filter(gender=self.gender)
+                gender_results = MBRotationalThrows.objects.filter(player__in=gender_players)
+
+                g_left = gender_results.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                g_right = gender_results.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=test_name,
+                    defaults={
+                        'left_min': None,
+                        'left_max': None,
+                        'right_min': None,
+                        'right_max': None,
+                    },
+                )
+                gender_agg.left_min = g_left['min_val']
+                gender_agg.left_max = g_left['max_val']
+                gender_agg.right_min = g_right['min_val']
+                gender_agg.right_max = g_right['max_val']
+                gender_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_players = Player.objects.filter(age_category=self.category)
+                cat_results = MBRotationalThrows.objects.filter(player__in=cat_players)
+
+                c_left = cat_results.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                c_right = cat_results.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=test_name,
+                    defaults={
+                        'left_min': None,
+                        'left_max': None,
+                        'right_min': None,
+                        'right_max': None,
+                    },
+                )
+                cat_agg.left_min = c_left['min_val']
+                cat_agg.left_max = c_left['max_val']
+                cat_agg.right_min = c_right['min_val']
+                cat_agg.right_max = c_right['max_val']
+                cat_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            if self.phase:
+                camp_qs = MBRotationalThrows.objects.filter(phase=self.phase)
+
+                camp_left = camp_qs.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                camp_right = camp_qs.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),
+                    test=test_name,
+                    defaults={
+                        'left_min': None,
+                        'left_max': None,
+                        'right_min': None,
+                        'right_max': None,
+                    },
+                )
+                camp_agg.left_min = camp_left['min_val']
+                camp_agg.left_max = camp_left['max_val']
+                camp_agg.right_min = camp_right['min_val']
+                camp_agg.right_max = camp_right['max_val']
+                camp_agg.save(update_fields=[
+                    'left_min', 'left_max', 'right_min', 'right_max'
+                ])
+
+class CopenhagenTest(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE,
+                              related_name='copenhagen_tests')
+
+    # Renamed main fields
+    right = models.FloatField(null=True, blank=True)
+    left = models.FloatField(null=True, blank=True)
+    difference = models.FloatField(null=True, blank=True)
+    ratio = models.FloatField(null=True, blank=True)
+
+    # Renamed min/max fields
+    right_min = models.FloatField(null=True, blank=True)
+    right_max = models.FloatField(null=True, blank=True)
+    left_min = models.FloatField(null=True, blank=True)
+    left_max = models.FloatField(null=True, blank=True)
+
+    individual_average_left = models.FloatField(null=True, blank=True)
+    individual_average_right = models.FloatField(null=True, blank=True)
+
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    notes = models.TextField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    reported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - set gender/category from player
+        - compute diff/ratio
+        - save
+        - update min/max + aggregates
+        """
+
+        # denormalize
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # compute diff/ratio
+        if self.right is not None and self.left is not None:
+            self.difference = abs(self.right - self.left)
+            if self.right > 0:
+                self.ratio = self.left / self.right
+
+        # first save (so we have pk)
+        super().save(*args, **kwargs)
+
+        # now update min/max + aggregates once (no recursion)
+        with transaction.atomic():
+            qs_player = CopenhagenTest.objects.filter(player=self.player)
+
+            if self.left is not None:
+                agg_left = qs_player.filter(left__isnull=False).aggregate(
+                    min_val=Min('left'),
+                    max_val=Max('left'),
+                    avg_val=Avg('left'),
+                )
+                self.left_min = agg_left['min_val']
+                self.left_max = agg_left['max_val']
+                self.individual_average_left = agg_left['avg_val']
+
+            if self.right is not None:
+                agg_right = qs_player.filter(right__isnull=False).aggregate(
+                    min_val=Min('right'),
+                    max_val=Max('right'),
+                    avg_val=Avg('right'),
+                )
+                self.right_min = agg_right['min_val']
+                self.right_max = agg_right['max_val']
+                self.individual_average_right = agg_right['avg_val']
+
+            # persist updated min/max/avg (this save does not call extra logic)
+            super().save(update_fields=[
+                'left_min', 'left_max',
+                'right_min', 'right_max',
+                'individual_average_left', 'individual_average_right',
+            ])
+
+            # update aggregates
+            test_name = 'Copenhagen'
+
+            # PlayerAggregate
+            player_agg, _ = PlayerAggregate.objects.get_or_create(
+                player=self.player,
+                test=test_name,
+                defaults={
+                    'left_min': None,
+                    'left_max': None,
+                    'right_min': None,
+                    'right_max': None,
+                },
+            )
+            player_agg.left_min = self.left_min
+            player_agg.left_max = self.left_max
+            player_agg.right_min = self.right_min
+            player_agg.right_max = self.right_max
+            player_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_players = Player.objects.filter(gender=self.gender)
+                gender_results = CopenhagenTest.objects.filter(player__in=gender_players)
+
+                g_left = gender_results.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                g_right = gender_results.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=test_name,
+                    defaults={
+                        'left_min': None,
+                        'left_max': None,
+                        'right_min': None,
+                        'right_max': None,
+                    },
+                )
+                gender_agg.left_min = g_left['min_val']
+                gender_agg.left_max = g_left['max_val']
+                gender_agg.right_min = g_right['min_val']
+                gender_agg.right_max = g_right['max_val']
+                gender_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_players = Player.objects.filter(age_category=self.category)
+                cat_results = CopenhagenTest.objects.filter(player__in=cat_players)
+
+                c_left = cat_results.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                c_right = cat_results.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=test_name,
+                    defaults={
+                        'left_min': None,
+                        'left_max': None,
+                        'right_min': None,
+                        'right_max': None,
+                    },
+                )
+                cat_agg.left_min = c_left['min_val']
+                cat_agg.left_max = c_left['max_val']
+                cat_agg.right_min = c_right['min_val']
+                cat_agg.right_max = c_right['max_val']
+                cat_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            if self.phase:
+                camp_qs = CopenhagenTest.objects.filter(phase=self.phase)
+
+                camp_left = camp_qs.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                camp_right = camp_qs.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),
+                    test=test_name,
+                    defaults={
+                        'left_min': None,
+                        'left_max': None,
+                        'right_min': None,
+                        'right_max': None,
+                    },
+                )
+                camp_agg.left_min = camp_left['min_val']
+                camp_agg.left_max = camp_left['max_val']
+                camp_agg.right_min = camp_right['min_val']
+                camp_agg.right_max = camp_right['max_val']
+                camp_agg.save(update_fields=[
+                    'left_min', 'left_max', 'right_min', 'right_max'
+                ])
+
+class SLHopTest(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE,
+                              related_name='sl_hop_tests')
+
+
+    right = models.FloatField(null=True, blank=True)
+    left = models.FloatField(null=True, blank=True)
+    difference = models.FloatField(null=True, blank=True)
+    ratio = models.FloatField(null=True, blank=True)
+
+
+    right_min = models.FloatField(null=True, blank=True)
+    right_max = models.FloatField(null=True, blank=True)
+    left_min = models.FloatField(null=True, blank=True)
+    left_max = models.FloatField(null=True, blank=True)
+
+    individual_average_left = models.FloatField(null=True, blank=True)
+    individual_average_right = models.FloatField(null=True, blank=True)
+
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    notes = models.TextField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    reported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - set gender/category from player
+        - compute diff/ratio
+        - save
+        - update min/max + aggregates
+        """
+
+        # denormalize
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # compute diff/ratio
+        if self.right is not None and self.left is not None:
+            self.difference = abs(self.right - self.left)
+            if self.right > 0:
+                self.ratio = self.left / self.right
+
+        # first save (so we have pk)
+        super().save(*args, **kwargs)
+
+        # now update min/max + aggregates once (no recursion)
+        with transaction.atomic():
+            qs_player = SLHopTest.objects.filter(player=self.player)
+
+            if self.left is not None:
+                agg_left = qs_player.filter(left__isnull=False).aggregate(
+                    min_val=Min('left'),
+                    max_val=Max('left'),
+                    avg_val=Avg('left'),
+                )
+                self.left_min = agg_left['min_val']
+                self.left_max = agg_left['max_val']
+                self.individual_average_left = agg_left['avg_val']
+
+            if self.right is not None:
+                agg_right = qs_player.filter(right__isnull=False).aggregate(
+                    min_val=Min('right'),
+                    max_val=Max('right'),
+                    avg_val=Avg('right'),
+                )
+                self.right_min = agg_right['min_val']
+                self.right_max = agg_right['max_val']
+                self.individual_average_right = agg_right['avg_val']
+
+            # persist updated min/max/avg (this save does not call extra logic)
+            super().save(update_fields=[
+                'left_min', 'left_max',
+                'right_min', 'right_max',
+                'individual_average_left', 'individual_average_right',
+            ])
+
+            # update aggregates
+            test_name = 'S/L Hop'
+
+            # PlayerAggregate
+            player_agg, _ = PlayerAggregate.objects.get_or_create(
+                player=self.player,
+                test=test_name,
+                defaults={
+                    'left_min': None,
+                    'left_max': None,
+                    'right_min': None,
+                    'right_max': None,
+                },
+            )
+            player_agg.left_min = self.left_min
+            player_agg.left_max = self.left_max
+            player_agg.right_min = self.right_min
+            player_agg.right_max = self.right_max
+            player_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_players = Player.objects.filter(gender=self.gender)
+                gender_results = SLHopTest.objects.filter(player__in=gender_players)
+
+                g_left = gender_results.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                g_right = gender_results.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=test_name,
+                    defaults={
+                        'left_min': None,
+                        'left_max': None,
+                        'right_min': None,
+                        'right_max': None,
+                    },
+                )
+                gender_agg.left_min = g_left['min_val']
+                gender_agg.left_max = g_left['max_val']
+                gender_agg.right_min = g_right['min_val']
+                gender_agg.right_max = g_right['max_val']
+                gender_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_players = Player.objects.filter(age_category=self.category)
+                cat_results = SLHopTest.objects.filter(player__in=cat_players)
+
+                c_left = cat_results.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                c_right = cat_results.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=test_name,
+                    defaults={
+                        'left_min': None,
+                        'left_max': None,
+                        'right_min': None,
+                        'right_max': None,
+                    },
+                )
+                cat_agg.left_min = c_left['min_val']
+                cat_agg.left_max = c_left['max_val']
+                cat_agg.right_min = c_right['min_val']
+                cat_agg.right_max = c_right['max_val']
+                cat_agg.save(update_fields=['left_min', 'left_max', 'right_min', 'right_max'])
+
+            if self.phase:
+                camp_qs = SLHopTest.objects.filter(phase=self.phase)
+
+                camp_left = camp_qs.aggregate(
+                    min_val=Min('left_min'),
+                    max_val=Max('left_max'),
+                )
+                camp_right = camp_qs.aggregate(
+                    min_val=Min('right_min'),
+                    max_val=Max('right_max'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),
+                    test=test_name,
+                    defaults={
+                        'left_min': None,
+                        'left_max': None,
+                        'right_min': None,
+                        'right_max': None,
+                    },
+                )
+                camp_agg.left_min = camp_left['min_val']
+                camp_agg.left_max = camp_left['max_val']
+                camp_agg.right_min = camp_right['min_val']
+                camp_agg.right_max = camp_right['max_val']
+                camp_agg.save(update_fields=[
+                    'left_min', 'left_max', 'right_min', 'right_max'
+                ])
+
+
+class FortyMeterTest(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    best = models.FloatField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+    distance_covered = models.FloatField(null=True, blank=True)
+    predicted_vo2max = models.FloatField(null=True, blank=True)
+    reported_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True,
+        related_name='m40_reports'
+    )
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+    reported_by_designation = models.CharField(max_length=100, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    # per-player stats on `best`
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
+    individual_average = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - denormalize gender/category
+        - save
+        - update per-player min/max/avg on `best`
+        - update PlayerAggregate + GenderAggregate + CategoryAggregate (min/max/average)
+        """
+        TEST_NAME = '40m'  # must match your TestAndResult.TEST_CHOICES
+
+        # denormalize from player
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # first save to ensure pk
+        super().save(*args, **kwargs)
+
+        # update per-player aggregates and global aggregates
+        with transaction.atomic():
+            qs_player = FortyMeterTest.objects.filter(
+                player=self.player,
+                best__isnull=False,
+            )
+
+            if self.best is not None:
+                agg = qs_player.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                # update this row
+                self.min = agg['min_val']
+                self.max = agg['max_val']
+                self.individual_average = agg['avg_val']
+                super().save(update_fields=['min', 'max', 'individual_average'])
+
+                # PlayerAggregate for this player + test
+                p_agg, _ = PlayerAggregate.objects.get_or_create(
+                    player=self.player,
+                    test=TEST_NAME,
+                    defaults={
+                        'individual_average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                p_agg.min = agg['min_val']
+                p_agg.max = agg['max_val']
+                p_agg.individual_average = agg['avg_val']
+                p_agg.save(update_fields=['min', 'max', 'individual_average'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_qs = FortyMeterTest.objects.filter(
+                    gender=self.gender,
+                    best__isnull=False,
+                )
+                g_agg = gender_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:67]
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                gender_agg.min = g_agg['min_val']
+                gender_agg.max = g_agg['max_val']
+                gender_agg.average = g_agg['avg_val']
+                gender_agg.save(update_fields=['min', 'max', 'average'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_qs = FortyMeterTest.objects.filter(
+                    category=self.category,
+                    best__isnull=False,
+                )
+                c_agg = cat_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                cat_agg.min = c_agg['min_val']
+                cat_agg.max = c_agg['max_val']
+                cat_agg.average = c_agg['avg_val']
+                cat_agg.save(update_fields=['min', 'max', 'average'])
+
+
+            if self.phase:
+                camp_qs = FortyMeterTest.objects.filter(
+                    phase=self.phase,
+                    best__isnull=False,
+                )
+                camp_agg_vals = camp_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),   # or self.phase.name; keep consistent with other tests
+                    test=TEST_NAME,
+                    defaults={
+                        'average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                camp_agg.min = camp_agg_vals['min_val']
+                camp_agg.max = camp_agg_vals['max_val']
+                camp_agg.average = camp_agg_vals['avg_val']
+                camp_agg.save(update_fields=['min', 'max', 'average'])
+
+class TwentyMeterTest(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    best = models.FloatField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+    distance_covered = models.FloatField(null=True, blank=True)
+    predicted_vo2max = models.FloatField(null=True, blank=True)
+    reported_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True,
+        related_name='test_20m'
+    )
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+    reported_by_designation = models.CharField(max_length=100, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    # per-player stats on `best`
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
+    individual_average = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - denormalize gender/category
+        - save
+        - update per-player min/max/avg on `best`
+        - update PlayerAggregate + GenderAggregate + CategoryAggregate (min/max/average)
+        """
+        TEST_NAME = '20m'  # must exist in TestAndResult.TEST_CHOICES
+
+        # denormalize from player
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # first save to ensure pk
+        super().save(*args, **kwargs)
+
+        with transaction.atomic():
+            qs_player = TwentyMeterTest.objects.filter(
+                player=self.player,
+                best__isnull=False,
+            )
+
+            if self.best is not None:
+                agg = qs_player.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                # update this row
+                self.min = agg['min_val']
+                self.max = agg['max_val']
+                self.individual_average = agg['avg_val']
+                super().save(update_fields=['min', 'max', 'individual_average'])
+
+                # PlayerAggregate for this player + test
+                p_agg, _ = PlayerAggregate.objects.get_or_create(
+                    player=self.player,
+                    test=TEST_NAME,
+                    defaults={
+                        'individual_average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                p_agg.min = agg['min_val']
+                p_agg.max = agg['max_val']
+                p_agg.individual_average = agg['avg_val']
+                p_agg.save(update_fields=['min', 'max', 'individual_average'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_qs = TwentyMeterTest.objects.filter(
+                    gender=self.gender,
+                    best__isnull=False,
+                )
+                g_agg = gender_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:67]
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                gender_agg.min = g_agg['min_val']
+                gender_agg.max = g_agg['max_val']
+                gender_agg.average = g_agg['avg_val']
+                gender_agg.save(update_fields=['min', 'max', 'average'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_qs = TwentyMeterTest.objects.filter(
+                    category=self.category,
+                    best__isnull=False,
+                )
+                c_agg = cat_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                cat_agg.min = c_agg['min_val']
+                cat_agg.max = c_agg['max_val']
+                cat_agg.average = c_agg['avg_val']
+                cat_agg.save(update_fields=['min', 'max', 'average'])
+
+            if self.phase:
+                camp_qs = TwentyMeterTest.objects.filter(
+                    phase=self.phase,
+                    best__isnull=False,
+                )
+                camp_vals = camp_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),  # or self.phase.name, but keep consistent
+                    test=TEST_NAME,
+                    defaults={
+                        'average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                camp_agg.min = camp_vals['min_val']
+                camp_agg.max = camp_vals['max_val']
+                camp_agg.average = camp_vals['avg_val']
+                camp_agg.save(update_fields=['min', 'max', 'average'])
+
+class TenMeterTest(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    best = models.FloatField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+    distance_covered = models.FloatField(null=True, blank=True)
+    predicted_vo2max = models.FloatField(null=True, blank=True)
+    reported_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True,
+        related_name='test_10m',
+    )
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+    reported_by_designation = models.CharField(max_length=100, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    # per-player stats on `best`
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
+    individual_average = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - denormalize gender/category
+        - save
+        - update per-player min/max/avg on `best`
+        - update PlayerAggregate + GenderAggregate + CategoryAggregate (min/max/average)
+        """
+        TEST_NAME = '10m'  # must match TestAndResult.TEST_CHOICES
+
+        # denormalize from player
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # first save to ensure pk
+        super().save(*args, **kwargs)
+
+        with transaction.atomic():
+            qs_player = TenMeterTest.objects.filter(
+                player=self.player,
+                best__isnull=False,
+            )
+
+            if self.best is not None:
+                agg = qs_player.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                # update this row
+                self.min = agg['min_val']
+                self.max = agg['max_val']
+                self.individual_average = agg['avg_val']
+                super().save(update_fields=['min', 'max', 'individual_average'])
+
+                # PlayerAggregate for this player + test
+                p_agg, _ = PlayerAggregate.objects.get_or_create(
+                    player=self.player,
+                    test=TEST_NAME,
+                    defaults={
+                        'individual_average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                p_agg.min = agg['min_val']
+                p_agg.max = agg['max_val']
+                p_agg.individual_average = agg['avg_val']
+                p_agg.save(update_fields=['min', 'max', 'individual_average'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_qs = TenMeterTest.objects.filter(
+                    gender=self.gender,
+                    best__isnull=False,
+                )
+                g_agg = gender_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:67]
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                gender_agg.min = g_agg['min_val']
+                gender_agg.max = g_agg['max_val']
+                gender_agg.average = g_agg['avg_val']
+                gender_agg.save(update_fields=['min', 'max', 'average'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_qs = TenMeterTest.objects.filter(
+                    category=self.category,
+                    best__isnull=False,
+                )
+                c_agg = cat_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                cat_agg.min = c_agg['min_val']
+                cat_agg.max = c_agg['max_val']
+                cat_agg.average = c_agg['avg_val']
+                cat_agg.save(update_fields=['min', 'max', 'average'])
+   
+             # CampAggregate (per phase + test on `best`)
+            if self.phase:
+                camp_qs = TenMeterTest.objects.filter(
+                    phase=self.phase,
+                    best__isnull=False,
+                )
+                camp_vals = camp_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),  # or self.phase.name; keep consistent with other tests
+                    test=TEST_NAME,
+                    defaults={
+                        'average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                camp_agg.min = camp_vals['min_val']
+                camp_agg.max = camp_vals['max_val']
+                camp_agg.average = camp_vals['avg_val']
+                camp_agg.save(update_fields=['min', 'max', 'average'])
+
+
+class SBJTest(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    best = models.FloatField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+    distance_covered = models.FloatField(null=True, blank=True)
+    predicted_vo2max = models.FloatField(null=True, blank=True)
+    reported_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True,
+        related_name='sbj_reports',
+    )
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+    reported_by_designation = models.CharField(max_length=100, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    # per-player stats on `best`
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
+    individual_average = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - denormalize gender/category
+        - save
+        - update per-player min/max/avg on `best`
+        - update PlayerAggregate + GenderAggregate + CategoryAggregate (min/max/average)
+        """
+        TEST_NAME = 'SBJ'  # must match TestAndResult.TEST_CHOICES
+
+        # denormalize from player
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # first save to ensure pk
+        super().save(*args, **kwargs)
+
+        with transaction.atomic():
+            qs_player = SBJTest.objects.filter(
+                player=self.player,
+                best__isnull=False,
+            )
+
+            if self.best is not None:
+                agg = qs_player.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                # update this row
+                self.min = agg['min_val']
+                self.max = agg['max_val']
+                self.individual_average = agg['avg_val']
+                super().save(update_fields=['min', 'max', 'individual_average'])
+
+                # PlayerAggregate for this player + test
+                p_agg, _ = PlayerAggregate.objects.get_or_create(
+                    player=self.player,
+                    test=TEST_NAME,
+                    defaults={
+                        'individual_average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                p_agg.min = agg['min_val']
+                p_agg.max = agg['max_val']
+                p_agg.individual_average = agg['avg_val']
+                p_agg.save(update_fields=['min', 'max', 'individual_average'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_qs = SBJTest.objects.filter(
+                    gender=self.gender,
+                    best__isnull=False,
+                )
+                g_agg = gender_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:14]
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                gender_agg.min = g_agg['min_val']
+                gender_agg.max = g_agg['max_val']
+                gender_agg.average = g_agg['avg_val']
+                gender_agg.save(update_fields=['min', 'max', 'average'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_qs = SBJTest.objects.filter(
+                    category=self.category,
+                    best__isnull=False,
+                )
+                c_agg = cat_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                cat_agg.min = c_agg['min_val']
+                cat_agg.max = c_agg['max_val']
+                cat_agg.average = c_agg['avg_val']
+                cat_agg.save(update_fields=['min', 'max', 'average'])
+
+            # CampAggregate (per phase + test on `best`)
+            if self.phase:
+                camp_qs = SBJTest.objects.filter(
+                    phase=self.phase,
+                    best__isnull=False,
+                )
+                camp_vals = camp_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),  # or self.phase.name; keep consistent with other tests
+                    test=TEST_NAME,
+                    defaults={
+                        'average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                camp_agg.min = camp_vals['min_val']
+                camp_agg.max = camp_vals['max_val']
+                camp_agg.average = camp_vals['avg_val']
+                camp_agg.save(update_fields=['min', 'max', 'average'])
+
+
+class YoYoTest(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+
+    # core YoYo result fields
+    best = models.FloatField(null=True, blank=True)              # e.g. best level or distance
+    distance_covered = models.FloatField(null=True, blank=True)  # total meters
+    predicted_vo2max = models.FloatField(null=True, blank=True)  # from distance
+    notes = models.TextField(blank=True, null=True)
+
+    reported_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True,
+        related_name='yoyo_test',
+    )
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+    reported_by_designation = models.CharField(max_length=100, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    # per-player stats on `best`
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
+    individual_average = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - denormalize gender/category
+        - save
+        - update per-player min/max/avg on `best`
+        - update PlayerAggregate + GenderAggregate + CategoryAggregate (min/max/average)
+        """
+        TEST_NAME = 'YoYo'  # must match TestAndResult.TEST_CHOICES
+
+        # denormalize from player
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # first save to ensure pk
+        super().save(*args, **kwargs)
+
+        with transaction.atomic():
+            qs_player = YoYoTest.objects.filter(
+                player=self.player,
+                best__isnull=False,
+            )
+
+            if self.best is not None:
+                agg = qs_player.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                # update this row
+                self.min = agg['min_val']
+                self.max = agg['max_val']
+                self.individual_average = agg['avg_val']
+                super().save(update_fields=['min', 'max', 'individual_average'])
+
+                # PlayerAggregate for this player + test
+                p_agg, _ = PlayerAggregate.objects.get_or_create(
+                    player=self.player,
+                    test=TEST_NAME,
+                    defaults={
+                        'individual_average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                p_agg.min = agg['min_val']
+                p_agg.max = agg['max_val']
+                p_agg.individual_average = agg['avg_val']
+                p_agg.save(update_fields=['min', 'max', 'individual_average'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_qs = YoYoTest.objects.filter(
+                    gender=self.gender,
+                    best__isnull=False,
+                )
+                g_agg = gender_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:14]
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                gender_agg.min = g_agg['min_val']
+                gender_agg.max = g_agg['max_val']
+                gender_agg.average = g_agg['avg_val']
+                gender_agg.save(update_fields=['min', 'max', 'average'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_qs = YoYoTest.objects.filter(
+                    category=self.category,
+                    best__isnull=False,
+                )
+                c_agg = cat_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                cat_agg.min = c_agg['min_val']
+                cat_agg.max = c_agg['max_val']
+                cat_agg.average = c_agg['avg_val']
+                cat_agg.save(update_fields=['min', 'max', 'average'])
+
+             # CampAggregate (per phase + test on `best`)
+            if self.phase:
+                camp_qs = YoYoTest.objects.filter(
+                    phase=self.phase,
+                    best__isnull=False,
+                )
+                camp_vals = camp_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),  # or self.phase.name; keep consistent with other tests
+                    test=TEST_NAME,
+                    defaults={
+                        'average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                camp_agg.min = camp_vals['min_val']
+                camp_agg.max = camp_vals['max_val']
+                camp_agg.average = camp_vals['avg_val']
+                camp_agg.save(update_fields=['min', 'max', 'average'])
+
+
+class RunA3Test(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+
+    # core result fields
+    best = models.FloatField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+    distance_covered = models.FloatField(null=True, blank=True)
+    predicted_vo2max = models.FloatField(null=True, blank=True)
+
+    reported_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True,
+        related_name='run_a3_reports',
+    )
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+    reported_by_designation = models.CharField(max_length=100, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    # per-player stats on `best`
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
+    individual_average = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - denormalize gender/category
+        - save
+        - update per-player min/max/avg on `best`
+        - update PlayerAggregate + GenderAggregate + CategoryAggregate (min/max/average)
+        """
+        TEST_NAME = 'Run A 3'  # ensure this exists in TestAndResult.TEST_CHOICES
+
+        # denormalize from player
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # first save to ensure pk
+        super().save(*args, **kwargs)
+
+        with transaction.atomic():
+            qs_player = RunA3Test.objects.filter(
+                player=self.player,
+                best__isnull=False,
+            )
+
+            if self.best is not None:
+                agg = qs_player.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                # update this row
+                self.min = agg['min_val']
+                self.max = agg['max_val']
+                self.individual_average = agg['avg_val']
+                super().save(update_fields=['min', 'max', 'individual_average'])
+
+                # PlayerAggregate for this player + test
+                p_agg, _ = PlayerAggregate.objects.get_or_create(
+                    player=self.player,
+                    test=TEST_NAME,
+                    defaults={
+                        'individual_average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                p_agg.min = agg['min_val']
+                p_agg.max = agg['max_val']
+                p_agg.individual_average = agg['avg_val']
+                p_agg.save(update_fields=['min', 'max', 'individual_average'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_qs = RunA3Test.objects.filter(
+                    gender=self.gender,
+                    best__isnull=False,
+                )
+                g_agg = gender_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:14]
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                gender_agg.min = g_agg['min_val']
+                gender_agg.max = g_agg['max_val']
+                gender_agg.average = g_agg['avg_val']
+                gender_agg.save(update_fields=['min', 'max', 'average'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_qs = RunA3Test.objects.filter(
+                    category=self.category,
+                    best__isnull=False,
+                )
+                c_agg = cat_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                cat_agg.min = c_agg['min_val']
+                cat_agg.max = c_agg['max_val']
+                cat_agg.average = c_agg['avg_val']
+                cat_agg.save(update_fields=['min', 'max', 'average'])
+
+              # CampAggregate (per phase + test on `best`)
+            if self.phase:
+                camp_qs = RunA3Test.objects.filter(
+                    phase=self.phase,
+                    best__isnull=False,
+                )
+                camp_vals = camp_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),  # or self.phase.name; keep consistent with other tests
+                    test=TEST_NAME,
+                    defaults={
+                        'average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                camp_agg.min = camp_vals['min_val']
+                camp_agg.max = camp_vals['max_val']
+                camp_agg.average = camp_vals['avg_val']
+                camp_agg.save(update_fields=['min', 'max', 'average'])
+
+class OneMileTest(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+
+    best = models.FloatField(null=True, blank=True)              # e.g. best time
+    notes = models.TextField(blank=True, null=True)
+    distance_covered = models.FloatField(null=True, blank=True)  # usually 1609m
+    predicted_vo2max = models.FloatField(null=True, blank=True)
+
+    reported_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True,
+        related_name='one_mile_reports',
+    )
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+    reported_by_designation = models.CharField(max_length=100, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    # per-player stats on `best`
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
+    individual_average = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - denormalize gender/category
+        - save
+        - update per-player min/max/avg on `best`
+        - update PlayerAggregate + GenderAggregate + CategoryAggregate (min/max/average)
+        """
+        TEST_NAME = '1 Mile'  # must match TestAndResult.TEST_CHOICES
+
+        # denormalize from player
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # first save to ensure pk
+        super().save(*args, **kwargs)
+
+        with transaction.atomic():
+            qs_player = OneMileTest.objects.filter(
+                player=self.player,
+                best__isnull=False,
+            )
+
+            if self.best is not None:
+                agg = qs_player.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                # update this row
+                self.min = agg['min_val']
+                self.max = agg['max_val']
+                self.individual_average = agg['avg_val']
+                super().save(update_fields=['min', 'max', 'individual_average'])
+
+                # PlayerAggregate for this player + test
+                p_agg, _ = PlayerAggregate.objects.get_or_create(
+                    player=self.player,
+                    test=TEST_NAME,
+                    defaults={
+                        'individual_average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                p_agg.min = agg['min_val']
+                p_agg.max = agg['max_val']
+                p_agg.individual_average = agg['avg_val']
+                p_agg.save(update_fields=['min', 'max', 'individual_average'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_qs = OneMileTest.objects.filter(
+                    gender=self.gender,
+                    best__isnull=False,
+                )
+                g_agg = gender_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:14]
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                gender_agg.min = g_agg['min_val']
+                gender_agg.max = g_agg['max_val']
+                gender_agg.average = g_agg['avg_val']
+                gender_agg.save(update_fields=['min', 'max', 'average'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_qs = OneMileTest.objects.filter(
+                    category=self.category,
+                    best__isnull=False,
+                )
+                c_agg = cat_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                cat_agg.min = c_agg['min_val']
+                cat_agg.max = c_agg['max_val']
+                cat_agg.average = c_agg['avg_val']
+                cat_agg.save(update_fields=['min', 'max', 'average'])
+          
+            # CampAggregate (per phase + test on `best`)
+            if self.phase:
+                camp_qs = OneMileTest.objects.filter(
+                    phase=self.phase,
+                    best__isnull=False,
+                )
+                camp_vals = camp_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),  # or self.phase.name; keep consistent
+                    test=TEST_NAME,
+                    defaults={
+                        'average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                camp_agg.min = camp_vals['min_val']
+                camp_agg.max = camp_vals['max_val']
+                camp_agg.average = camp_vals['avg_val']
+                camp_agg.save(update_fields=['min', 'max', 'average'])
+
+       
+class TwoKmTest(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+
+    best = models.FloatField(null=True, blank=True)              # e.g. best time for 2 km
+    notes = models.TextField(blank=True, null=True)
+    distance_covered = models.FloatField(null=True, blank=True)  # usually 2000m
+    predicted_vo2max = models.FloatField(null=True, blank=True)
+
+    reported_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True,
+        related_name='two_km_reports',
+    )
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+    reported_by_designation = models.CharField(max_length=100, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    # per-player stats on `best`
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
+    individual_average = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - denormalize gender/category
+        - save
+        - update per-player min/max/avg on `best`
+        - update PlayerAggregate + GenderAggregate + CategoryAggregate (min/max/average)
+        """
+        TEST_NAME = '2 KM'  # must match TestAndResult.TEST_CHOICES
+
+        # denormalize from player
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # first save to ensure pk
+        super().save(*args, **kwargs)
+
+        with transaction.atomic():
+            qs_player = TwoKmTest.objects.filter(
+                player=self.player,
+                best__isnull=False,
+            )
+
+            if self.best is not None:
+                agg = qs_player.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                # update this row
+                self.min = agg['min_val']
+                self.max = agg['max_val']
+                self.individual_average = agg['avg_val']
+                super().save(update_fields=['min', 'max', 'individual_average'])
+
+                # PlayerAggregate for this player + test
+                p_agg, _ = PlayerAggregate.objects.get_or_create(
+                    player=self.player,
+                    test=TEST_NAME,
+                    defaults={
+                        'individual_average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                p_agg.min = agg['min_val']
+                p_agg.max = agg['max_val']
+                p_agg.individual_average = agg['avg_val']
+                p_agg.save(update_fields=['min', 'max', 'individual_average'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_qs = TwoKmTest.objects.filter(
+                    gender=self.gender,
+                    best__isnull=False,
+                )
+                g_agg = gender_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:14]
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                gender_agg.min = g_agg['min_val']
+                gender_agg.max = g_agg['max_val']
+                gender_agg.average = g_agg['avg_val']
+                gender_agg.save(update_fields=['min', 'max', 'average'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_qs = TwoKmTest.objects.filter(
+                    category=self.category,
+                    best__isnull=False,
+                )
+                c_agg = cat_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                cat_agg.min = c_agg['min_val']
+                cat_agg.max = c_agg['max_val']
+                cat_agg.average = c_agg['avg_val']
+                cat_agg.save(update_fields=['min', 'max', 'average'])
+
+            # CampAggregate (per phase + test on `best`)
+            if self.phase:
+                camp_qs = TwoKmTest.objects.filter(
+                    phase=self.phase,
+                    best__isnull=False,
+                )
+                camp_vals = camp_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),  # or self.phase.name; keep consistent across tests
+                    test=TEST_NAME,
+                    defaults={
+                        'average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                camp_agg.min = camp_vals['min_val']
+                camp_agg.max = camp_vals['max_val']
+                camp_agg.average = camp_vals['avg_val']
+                camp_agg.save(update_fields=['min', 'max', 'average'])
+
+class PushUpsTest(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+
+    best = models.FloatField(null=True, blank=True)  # max reps in test
+    notes = models.TextField(blank=True, null=True)
+    distance_covered = models.FloatField(null=True, blank=True)  # optional / unused
+    predicted_vo2max = models.FloatField(null=True, blank=True)  # optional
+
+    reported_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True,
+        related_name='pushups_reports',
+    )
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+    reported_by_designation = models.CharField(max_length=100, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    # per-player stats on `best`
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
+    individual_average = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        """
+        - denormalize gender/category
+        - save
+        - update per-player min/max/avg on `best`
+        - update PlayerAggregate + GenderAggregate + CategoryAggregate (min/max/average)
+        """
+        TEST_NAME = 'Push-ups'  # must match TestAndResult.TEST_CHOICES
+
+        # denormalize from player
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # first save to ensure pk
+        super().save(*args, **kwargs)
+
+        with transaction.atomic():
+            qs_player = PushUpsTest.objects.filter(
+                player=self.player,
+                best__isnull=False,
+            )
+
+            if self.best is not None:
+                agg = qs_player.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                # update this row
+                self.min = agg['min_val']
+                self.max = agg['max_val']
+                self.individual_average = agg['avg_val']
+                super().save(update_fields=['min', 'max', 'individual_average'])
+
+                # PlayerAggregate for this player + test
+                p_agg, _ = PlayerAggregate.objects.get_or_create(
+                    player=self.player,
+                    test=TEST_NAME,
+                    defaults={
+                        'individual_average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                p_agg.min = agg['min_val']
+                p_agg.max = agg['max_val']
+                p_agg.individual_average = agg['avg_val']
+                p_agg.save(update_fields=['min', 'max', 'individual_average'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_qs = PushUpsTest.objects.filter(
+                    gender=self.gender,
+                    best__isnull=False,
+                )
+                g_agg = gender_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:14]
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                gender_agg.min = g_agg['min_val']
+                gender_agg.max = g_agg['max_val']
+                gender_agg.average = g_agg['avg_val']
+                gender_agg.save(update_fields=['min', 'max', 'average'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_qs = PushUpsTest.objects.filter(
+                    category=self.category,
+                    best__isnull=False,
+                )
+                c_agg = cat_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )  # [web:11][web:15]
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                cat_agg.min = c_agg['min_val']
+                cat_agg.max = c_agg['max_val']
+                cat_agg.average = c_agg['avg_val']
+                cat_agg.save(update_fields=['min', 'max', 'average'])
+         
+             # CampAggregate (per phase + test on `best`)
+            if self.phase:
+                camp_qs = PushUpsTest.objects.filter(
+                    phase=self.phase,
+                    best__isnull=False,
+                )
+                camp_vals = camp_qs.aggregate(
+                    min_val=Min('best'),
+                    max_val=Max('best'),
+                    avg_val=Avg('best'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),  # or phase.name; keep consistent with other tests
+                    test=TEST_NAME,
+                    defaults={
+                        'average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                camp_agg.min = camp_vals['min_val']
+                camp_agg.max = camp_vals['max_val']
+                camp_agg.average = camp_vals['avg_val']
+                camp_agg.save(update_fields=['min', 'max', 'average'])
+
+
+
+class CMJTest(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    notes = models.TextField(blank=True, null=True)
+
+    reported_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True,
+        related_name='cmj_reports',
+    )
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+    reported_by_designation = models.CharField(max_length=100, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    # CMJ metrics
+    cmj_body_weight = models.FloatField(null=True, blank=True)
+    cmj_push_off_distance = models.FloatField(null=True, blank=True)
+    cmj_box_height = models.FloatField(null=True, blank=True)
+    cmj_load = models.FloatField(null=True, blank=True)
+    cmj_jump_height = models.FloatField(null=True, blank=True)          # primary metric
+    cmj_flight_time = models.FloatField(null=True, blank=True)
+    cmj_contact_time = models.FloatField(null=True, blank=True)
+    cmj_force = models.FloatField(null=True, blank=True)
+    cmj_velocity = models.FloatField(null=True, blank=True)
+    cmj_power = models.FloatField(null=True, blank=True)
+    cmj_reactive_strength_index = models.FloatField(null=True, blank=True)
+    cmj_stiffness = models.FloatField(null=True, blank=True)
+    cmj_readiness_color = models.CharField(max_length=20, null=True, blank=True)
+    cmj_jump_type = models.CharField(max_length=50, null=True, blank=True)
+
+
+    class Meta:
+        ordering = ['-date']
+
+
+class AnthropometryTest(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    notes = models.TextField(blank=True, null=True)
+
+    reported_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='anthropometry_reports',
+    )
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+    reported_by_designation = models.CharField(max_length=100, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    # Anthropometry fields
+    anthropometry_height = models.FloatField(null=True, blank=True)
+    anthropometry_weight = models.FloatField(null=True, blank=True)
+    anthropometry_age = models.IntegerField(null=True, blank=True)
+
+    anthropometry_chest = models.FloatField(null=True, blank=True)
+    anthropometry_mid_axillary = models.FloatField(null=True, blank=True)
+    anthropometry_subscapular = models.FloatField(null=True, blank=True)
+    anthropometry_triceps = models.FloatField(null=True, blank=True)
+    anthropometry_abdomen = models.FloatField(null=True, blank=True)
+    anthropometry_suprailiac = models.FloatField(null=True, blank=True)
+    anthropometry_mid_thigh = models.FloatField(null=True, blank=True)
+
+    anthropometry_total_skinfold = models.FloatField(null=True, blank=True)
+    anthropometry_body_density = models.FloatField(null=True, blank=True)
+    anthropometry_fat_percentage = models.FloatField(null=True, blank=True)
+    anthropometry_error_corrected = models.CharField(
+        max_length=100, null=True, blank=True
+    )
+
+    anthropometry_chest_n = models.FloatField(null=True, blank=True)
+    anthropometry_chest_e = models.FloatField(null=True, blank=True)
+    anthropometry_upper_arm = models.FloatField(null=True, blank=True)
+    anthropometry_waist = models.FloatField(null=True, blank=True)
+    anthropometry_abdomen_cm = models.FloatField(null=True, blank=True)
+    anthropometry_hip = models.FloatField(null=True, blank=True)
+    anthropometry_thigh = models.FloatField(null=True, blank=True)
+    anthropometry_calf = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"Anthropometry - {self.player} - {self.date}"
+
+
+class DexaScanTest(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    notes = models.TextField(blank=True, null=True)
+
+    reported_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='dexa_reports',
+    )
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+    reported_by_designation = models.CharField(max_length=100, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    # DEXA Scan fields
+    dexa_height = models.FloatField(null=True, blank=True)
+    dexa_weight = models.FloatField(null=True, blank=True)
+    dexa_bmi = models.FloatField(null=True, blank=True)
+    dexa_rmr = models.FloatField(null=True, blank=True)
+    dexa_bmd = models.FloatField(null=True, blank=True)
+    dexa_tscore = models.FloatField(null=True, blank=True)
+    dexa_total_fat = models.FloatField(null=True, blank=True)
+    dexa_lean = models.FloatField(null=True, blank=True)
+    dexa_lean_mass = models.FloatField(null=True, blank=True)
+    dexa_testosterone = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"DEXA Scan - {self.player} - {self.date}"
+
+
+class BloodTest(models.Model):
+    player = models.ForeignKey('Player', on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey('CampTournament', on_delete=models.CASCADE, null=True)
+
+    # core blood markers
+    blood_hemoglobin = models.FloatField(null=True, blank=True)
+    blood_rbc = models.FloatField(null=True, blank=True)
+    blood_platelets = models.FloatField(null=True, blank=True)
+    blood_albumin = models.FloatField(null=True, blank=True)
+    blood_globulin = models.FloatField(null=True, blank=True)
+    blood_uric_acid = models.FloatField(null=True, blank=True)
+    blood_creatinine = models.FloatField(null=True, blank=True)
+    blood_testosterone = models.FloatField(null=True, blank=True)
+    blood_iron = models.FloatField(null=True, blank=True)
+    blood_vitamin_d3 = models.FloatField(null=True, blank=True)
+    blood_cholesterol = models.FloatField(null=True, blank=True)
+    blood_hdl = models.FloatField(null=True, blank=True)
+    blood_ldl = models.FloatField(null=True, blank=True)
+    blood_ldl_hdl_ratio = models.FloatField(null=True, blank=True)
+    blood_vitamin_b12 = models.FloatField(null=True, blank=True)
+    blood_lipoprotein = models.FloatField(null=True, blank=True)
+    blood_homocysteine = models.FloatField(null=True, blank=True)
+    blood_protein = models.FloatField(null=True, blank=True)
+    blood_t3 = models.FloatField(null=True, blank=True)
+    blood_t4 = models.FloatField(null=True, blank=True)
+    blood_tsh = models.FloatField(null=True, blank=True)
+
+    notes = models.TextField(blank=True, null=True)
+
+    reported_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='blood_tests_reported',
+    )
+
+    # denormalized fields (optional but consistent with other tests)
+    gender = models.CharField(max_length=50, null=True, blank=True)
+    category = models.CharField(max_length=100, null=True, blank=True)
+    reported_by_designation = models.CharField(max_length=100, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    class Meta:
+        ordering = ['-date']
+
+
+class MSKInjuryAssessment(models.Model):
+    # --- Basic info ---
+    physiotherapist_name = models.CharField(max_length=255)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+
+    height = models.FloatField(null=True, blank=True)
+    weight = models.FloatField(null=True, blank=True)
+
+    # --- Choices ---
+
+    # Example: store skills as a comma-separated string or JSON later.
+    # For now, simple text; implement multi-select in forms/serializer.
+    skills = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Comma-separated skills, e.g. 'RHB,RAMF,WK'",
+    )
+
+    participation_category = models.CharField(
+        max_length=32,
+    
+        null=True,
+        blank=True,
+    )
+
+    SIDE_CHOICES = [
+        ('LEFT', 'Left'),
+        ('RIGHT', 'Right'),
+    ]
+    dominant_side = models.CharField(
+        max_length=5,
+        null=True,
+        blank=True,
+    )
+    lead_leg = models.CharField(
+        max_length=5,
+        
+        null=True,
+        blank=True,
+    )
+
+    FOOT_POSTURE_CHOICES = [
+        ('NEUTRAL', 'Neutral'),
+        ('PRONATED', 'Pronated'),
+        ('SUPINATED', 'Supinated'),
+    ]
+    rear_foot_right = models.CharField(
+        max_length=9,
+        
+        null=True,
+        blank=True,
+    )
+    rear_foot_left = models.CharField(
+        max_length=9,
+        
+        null=True,
+        blank=True,
+    )
+    mid_foot_right = models.CharField(
+        max_length=9,
+        
+        null=True,
+        blank=True,
+    )
+    mid_foot_left = models.CharField(
+        max_length=9,
+        
+        null=True,
+        blank=True,
+    )
+
+    # LLD
+    LLD_CHOICES = [
+        ('NEUTRAL', 'Neutral'),
+        ('RIGHT_LONGER', 'Right Longer'),
+        ('LEFT_LONGER', 'Left Longer'),
+    ]
+    lld = models.CharField(
+        max_length=12,
+        
+        null=True,
+        blank=True,
+    )
+
+    # Positive/Negative
+    POS_NEG_CHOICES = [
+        ('NEGATIVE', 'Negative'),
+        ('POSITIVE', 'Positive'),
+    ]
+
+    # --- Range / numeric tests ---
+
+    df_lunge_right = models.FloatField(null=True, blank=True)
+    df_lunge_left = models.FloatField(null=True, blank=True)
+
+    tibial_dial_right = models.FloatField(null=True, blank=True)
+    tibial_dial_left = models.FloatField(null=True, blank=True)
+
+    hip_ir_90_supine_right = models.FloatField(null=True, blank=True)
+    hip_ir_90_supine_left = models.FloatField(null=True, blank=True)
+
+    fabers_right = models.FloatField(null=True, blank=True)
+    fabers_left = models.FloatField(null=True, blank=True)
+
+    shoulder_ir_90_right = models.FloatField(null=True, blank=True)
+    shoulder_ir_90_left = models.FloatField(null=True, blank=True)
+
+    shoulder_er_90_right = models.FloatField(null=True, blank=True)
+    shoulder_er_90_left = models.FloatField(null=True, blank=True)
+
+    pec_minor_length_right = models.FloatField(null=True, blank=True)
+    pec_minor_length_left = models.FloatField(null=True, blank=True)
+
+    thoracic_rotation_right = models.FloatField(null=True, blank=True)
+    thoracic_rotation_left = models.FloatField(null=True, blank=True)
+
+    thomas_pos1_right = models.FloatField(null=True, blank=True)
+    thomas_pos1_left = models.FloatField(null=True, blank=True)
+
+    thomas_pos2_right = models.FloatField(null=True, blank=True)
+    thomas_pos2_left = models.FloatField(null=True, blank=True)
+
+    thomas_pos3_right = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text="e.g. 'ER-10, IR-5, 0'",
+    )
+    thomas_pos3_left = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text="e.g. 'ER-10, IR-5, 0'",
+    )
+
+    thomas_pos4_right = models.FloatField(null=True, blank=True)
+    thomas_pos4_left = models.FloatField(null=True, blank=True)
+
+    # --- Clinical tests (Positive/Negative) ---
+
+    anterior_apprehension_right = models.CharField(
+        max_length=8,
+        
+        null=True,
+        blank=True,
+    )
+    anterior_apprehension_left = models.CharField(
+        max_length=8,
+        
+        null=True,
+        blank=True,
+    )
+
+    relocation_right = models.CharField(
+        max_length=8,
+        
+        null=True,
+        blank=True,
+    )
+    relocation_left = models.CharField(
+        max_length=8,
+        
+        null=True,
+        blank=True,
+    )
+
+    gird_erg_right = models.CharField(
+        max_length=8,
+        
+        null=True,
+        blank=True,
+    )
+    gird_erg_left = models.CharField(
+        max_length=8,
+        
+        null=True,
+        blank=True,
+    )
+
+    hk_test_right = models.CharField(
+        max_length=8,
+        
+        null=True,
+        blank=True,
+    )
+    hk_test_left = models.CharField(
+        max_length=8,
+        
+        null=True,
+        blank=True,
+    )
+
+    obriens_right = models.CharField(
+        max_length=8,
+      
+        null=True,
+        blank=True,
+    )
+    obriens_left = models.CharField(
+        max_length=8,
+       
+        null=True,
+        blank=True,
+    )
+
+    # --- Context / meta ---
+
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    comments = models.TextField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"MSK Assessment - {self.player} - {self.date}"

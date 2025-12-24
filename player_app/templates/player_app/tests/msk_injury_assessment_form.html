@@ -1,0 +1,411 @@
+{% extends "player_app/tests/base.html" %}
+{% load static %}
+
+{% block title %}Add MSK Injury Assessment{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* Your existing styles stay the same */
+        body { background: #fff; font-family: 'Segoe UI', Arial, sans-serif; }
+        .form-title { text-align: center; font-size: 1.3em; font-weight: 600; margin: 32px 0 24px 0; color: #234; }
+        .form-container { width: 900px; max-width: 95vw; margin: 0 auto; background: #fafbfc; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 32px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 0.95em; font-weight: 500; color: #435; margin-bottom: 6px; }
+        select, input[type="text"], input[type="date"], textarea, input[type="number"] { width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #cfd8dc; border-radius: 6px; box-sizing: border-box; background: #fff; }
+        select:focus, input:focus, textarea:focus { border-color: #1976d2; outline: none; box-shadow: 0 0 0 2px rgba(25,118,210,0.1); }
+        textarea { resize: vertical; min-height: 70px; }
+        .form-actions { text-align: center; margin-top: 30px; }
+        .btn-main { background: #1976d2; color: #fff; border: none; border-radius: 6px; font-weight: 600; font-size: 16px; padding: 12px 32px; cursor: pointer; transition: all 0.2s; }
+        .btn-main:hover { background: #1565c0; transform: translateY(-1px); }
+        .back-link { color: #1976d2; text-decoration: none; font-size: 14px; }
+        .two-col { display: flex; gap: 20px; }
+        .two-col > div { flex: 1; }
+        .four-col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; }
+        .section-title { font-size: 1.2em; font-weight: 600; color: #1976d2; margin: 25px 0 15px 0; padding-bottom: 8px; border-bottom: 2px solid #e3f2fd; }
+        .error-list { background: #ffebee; border: 1px solid #f8bbd9; color: #c2185b; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        hr { border: none; height: 1px; background: linear-gradient(90deg, transparent, #e0e0e0, transparent); margin: 30px 0; }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="form-title">MSK Injury Assessment</div>
+    <div class="form-container">
+        {% if errors %}
+            <div class="error-list">
+                {% for error in errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" id="mskForm">
+            {% csrf_token %}
+
+            <!-- BASIC INFO -->
+            <div class="section-title">Basic Information</div>
+            
+            <div class="form-group">
+                <label>Player <span style="color:red;">*</span></label>
+                <select name="player" required>
+                    <option value="">Select Player</option>
+                    {% for player in players %}
+                        <option value="{{ player.id }}">{{ player.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="two-col">
+                <div class="form-group">
+                    <label>Physiotherapist <span style="color:red;">*</span></label>
+                    <input type="text" name="physiotherapist_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Date <span style="color:red;">*</span></label>
+                    <input type="date" name="date" required>
+                </div>
+            </div>
+
+            <div class="two-col">
+                <div class="form-group">
+                    <label>Height (cm)</label>
+                    <input type="number" step="0.1" name="height">
+                </div>
+                <div class="form-group">
+                    <label>Weight (kg)</label>
+                    <input type="number" step="0.1" name="weight">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Skills (e.g., RHB,RAMF,WK)</label>
+                <input type="text" name="skills" placeholder="Comma-separated skills">
+            </div>
+
+            <!-- GENERAL ASSESSMENTS -->
+            <div class="section-title">General Assessments</div>
+
+            <div class="two-col">
+                <div class="form-group">
+                    <label>Dominant Side</label>
+                    <select name="dominant_side">
+                        <option value="">---------</option>
+                        <option value="LEFT">Left</option>
+                        <option value="RIGHT">Right</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Lead Leg</label>
+                    <select name="lead_leg">
+                        <option value="">---------</option>
+                        <option value="LEFT">Left</option>
+                        <option value="RIGHT">Right</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="two-col">
+                <div class="form-group">
+                    <label>Participation Category</label>
+                    <select name="participation_category">
+                        <option value="">---------</option>
+                        <option value="boys under 16">Boys U16</option>
+                        <option value="boys under 19">Boys U19</option>
+                        <option value="men under 23">Men U23</option>
+                        <option value="men senior">Men Senior</option>
+                        <option value="girls under 15">Girls U15</option>
+                        <option value="girls under 19">Girls U19</option>
+                        <option value="women under 23">Women U23</option>
+                        <option value="women senior">Women Senior</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>LLD (Leg Length Discrepancy)</label>
+                    <select name="lld">
+                        <option value="">---------</option>
+                        <option value="NEUTRAL">Neutral</option>
+                        <option value="RIGHT_LONGER">Right Longer</option>
+                        <option value="LEFT_LONGER">Left Longer</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- FOOT POSTURE -->
+            <div class="section-title">Foot Posture</div>
+
+            <div class="two-col">
+                <div class="form-group">
+                    <label>Rear Foot</label>
+                    <div class="two-col">
+                        <select name="rear_foot_right">
+                            <option value="">Right</option>
+                            <option value="NEUTRAL">Neutral</option>
+                            <option value="PRONATED">Pronated</option>
+                            <option value="SUPINATED">Supinated</option>
+                        </select>
+                        <select name="rear_foot_left">
+                            <option value="">Left</option>
+                            <option value="NEUTRAL">Neutral</option>
+                            <option value="PRONATED">Pronated</option>
+                            <option value="SUPINATED">Supinated</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Mid Foot</label>
+                    <div class="two-col">
+                        <select name="mid_foot_right">
+                            <option value="">Right</option>
+                            <option value="NEUTRAL">Neutral</option>
+                            <option value="PRONATED">Pronated</option>
+                            <option value="SUPINATED">Supinated</option>
+                        </select>
+                        <select name="mid_foot_left">
+                            <option value="">Left</option>
+                            <option value="NEUTRAL">Neutral</option>
+                            <option value="PRONATED">Pronated</option>
+                            <option value="SUPINATED">Supinated</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- RANGE OF MOTION TESTS -->
+            <div class="section-title">Range of Motion (°)</div>
+
+            <div class="four-col">
+                <div class="form-group">
+                    <label>DF Lunge R</label>
+                    <input type="number" step="0.1" name="df_lunge_right">
+                </div>
+                <div class="form-group">
+                    <label>DF Lunge L</label>
+                    <input type="number" step="0.1" name="df_lunge_left">
+                </div>
+                <div class="form-group">
+                    <label>Tibial Dial R</label>
+                    <input type="number" step="0.1" name="tibial_dial_right">
+                </div>
+                <div class="form-group">
+                    <label>Tibial Dial L</label>
+                    <input type="number" step="0.1" name="tibial_dial_left">
+                </div>
+            </div>
+
+            <div class="four-col">
+                <div class="form-group">
+                    <label>Hip IR 90 R</label>
+                    <input type="number" step="0.1" name="hip_ir_90_supine_right">
+                </div>
+                <div class="form-group">
+                    <label>Hip IR 90 L</label>
+                    <input type="number" step="0.1" name="hip_ir_90_supine_left">
+                </div>
+                <div class="form-group">
+                    <label>FABERs R</label>
+                    <input type="number" step="0.1" name="fabers_right">
+                </div>
+                <div class="form-group">
+                    <label>FABERs L</label>
+                    <input type="number" step="0.1" name="fabers_left">
+                </div>
+            </div>
+
+            <div class="four-col">
+                <div class="form-group">
+                    <label>Shoulder IR R</label>
+                    <input type="number" step="0.1" name="shoulder_ir_90_right">
+                </div>
+                <div class="form-group">
+                    <label>Shoulder IR L</label>
+                    <input type="number" step="0.1" name="shoulder_ir_90_left">
+                </div>
+                <div class="form-group">
+                    <label>Shoulder ER R</label>
+                    <input type="number" step="0.1" name="shoulder_er_90_right">
+                </div>
+                <div class="form-group">
+                    <label>Shoulder ER L</label>
+                    <input type="number" step="0.1" name="shoulder_er_90_left">
+                </div>
+            </div>
+
+            <div class="four-col">
+                <div class="form-group">
+                    <label>Pec Minor R</label>
+                    <input type="number" step="0.1" name="pec_minor_length_right">
+                </div>
+                <div class="form-group">
+                    <label>Pec Minor L</label>
+                    <input type="number" step="0.1" name="pec_minor_length_left">
+                </div>
+                <div class="form-group">
+                    <label>Thoracic Rot R</label>
+                    <input type="number" step="0.1" name="thoracic_rotation_right">
+                </div>
+                <div class="form-group">
+                    <label>Thoracic Rot L</label>
+                    <input type="number" step="0.1" name="thoracic_rotation_left">
+                </div>
+            </div>
+
+            <div class="four-col">
+                <div class="form-group">
+                    <label>Thomas Pos1 R</label>
+                    <input type="number" step="0.1" name="thomas_pos1_right">
+                </div>
+                <div class="form-group">
+                    <label>Thomas Pos1 L</label>
+                    <input type="number" step="0.1" name="thomas_pos1_left">
+                </div>
+                <div class="form-group">
+                    <label>Thomas Pos2 R</label>
+                    <input type="number" step="0.1" name="thomas_pos2_right">
+                </div>
+                <div class="form-group">
+                    <label>Thomas Pos2 L</label>
+                    <input type="number" step="0.1" name="thomas_pos2_left">
+                </div>
+            </div>
+
+            <div class="two-col">
+                
+                <div class="form-group">
+                    <label>Thomas Pos3 Right</label>
+                    <input type="text" name="thomas_pos3_right" placeholder="e.g. ER-10, IR-5, 0">
+                </div>
+                <div class="form-group">
+                    <label>Thomas Pos3 Left</label>
+                    <input type="text" name="thomas_pos3_left" placeholder="e.g. ER-10, IR-5, 0">
+                </div>
+                <div class="form-group">
+                    <label>Thomas Pos4 R</label>
+                    <input type="number" step="0.1" name="thomas_pos4_right">
+                </div>
+                <div class="form-group">
+                    <label>Thomas Pos4 L</label>
+                    <input type="number" step="0.1" name="thomas_pos4_left">
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- CLINICAL TESTS -->
+            <div class="section-title">Clinical Tests (Positive/Negative)</div>
+
+            <div class="four-col">
+                <div class="form-group">
+                    <label>Ant. Apprehension R</label>
+                    <select name="anterior_apprehension_right">
+                        <option value="">---------</option>
+                        <option value="NEGATIVE">Negative</option>
+                        <option value="POSITIVE">Positive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ant. Apprehension L</label>
+                    <select name="anterior_apprehension_left">
+                        <option value="">---------</option>
+                        <option value="NEGATIVE">Negative</option>
+                        <option value="POSITIVE">Positive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Relocation R</label>
+                    <select name="relocation_right">
+                        <option value="">---------</option>
+                        <option value="NEGATIVE">Negative</option>
+                        <option value="POSITIVE">Positive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Relocation L</label>
+                    <select name="relocation_left">
+                        <option value="">---------</option>
+                        <option value="NEGATIVE">Negative</option>
+                        <option value="POSITIVE">Positive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="four-col">
+                <div class="form-group">
+                    <label>GIRD/ERG R</label>
+                    <select name="gird_erg_right">
+                        <option value="">---------</option>
+                        <option value="NEGATIVE">Negative</option>
+                        <option value="POSITIVE">Positive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>GIRD/ERG L</label>
+                    <select name="gird_erg_left">
+                        <option value="">---------</option>
+                        <option value="NEGATIVE">Negative</option>
+                        <option value="POSITIVE">Positive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>HK Test R</label>
+                    <select name="hk_test_right">
+                        <option value="">---------</option>
+                        <option value="NEGATIVE">Negative</option>
+                        <option value="POSITIVE">Positive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>HK Test L</label>
+                    <select name="hk_test_left">
+                        <option value="">---------</option>
+                        <option value="NEGATIVE">Negative</option>
+                        <option value="POSITIVE">Positive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="four-col">
+                <div class="form-group">
+                    <label>O'Brien's R</label>
+                    <select name="obriens_right">
+                        <option value="">---------</option>
+                        <option value="NEGATIVE">Negative</option>
+                        <option value="POSITIVE">Positive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>O'Brien's L</label>
+                    <select name="obriens_left">
+                        <option value="">---------</option>
+                        <option value="NEGATIVE">Negative</option>
+                        <option value="POSITIVE">Positive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Phase</label>
+                    <select name="phase">
+                        <option value="">---------</option>
+                        {% for event in events %}
+                            <option value="{{ event.id }}">{{ event.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div></div>
+            </div>
+
+            <!-- COMMENTS -->
+            <div class="form-group">
+                <label>Comments</label>
+                <textarea name="comments" placeholder="Additional observations..."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-main">Save MSK Assessment</button>
+            </div>
+        </form>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{% url 'msk_injury_assessment_list' %}" class="back-link">← Back to List</a>
+        </div>
+    </div>
+{% endblock %}
