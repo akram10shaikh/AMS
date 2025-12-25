@@ -1,0 +1,130 @@
+{% extends "player_app/organization/base.html" %}
+{% block title %}{{ phase.name }} Tests{% endblock %}
+
+{% block extra_head %}
+    <style>
+        .phase-page {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+            margin-bottom:50px;
+        }
+
+        .phase-header h2 {
+            margin-bottom: 4px;
+            font-size: 24px;
+        }
+
+        .phase-header p {
+            margin: 0 0 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .test-card {
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(15, 23, 42, 0.06);
+            margin-bottom: 18px;
+            padding: 12px 14px 14px;
+        }
+
+        .test-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .test-card-header h3 {
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            background: #edf2ff;
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Responsive table */
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .test-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 420px;
+        }
+
+        .test-table thead {
+            background: #f8fafc;
+        }
+
+        .test-table th,
+        .test-table td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+
+        .test-table tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .test-table tbody tr:hover {
+            background: #eef2ff;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+<div class="phase-page">
+    <div class="phase-header">
+        <h2>{{ phase.name }} – Tests</h2>
+        <p>Total test types: {{ test_data|length }}</p>
+    </div>
+
+    {% for test_type, tests in test_data.items %}
+        {% if tests %}
+        <section class="test-card">
+            <div class="test-card-header">
+                <h3>{{ test_type }}</h3>
+                <span class="badge">{{ tests|length }} tests</span>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="test-table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Best</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for test in tests %}
+                        <tr>
+                            <td>{{ test.player.name }}</td>
+                            <td>{{ test.best }}</td>
+                            <td>{{ test.date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+    {% empty %}
+        <p>No tests found for this phase.</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1277,6 +1277,45 @@ def organization_camp_detail(request, camp_id):
     camp = get_object_or_404(CampTournament, id=camp_id)
     return render(request, 'player_app/organization/organization_camp_detail.html', {'camp': camp})
 
+
+@login_required
+def phase_tests_view(request, id):
+    phase = get_object_or_404(CampTournament, id=id, 
+                             organization=request.user.organization)
+    
+    # Dict of all test querysets by phase
+    test_data = {
+        '10m': TenMeterTest.objects.filter(phase=phase).select_related('player')[:50],
+        '20m': TwentyMeterTest.objects.filter(phase=phase).select_related('player')[:50],
+        '40m': FortyMeterTest.objects.filter(phase=phase).select_related('player')[:50],
+        'YoYo':YoYoTest.objects.filter(phase=phase).select_related('player')[:50],
+        'SBJ': SBJTest.objects.filter(phase=phase).select_related('player')[:50],
+        'S/L Glute Bridges': SLGluteBridges.objects.filter(phase=phase).select_related('player')[:50],
+        'S/L Lunge Calf Raises': SLLungeCalfRaises.objects.filter(phase=phase).select_related('player')[:50],
+        'MB Rotational Throws': MBRotationalThrows.objects.filter(phase=phase).select_related('player')[:50],
+        'Copenhagen': CopenhagenTest.objects.filter(phase=phase).select_related('player')[:50],
+        'S/L Hop': SLHopTest.objects.filter(phase=phase).select_related('player')[:50],
+        'Run A 3': RunA3Test.objects.filter(phase=phase).select_related('player')[:50],
+        # 'Run A 3x6':
+        '1 Mile': OneMileTest.objects.filter(phase=phase).select_related('player')[:50],
+        'Push-ups': PushUpsTest.objects.filter(phase=phase).select_related('player')[:50],
+        '2 KM': TwoKmTest.objects.filter(phase=phase).select_related('player')[:50],
+        'CMJ Scores': CMJTest.objects.filter(phase=phase).select_related('player')[:50],
+        'Anthropometry Test': AnthropometryTest.objects.filter(phase=phase).select_related('player')[:50],
+        'Blood Work': BloodTest.objects.filter(phase=phase).select_related('player')[:50],
+        'DEXA Scan Test': DexaScanTest.objects.filter(phase=phase).select_related('player')[:50],
+        'MSK Injury Assessment': MSKInjuryAssessment.objects.filter(phase=phase).select_related('player')[:50],
+        
+    }
+    
+    context = {
+        'phase': phase,
+        'test_data': test_data,
+        'total_tests': sum(len(tests) for tests in test_data.values()),
+    }
+    return render(request, 'player_app/tests/phase_test_data.html', context)
+    
+
 # Daily Activities of S&C Coach's Log
 ACTIVITY_NAMES = [
     "Match",
@@ -3622,8 +3661,8 @@ def add_lunge_calf_raises_test(request):
                 player=player,
                 date=date,
                 phase=phase_obj,
-                sl_cr_right=right_val,
-                sl_cr_left=left_val,
+                right=right_val,
+                left=left_val,
                 notes=notes,
                 reported_by=reported_by_user,
             )
@@ -3738,8 +3777,8 @@ def add_mb_rotational_throw_test(request):
                 player=player,
                 date=date,
                 phase=phase_obj,
-                mb_right=right_val,
-                mb_left=left_val,
+                right=right_val,
+                left=left_val,
                 notes=notes,
                 reported_by=reported_by_user,
             )
@@ -3852,8 +3891,8 @@ def add_copen_hagen_test(request):
                 player=player,
                 date=date,
                 phase=phase_obj,
-                copenhagen_right=right_val,
-                copenhagen_left=left_val,
+                right=right_val,
+                left=left_val,
                 notes=notes,
                 reported_by=reported_by_user,
             )
@@ -3962,8 +4001,8 @@ def add_sl_hop_test(request):
                 player=player,
                 date=date,
                 phase=phase_obj,
-                sl_hop_right=right_val,
-                sl_hop_left=left_val,
+                right=right_val,
+                left=left_val,
                 notes=notes,
                 reported_by=reported_by_user,
             )
@@ -6344,7 +6383,7 @@ def fetch_players(request):
         end_date = request.POST.get('end_date', '')
         
         players_data = []
-        
+        print(test_name)
         # Map test names to models (extend this for all your models)
         test_models = {
             '10m': TenMeterTest,
@@ -6423,7 +6462,16 @@ def fetch_report(request):
             'YoYo': YoYoTest,
             'Run A 3': RunA3Test,
             'SBJ': SBJTest,
-            # other tests...
+            'S/L Hop': SLHopTest,
+            'Copenhagen': CopenhagenTest,
+            'MB Rotational Throws':MBRotationalThrows,
+            'SL Lunge Calf Raises':SLLungeCalfRaises,
+            'S/L Glute Bridges':SLGluteBridges,
+            'CMJ Scores':CMJTest,
+            'Anthropometry Test':AnthropometryTest,
+            'DEXA Scan Test':DexaScanTest,
+            'Blood Test':BloodTest,
+            'MSK Injury Assessment':MSKInjuryAssessment,
         }
 
         Model = TEST_MODELS.get(test_name)

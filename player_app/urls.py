@@ -82,6 +82,9 @@ urlpatterns = [
                   path('organization/camp/create/', views.organization_create_camp, name='organization_create_camp'),
                   path('organization/camp/<int:camp_id>/delete/', views.organization_delete_camp, name='organization_delete_camp'),
 
+                  path('organization/phase/<int:id>/', views.phase_tests_view, name='phase_tests_view'),
+
+
                # Organization Test Results URLs
                   # path('organization/test/dashboard', views.test_dashboard, name='test_dashboard'),
                   path('test/add/', views.add_test_result, name='add_test_result'),
