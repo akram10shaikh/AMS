@@ -3533,3 +3533,86 @@ class MSKInjuryAssessment(models.Model):
 
     def __str__(self):
         return f"MSK Assessment - {self.player} - {self.date}"
+
+
+class DailyWellnessTest(models.Model):
+    # Common links
+    player = models.ForeignKey(
+        "Player",
+        on_delete=models.CASCADE,
+        related_name="daily_wellness_tests",
+    )
+    phase = models.ForeignKey(
+        "CampTournament",
+        on_delete=models.CASCADE,
+        related_name="daily_wellness_tests",
+    )
+
+    date = models.DateField()
+
+    # 1) Urine color (single choice)
+    URINE_COLOR_CHOICES = [
+        ("NO_COLOR", "No Color"),
+        ("PALE_STRAW", "Pale Straw Yellow"),
+        ("TRANSLUCENT_YELLOW", "Translucent Yellow"),
+        ("DARK_YELLOW", "Dark Yellow"),
+        ("AMBER", "Amber"),
+        ("BROWN", "Brown"),
+    ]
+    urine_color = models.CharField(
+        max_length=32,
+        choices=URINE_COLOR_CHOICES,
+    )
+
+    # 2) Soreness level 1–10
+    soreness_level = models.PositiveSmallIntegerField()  # 1–10 in form validation
+
+    # 3) Fatigue level 0–10
+    fatigue_level = models.PositiveSmallIntegerField()
+
+    # 4) Sleep hours 0–10 (you can use DecimalField if you want 7.5 etc.)
+    sleep_hours = models.DecimalField(max_digits=4, decimal_places=1)
+
+    # 5) Aches / pain / niggle
+    has_pain = models.BooleanField()
+    pain_comment = models.TextField(blank=True)
+
+    # 6) Motivation level (1–10)
+    motivation_level = models.PositiveSmallIntegerField()
+
+    # 7) Number of balls bowled
+    balls_bowled = models.PositiveIntegerField()
+
+    # 8) Training session completed (multi-select)
+    TRAINING_TYPE_CHOICES = [
+        ("STRENGTH", "Strength"),
+        ("CONDITIONING", "Conditioning"),
+        ("BOWLING", "Bowling"),
+        ("FIELDING", "Fielding"),
+        ("BATTING", "Batting"),
+        ("REST", "Rest"),
+        ("MATCH", "Match"),
+        ("OTHER", "Other"),
+    ]
+    # store as comma‑separated values or JSON depending on your DB
+    training_session_types = models.JSONField(default=list)
+
+    # 9) Total session RPE 0–10
+    total_rpe = models.PositiveSmallIntegerField()
+
+    # Audit fields if you use them elsewhere
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_daily_wellness_tests",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Daily Wellness Test"
+        verbose_name_plural = "Daily Wellness Tests"
+
+    def __str__(self):
+        return f"{self.player} - {self.date}"

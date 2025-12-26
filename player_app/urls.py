@@ -82,7 +82,8 @@ urlpatterns = [
                   path('organization/camp/create/', views.organization_create_camp, name='organization_create_camp'),
                   path('organization/camp/<int:camp_id>/delete/', views.organization_delete_camp, name='organization_delete_camp'),
 
-                  path('organization/phase/<int:id>/', views.phase_tests_view, name='phase_tests_view'),
+                  path('organization/phase/<int:id>/', views.phase_tests_view, name='phase_tests_view'), 
+                  path('organization/phase-test/<int:id>/',views.phase_test, name='phase_test'),
 
 
                # Organization Test Results URLs
@@ -137,6 +138,7 @@ urlpatterns = [
                   path('pushups-test/', views.add_pushups_test, name='add_pushups_test'),
                   path('msk-injury-assessment/', views.add_msk_injury_assessment, name='add_msk_injury_assessment'),
                   path('organization/<int:player_id>/all-tests/', views.organization_player_tests,name='organization_player_tests'),
+                  path('daily-wellness/',views.daily_wellness_create_view,name='daily_wellness_create_view'),
 
 
                   # Test Data View URLs
@@ -160,6 +162,7 @@ urlpatterns = [
                   path('two-km-test-view/', views.two_km_test_view, name='two_km_test_view'),
                   path('pushups-test-view/', views.pushups_test_view, name='pushups_test_view'),
                   path('msk-injury-assessment-list/', views.msk_injury_assessment_list, name='msk_injury_assessment_list'),
+                  path('daily-wellness-view/',views.daily_wellness_results_view,name='daily_wellness_results_view'),
 
                   # Daily Activity of Coachs
                   path('daily-log/<int:id>/',views.daily_activity_coach_log,name='daily_activity_coach_log'),

@@ -1,0 +1,126 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Daily Wellness Results{% endblock %}
+
+{% block extra_head %}
+<style>
+    table { width: 95%; margin: 1.5em auto; border-collapse: collapse; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: center; font-size: 14px; }
+    th { background-color: #f0f0f0; }
+    #searchInput {
+        width: 300px;
+        padding: 8px;
+        font-size: 16px;
+    }
+    .pagination {
+        text-align: center;
+        margin: 2em 0 4em 0;
+    }
+    .pagination a, .pagination strong {
+        display: inline-block;
+        padding: 6px 12px;
+        margin: 0 2px;
+        border: 1px solid #ccc;
+        background: #f9f9f9;
+        color: #333;
+        text-decoration: none;
+    }
+    .pagination strong {
+        background: #e0e0e0;
+        font-weight: bold;
+    }
+    form.search-form {
+        text-align: center;
+        margin: 2em auto 1em auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 style="text-align:center;">Daily Wellness Test Results</h2>
+
+<form method="get" class="search-form" aria-label="Search Player Form">
+    <input type="text"
+           name="search"
+           id="searchInput"
+           placeholder="Search player name..."
+           value="{{ search_query }}">
+    <button type="submit">Search</button>
+</form>
+
+<p style="text-align:center; margin-top: 0.5em;">
+    Total rows: {{ total_results }}
+</p>
+
+<table id="resultsTable" aria-describedby="results summary">
+    <thead>
+        <tr>
+            <th>No</th>
+            <th>Player</th>
+            <th>Date</th>
+            <th>Phase</th>
+            <th>Urine Color</th>
+            <th>Soreness (1–10)</th>
+            <th>Fatigue (0–10)</th>
+            <th>Sleep (h)</th>
+            <th>Pain?</th>
+            <th>Motivation (1–10)</th>
+            <th>Balls Bowled</th>
+            <th>Sessions</th>
+            <th>Total RPE (0–10)</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for result in page_obj %}
+        <tr>
+            <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+            <td class="player-name">{{ result.player.name }}</td>
+            <td>{{ result.date }}</td>
+            <td>{{ result.phase.name }}</td>
+            <td>{{ result.get_urine_color_display }}</td>
+            <td>{{ result.soreness_level }}</td>
+            <td>{{ result.fatigue_level }}</td>
+            <td>{{ result.sleep_hours }}</td>
+            <td>{{ result.has_pain|yesno:"Yes,No" }}</td>
+            <td>{{ result.motivation_level }}</td>
+            <td>{{ result.balls_bowled }}</td>
+            <td>
+                {% if result.training_session_types %}
+                    {{ result.training_session_types|join:", " }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td>{{ result.total_rpe }}</td>
+            <td>{{ result.pain_comment|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="14">No results found for Daily Wellness tests.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">&laquo; First</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">&lt; Prev</a>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+            <strong>{{ num }}</strong>
+        {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+            <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next &gt;</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last &raquo;</a>
+    {% endif %}
+</div>
+{% endblock %}

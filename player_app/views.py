@@ -1278,6 +1278,16 @@ def organization_camp_detail(request, camp_id):
     return render(request, 'player_app/organization/organization_camp_detail.html', {'camp': camp})
 
 
+def obj_to_row(obj):
+    EXCLUDED_KEYS = {"id", "created_at", "reported_by_designation", "phase", "updated_at","gender","category"}
+
+    data = obj.__dict__.copy()
+    # Remove private + excluded keys
+    for key in list(data.keys()):
+        if key.startswith("_") or key in EXCLUDED_KEYS:
+            data.pop(key, None)
+    return data
+
 @login_required
 def phase_tests_view(request, id):
     phase = get_object_or_404(CampTournament, id=id, 
@@ -1290,31 +1300,68 @@ def phase_tests_view(request, id):
         '40m': FortyMeterTest.objects.filter(phase=phase).select_related('player')[:50],
         'YoYo':YoYoTest.objects.filter(phase=phase).select_related('player')[:50],
         'SBJ': SBJTest.objects.filter(phase=phase).select_related('player')[:50],
-        'S/L Glute Bridges': SLGluteBridges.objects.filter(phase=phase).select_related('player')[:50],
-        'S/L Lunge Calf Raises': SLLungeCalfRaises.objects.filter(phase=phase).select_related('player')[:50],
-        'MB Rotational Throws': MBRotationalThrows.objects.filter(phase=phase).select_related('player')[:50],
-        'Copenhagen': CopenhagenTest.objects.filter(phase=phase).select_related('player')[:50],
-        'S/L Hop': SLHopTest.objects.filter(phase=phase).select_related('player')[:50],
         'Run A 3': RunA3Test.objects.filter(phase=phase).select_related('player')[:50],
         # 'Run A 3x6':
         '1 Mile': OneMileTest.objects.filter(phase=phase).select_related('player')[:50],
         'Push-ups': PushUpsTest.objects.filter(phase=phase).select_related('player')[:50],
         '2 KM': TwoKmTest.objects.filter(phase=phase).select_related('player')[:50],
-        'CMJ Scores': CMJTest.objects.filter(phase=phase).select_related('player')[:50],
-        'Anthropometry Test': AnthropometryTest.objects.filter(phase=phase).select_related('player')[:50],
-        'Blood Work': BloodTest.objects.filter(phase=phase).select_related('player')[:50],
-        'DEXA Scan Test': DexaScanTest.objects.filter(phase=phase).select_related('player')[:50],
-        'MSK Injury Assessment': MSKInjuryAssessment.objects.filter(phase=phase).select_related('player')[:50],
-        
+    }
+    all_empty = not any(qs.exists() for qs in test_data.values())
+
+    TEST_SPECIAL = {
+        'S/L Glute Bridges': SLGluteBridges.objects.filter(phase=phase).select_related('player')[:50],
+        'S/L Lunge Calf Raises': SLLungeCalfRaises.objects.filter(phase=phase).select_related('player')[:50],
+        'MB Rotational Throws': MBRotationalThrows.objects.filter(phase=phase).select_related('player')[:50],
+        'Copenhagen': CopenhagenTest.objects.filter(phase=phase).select_related('player')[:50],
+        'S/L Hop': SLHopTest.objects.filter(phase=phase).select_related('player')[:50],
     }
     
+    other_test_models = {
+        "CMJ Scores": CMJTest,
+        "Anthropometry Test": AnthropometryTest,
+        "Blood Work": BloodTest,
+        "DEXA Scan Test": DexaScanTest,
+        "MSK Injury Assessment": MSKInjuryAssessment,
+    }
+
+    OTHER_TEST = {}
+    for label, model in other_test_models.items():
+        qs = model.objects.filter(phase=phase).select_related("player")[:50]
+
+        rows = []
+        headers = None
+
+        for obj in qs:
+            row_dict = obj_to_row(obj)          # dict without excluded keys
+            if headers is None:
+                headers = list(row_dict.keys())  # order fixed from first row
+            rows.append([row_dict[h] for h in headers])
+
+        OTHER_TEST[label] = {
+            "headers": headers or [],
+            "rows": rows,
+        }
+
     context = {
-        'phase': phase,
-        'test_data': test_data,
-        'total_tests': sum(len(tests) for tests in test_data.values()),
+        "phase": phase,
+        "test_data": test_data,
+        "total_tests": sum(len(tests) for tests in test_data.values()),
+        "all_empty": all_empty,
+        "TEST_SPECIAL": TEST_SPECIAL,
+        "OTHER_TEST": OTHER_TEST,
     }
-    return render(request, 'player_app/tests/phase_test_data.html', context)
+    return render(request, "player_app/tests/phase_test_data.html", context)
+
+def phase_test(request,id):
+    phase = get_object_or_404(CampTournament, id=id, 
+                            organization=request.user.organization)
+    if 'phase_id_test' in request.session:
+        del request.session['phase_id_test']
+
+    request.session['phase_id_test'] = id
+    print("session id :",request.session['phase_id_test'])
     
+    return render(request,"player_app/tests/phase_test.html",{"phase":phase})
 
 # Daily Activities of S&C Coach's Log
 ACTIVITY_NAMES = [
@@ -3250,6 +3297,8 @@ def test_results_main(request):
 
 # New test Views
 def test_dashboard_new(request):
+    if 'phase_id_test' in request.session:
+        del request.session['phase_id_test']
     return render(request, 'player_app/organization/organization_main_test_dash.html')
 
 from django.core.paginator import Paginator
@@ -5280,6 +5329,8 @@ def add_ten_meter_test(request):
             errors.append("Best must be a valid number.")
             best_val = None
 
+        
+        
         if not errors:
             phase_obj = get_object_or_404(CampTournament, id=int(phase_id))
             player = get_object_or_404(Player, pk=player_id)
@@ -5305,7 +5356,8 @@ def add_ten_meter_test(request):
                 gender=player.gender,
                 category=player.age_category,
             )
-
+            if 'phase_id_test' in request.session:
+                return redirect('phase_test')
             return redirect('ten_meter_test_view')
 
         return render(request, 'player_app/tests/ten_meter.html', {
@@ -6303,52 +6355,99 @@ def organization_player_tests(request, player_id):
     return render(request, 'player_app/tests/organization_player_tests.html', context)
 
 
-
-
 @login_required
-def create_sl_glute_bridge(request):
-    user_organization = getattr(request.user, 'organization', None)
+def daily_wellness_create_view(request):
+    user_org = getattr(request.user, "organization", None)
 
-    players = Player.objects.filter(organization=user_organization)
-    events = CampTournament.objects.filter(is_deleted=False)
-    staff = Staff.objects.filter(organization=user_organization)
+    players = Player.objects.filter(organization=user_org)
+    phases = CampTournament.objects.filter(organization=user_org, is_deleted=False)
 
-    if request.method == 'POST':
-        player_id = request.POST.get('player')
-        date_str = request.POST.get('date')
-        phase_id = request.POST.get('phase')
-        sl_right = request.POST.get('sl_glute_right')
-        sl_left = request.POST.get('sl_glute_left')
-        notes = request.POST.get('notes')
-        reported_by_id = request.POST.get('reported_by')
+    if request.method == "POST":
+        # selected player & phase from form
+        player_id = request.POST.get("player_id")
+        phase_id = request.POST.get("phase_id")
 
-        player = get_object_or_404(Player, pk=player_id)
-        phase = CampTournament.objects.get(pk=phase_id) if phase_id else None
-        reported_by = get_object_or_404(User, pk=reported_by_id)
+        player = get_object_or_404(Player, id=player_id, organization=user_org)
+        phase = get_object_or_404(CampTournament, id=phase_id,
+                                  organization=user_org, is_deleted=False)
 
-        obj = SLGluteBridges(
+        date = request.POST.get("date")
+
+        urine_color = request.POST.get("urine_color")
+        soreness_level = int(request.POST.get("soreness_level", 0))
+        fatigue_level = int(request.POST.get("fatigue_level", 0))
+        sleep_hours = float(request.POST.get("sleep_hours", 0))
+
+        has_pain_raw = request.POST.get("has_pain")  # "true"/"false"
+        has_pain = has_pain_raw == "true"
+        pain_comment = request.POST.get("pain_comment", "").strip()
+
+        motivation_level = int(request.POST.get("motivation_level", 0))
+        balls_bowled = int(request.POST.get("balls_bowled", 0))
+
+        training_session_types = request.POST.getlist("training_session_types")
+        total_rpe = int(request.POST.get("total_rpe", 0))
+
+        DailyWellnessTest.objects.create(
             player=player,
-            date=parse_date(date_str) if date_str else None,
             phase=phase,
-            sl_right=float(sl_right) if sl_right else None,
-            sl_left=float(sl_left) if sl_left else None,
-            notes=notes,
-            reported_by=reported_by,
+            date=date,
+            urine_color=urine_color,
+            soreness_level=soreness_level,
+            fatigue_level=fatigue_level,
+            sleep_hours=sleep_hours,
+            has_pain=has_pain,
+            pain_comment=pain_comment,
+            motivation_level=motivation_level,
+            balls_bowled=balls_bowled,
+            training_session_types=training_session_types,
+            total_rpe=total_rpe,
+            created_by=request.user,
         )
-        obj.save()  # your model save() handles diff/ratio + aggregates
 
-        return redirect('sl_glute_bridges_list')
+        return redirect('daily_wellness_results_view')
 
-    return render(request, 'player_app/test/sl_glute_bridges_create.html', {
-        'players': players,
-        'events': events,
-        'staff': staff,
-    })
+    context = {
+        "players": players,
+        "phases": phases,
+        "range_1_10": range(1, 11),
+        "range_0_10": range(0, 11),
+    }
+    return render(request, "player_app/tests/daily_wellness_form.html", context)
 
 @login_required
-def sl_glute_bridges_list(request):
-    tests = SLGluteBridges.objects.select_related('player', 'phase', 'reported_by')
-    return render(request, 'player_app/test/sl_glute_bridges_list.html', {'tests': tests})
+def daily_wellness_results_view(request):
+    user_org = getattr(request.user, "organization", None)
+
+    # Base queryset: all wellness tests for this organization
+    qs = DailyWellnessTest.objects.select_related("player", "phase").filter(
+        player__organization=user_org
+    )
+
+    # Search by player name
+    search_query = request.GET.get("search", "").strip()
+    if search_query:
+        qs = qs.filter(
+            Q(player__name__icontains=search_query)
+        )
+
+    total_results = qs.count()
+
+    # Pagination
+    page_number = request.GET.get("page", 1)
+    paginator = Paginator(qs.order_by("-date", "-id"), 25)  # 25 rows per page
+    page_obj = paginator.get_page(page_number)  # safe for invalid page numbers [web:167]
+
+    context = {
+        "page_obj": page_obj,
+        "search_query": search_query,
+        "total_results": total_results,
+    }
+    return render(
+        request,
+        "player_app/tests/daily_wellness_results.html",
+        context,
+    )
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt

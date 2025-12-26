@@ -87,44 +87,127 @@
     </style>
 {% endblock %}
 {% block content %}
-<div class="phase-page">
+<div class="phase-page" style="margin-bottom:100px;">
     <div class="phase-header">
         <h2>{{ phase.name }} – Tests</h2>
         <p>Total test types: {{ test_data|length }}</p>
     </div>
 
-    {% for test_type, tests in test_data.items %}
-        {% if tests %}
+    {% if all_empty %}
+        <p>No tests found for this phase.</p>
+    {% else %}
+        {% for test_type, tests in test_data.items %}
+            {% if tests %}
+                <section class="test-card">
+                    <div class="test-card-header">
+                        <h3>{{ test_type }}</h3>
+                        <span class="badge">{{ tests|length }} tests</span>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="test-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Date</th>
+                                    <th>Best</th>
+                                    <th>Distance</th>
+                                    <th>Vo2 Max</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for test in tests %}
+                                    <tr>
+                                        <td>{{ test.player.name }}</td>
+                                        <td>{{ test.date }}</td>
+                                        <td>{{ test.best }}</td>
+                                        <td>{{ test.distance_covered }}</td>
+                                        <td>{{ test.predicted_vo2max }}</td>
+                                        
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            {% endif %}
+        {% endfor %}
+
+        <!--Special Test Data -->
+         {% for test_type, tests in TEST_SPECIAL.items %}
+            {% if tests %}
+                <section class="test-card">
+                    <div class="test-card-header">
+                        <h3>{{ test_type }}</h3>
+                        <span class="badge">{{ tests|length }} tests</span>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="test-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Player</th>
+                                    <th>Date</th>
+                                    <th>Right</th>
+                                    <th>Left</th>
+                                    <th>Difference</th>
+                                    <th>Ratio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for test in tests %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ test.player.name }}</td>
+                                        <td>{{ test.date }}</td>
+                                        <td>{{ test.right }}</td>
+                                        <td>{{ test.left }}</td>
+                                        <td>{{ test.difference }}</td>
+                                        <td>{{ test.ratio }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Other Tests -->
+        {% for name, data in OTHER_TEST.items %}
+        {% if data.rows %}
         <section class="test-card">
             <div class="test-card-header">
-                <h3>{{ test_type }}</h3>
-                <span class="badge">{{ tests|length }} tests</span>
+                <h3>{{ name }}</h3>
+                <span class="badge">{{ data.rows|length }} tests</span>
             </div>
-
             <div class="table-wrapper">
                 <table class="test-table">
                     <thead>
                         <tr>
-                            <th>Player</th>
-                            <th>Best</th>
-                            <th>Date</th>
+                            {% for h in data.headers %}
+                                <th>{{ h|capfirst }}</th>
+                            {% endfor %}
                         </tr>
                     </thead>
                     <tbody>
-                        {% for test in tests %}
-                        <tr>
-                            <td>{{ test.player.name }}</td>
-                            <td>{{ test.best }}</td>
-                            <td>{{ test.date }}</td>
-                        </tr>
+                        {% for row in data.rows %}
+                            <tr>
+                                {% for value in row %}
+                                    <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </section>
         {% endif %}
-    {% empty %}
-        <p>No tests found for this phase.</p>
     {% endfor %}
+
+
+    {% endif %}
 </div>
+
 {% endblock %}

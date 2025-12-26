@@ -90,7 +90,7 @@ def organization_login(request):
             user = authenticate(request, username=username, password=password)
             if user is not None and user.role == 'OrganizationAdmin':
                 login(request, user)
-                return redirect('organization_dashboard')
+                return redirect('organization_dashboard_org')
             else:
                 messages.error(request, 'Invalid credentials')
         else:

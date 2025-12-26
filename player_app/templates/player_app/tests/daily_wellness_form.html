@@ -1,0 +1,461 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    .wellness-form {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 2rem 2.5rem;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 14px 40px rgba(15, 23, 42, 0.18);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #0f172a;
+    }
+
+    .wellness-form h2 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .wellness-form > p.sub {
+        margin: 0 0 1.5rem;
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    .form-row,
+    .question,
+    .form-actions {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-row label,
+    .question > label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+    }
+
+    .form-row select,
+    .form-row input[type="date"],
+    .form-row input[type="number"],
+    .form-row textarea,
+    .question textarea {
+        width: 100%;
+        padding: 0.55rem 0.75rem;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        font-size: 0.95rem;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s;
+    }
+
+    .form-row select:focus,
+    .form-row input:focus,
+    .question textarea:focus {
+        outline: none;
+        border-color: #2563eb;
+        background: #ffffff;
+        box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+    }
+
+    .question p {
+        margin: 0 0 0.75rem;
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    hr {
+        border: none;
+        border-top: 1px solid #e2e8f0;
+        margin: 1.75rem 0 1.5rem;
+    }
+
+    .scale-image {
+        margin-bottom: 0.75rem;
+        text-align: left;
+    }
+    
+    .scale-image img {
+        max-width: 100%;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .scale-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.7rem;
+    }
+
+    .scale-row-3 {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3rem;
+    }
+    .scale-row-4 {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3.2rem;
+    }
+    .scale-row-5 {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3rem;
+    }
+    .scale-row label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        padding: 0.35rem 0.45rem;
+        border-radius: 999px;
+        background: #f8fafc;
+        border: 1px solid transparent;
+        cursor: pointer;
+        font-size: 0.75rem;
+        color: #64748b;
+        transition: background 0.15s ease, border-color 0.15s ease, color 0.15s;
+    }
+
+    .scale-row label span {
+        font-weight: 600;
+        margin-bottom: 0.1rem;
+        color: #0f172a;
+    }
+
+    .scale-row input {
+        margin-top: 0.1rem;
+    }
+
+    .scale-row input:checked + span,
+    .scale-row input:checked ~ span {
+        font-weight: 700;
+    }
+
+    .scale-row input:checked ~ * {
+        color: #1d4ed8;
+    }
+
+    .scale-row input:checked ~ label,
+    .scale-row input:checked {
+        color: #1d4ed8;
+    }
+
+    .scale-row input[type="radio"] {
+        accent-color: #2563eb;
+    }
+
+    .options-vertical {
+        display: grid;
+        gap: 0.4rem;
+        margin-top: 0.25rem;
+    }
+
+    .options-vertical label {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.9rem;
+        color: #475569;
+        cursor: pointer;
+    }
+
+    .options-vertical input[type="radio"],
+    .options-vertical input[type="checkbox"] {
+        accent-color: #2563eb;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 1.5rem;
+    }
+
+    .form-actions button {
+        padding: 0.7rem 1.6rem;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, #2563eb, #4f46e5);
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 0.95rem;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        box-shadow: 0 12px 25px rgba(37, 99, 235, 0.35);
+        transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+    }
+
+    .form-actions button:hover {
+        filter: brightness(1.05);
+        box-shadow: 0 16px 32px rgba(37, 99, 235, 0.45);
+        transform: translateY(-1px);
+    }
+
+    .form-actions button:active {
+        transform: translateY(0);
+        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+    }
+
+    @media (max-width: 640px) {
+        .wellness-form {
+            margin: 1rem;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .scale-row {
+            gap: 0.25rem;
+        }
+    }
+</style>
+
+<div class="wellness-form">
+    <h2>Daily Wellness &amp; Load Monitoring</h2>
+    <p class="sub">Log your daily wellbeing so staff can monitor load and recovery.</p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Player select -->
+        <div class="form-row">
+            <label for="player">Player</label>
+            <select id="player" name="player_id" required>
+                <option value="">Select player…</option>
+                {% for p in players %}
+                    <option value="{{ p.id }}">{{ p.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Phase select -->
+        <div class="form-row">
+            <label for="phase">Phase</label>
+              {% if request.session.phase_id_test %}
+                     {% for ph in phases %}
+                        {% if ph.id == request.session.phase_id_test %}
+                            <!-- show phase NAME -->
+                            <input type="text"
+                                id="phase"
+                                value="{{ ph.name }}"
+                                disabled width="100%">
+
+                            <!-- send phase ID -->
+                            <input type="hidden"
+                                name="phase-id"
+                                value="{{ ph.id }}" width="100%">
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                 <select id="phase" name="phase_id" required>
+                        <option value="">---------</option>
+                        {% for ph in phases %}
+                            <option value="{{ ph.id }}">{{ ph.name }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+        </div>
+
+        {% comment %} <div class="form-group">
+                <label for="phase">Phase:</label>
+
+                {% if request.session.phase_id_test %}
+                     {% for ph in phases %}
+                        {% if ph.id == request.session.phase_id_test %}
+                            <!-- show phase NAME -->
+                            <input type="text"
+                                id="phase_display"
+                                value="{{ ph.name }}"
+                                disabled>
+
+                            <!-- send phase ID -->
+                            <input type="hidden"
+                                name="phase"
+                                value="{{ ph.id }}">
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <select id="phase" name="phase" required>
+                        <option value="">---------</option>
+                        {% for ph in phases %}
+                            <option value="{{ ph.id }}">{{ event.name }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+        </div> {% endcomment %}
+
+        <div class="form-row">
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" required>
+        </div>
+
+        <!-- Urine color -->
+        <hr>
+        <div class="question">
+            <label>Urine Color *</label>
+            <p>How would you describe the color of your urine today?</p>
+
+            <div class="scale-image">
+                <img src="{% static 'urine_color.png' %}" alt="Urine color scale">
+            </div>
+
+            <div class="options-vertical">
+                <label><input type="radio" name="urine_color" value="NO_COLOR" required> No Color</label>
+                <label><input type="radio" name="urine_color" value="PALE_STRAW"> Pale Straw Yellow</label>
+                <label><input type="radio" name="urine_color" value="TRANSLUCENT_YELLOW"> Translucent Yellow</label>
+                <label><input type="radio" name="urine_color" value="DARK_YELLOW"> Dark Yellow</label>
+                <label><input type="radio" name="urine_color" value="AMBER"> Amber</label>
+                <label><input type="radio" name="urine_color" value="AMOWN">Amown</label>
+                <label><input type="radio" name="urine_color" value="BROWN"> Brown</label>
+            </div>
+        </div>
+
+        <!-- Soreness -->
+        <hr>
+        <div class="question">
+            <label>Soreness Level *</label>
+            <p>How would you rate your current soreness level?</p>
+
+            <div class="scale-image">
+                <img src="{% static 'soreness_scale.jpg' %}" alt="Soreness scale">
+            </div>
+
+            <div class="scale-row" style="padding-left:40px;">
+                {% for n in range_0_10 %}
+                    <label>
+                        <span>{{ n }}</span>
+                        <input type="radio" name="soreness_level" value="{{ n }}" required>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Fatigue -->
+        <hr>
+        <div class="question">
+            <label>Fatigue Level *</label>
+            <p>How would you rate your current fatigue level?</p>
+
+            <div class="scale-image">
+                <img src="{% static 'fatigue_scale.png' %}" alt="Fatigue scale">
+            </div>
+
+            <div class="scale-row-3">
+                {% for n in range_0_10 %}
+                    <label>
+                        <span>{{ n }}</span>
+                        <input type="radio" name="fatigue_level" value="{{ n }}" required>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sleep -->
+        <hr>
+        <div class="question">
+            <label>Sleep Hours *</label>
+            <p>How many hours did you sleep last night?</p>
+
+            <div class="scale-row">
+                {% for n in range_0_10 %}
+                    <label>
+                        <span>{{ n }}</span>
+                        <input type="radio" name="sleep_hours" value="{{ n }}" required>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Pain -->
+        <hr>
+        <div class="question">
+            <label>Experiencing Any Aches / Pain / Niggle? *</label>
+
+            <div class="options-vertical">
+                <label><input type="radio" name="has_pain" value="true" required> Yes</label>
+                <label><input type="radio" name="has_pain" value="false"> No</label>
+            </div>
+
+            <div class="form-row">
+                <label>If yes, please comment</label>
+                <textarea name="pain_comment" rows="3"
+                          placeholder="Briefly describe any aches, pains, or niggles."></textarea>
+            </div>
+        </div>
+
+        <!-- Motivation -->
+        <hr>
+        <div class="question">
+            <label>Motivational Levels *</label>
+            <p>How would you rate your current motivation level?</p>
+
+            <div class="scale-image">
+                <img src="{% static 'motivation_scale.png' %}" alt="Motivation scale">
+            </div>
+
+            <div class="scale-row-5">
+                {% for n in range_0_10 %}
+                    <label>
+                        <span>{{ n }}</span>
+                        <input type="radio" name="motivation_level" value="{{ n }}" required>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Balls bowled -->
+        <hr>
+        <div class="question">
+            <label>Number of Balls Bowled *</label>
+            <p>How many balls did you bowl during your most recent activity or practice session?</p>
+            <input type="number" name="balls_bowled" min="0" step="1" required>
+        </div>
+
+        <!-- Training types -->
+        <hr>
+        <div class="question">
+            <label>Training Session Completed Today *</label>
+            <p>Select all that apply.</p>
+
+            <div class="options-vertical">
+                <label><input type="checkbox" name="training_session_types" value="STRENGTH"> Strength</label>
+                <label><input type="checkbox" name="training_session_types" value="CONDITIONING"> Conditioning</label>
+                <label><input type="checkbox" name="training_session_types" value="BOWLING"> Bowling</label>
+                <label><input type="checkbox" name="training_session_types" value="FIELDING"> Fielding</label>
+                <label><input type="checkbox" name="training_session_types" value="BATTING"> Batting</label>
+                <label><input type="checkbox" name="training_session_types" value="REST"> Rest</label>
+                <label><input type="checkbox" name="training_session_types" value="MATCH"> Match</label>
+                <label><input type="checkbox" name="training_session_types" value="OTHER"> Other</label>
+            </div>
+        </div>
+
+        <!-- RPE -->
+        <hr>
+        <div class="question">
+            <label>Total Session RPE *</label>
+            <p>Select your Rate of Perceived Exertion (0–10).</p>
+
+            <div class="scale-image">
+                <img src="{% static 'rpe_scale.png' %}" alt="RPE scale">
+            </div>
+
+            <div class="scale-row-4">
+                {% for n in range_0_10 %}
+                    <label>
+                        <span>{{ n }}</span>
+                        <input type="radio" name="total_rpe" value="{{ n }}" required>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <hr>
+        <div class="form-actions">
+            <button type="submit">Submit</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
