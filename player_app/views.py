@@ -3479,6 +3479,9 @@ def add_run_3x6_test(request,test_name=None):
                 notes=notes,
                 reported_by=reported_by
             )
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
+
             return redirect('test_dashboard_new')
         # Pass errors back to template if any
         else:
@@ -3570,6 +3573,9 @@ def add_glute_bridges_test(request):
                 notes=notes,
                 reported_by=reported_by
             )
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
+ 
             return redirect('test_dashboard_new')
         # Pass errors back to template if any
         else:
@@ -3715,6 +3721,8 @@ def add_lunge_calf_raises_test(request):
                 notes=notes,
                 reported_by=reported_by_user,
             )
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
 
             return redirect('test_dashboard_new')
 
@@ -3831,6 +3839,8 @@ def add_mb_rotational_throw_test(request):
                 notes=notes,
                 reported_by=reported_by_user,
             )
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
 
             return redirect('test_dashboard_new')
 
@@ -3945,6 +3955,8 @@ def add_copen_hagen_test(request):
                 notes=notes,
                 reported_by=reported_by_user,
             )
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
 
             return redirect('test_dashboard_new')
 
@@ -4055,6 +4067,8 @@ def add_sl_hop_test(request):
                 notes=notes,
                 reported_by=reported_by_user,
             )
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
 
             return redirect('test_dashboard_new')
 
@@ -4234,6 +4248,8 @@ def add_cmj_scores_test(request):
                 gender=player.gender,
                 category=player.age_category,
             )
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
 
             return redirect('test_dashboard_new')
 
@@ -4460,6 +4476,8 @@ def add_anthropometry_test(request):
                 notes=notes,
                 reported_by=reported_by_user,
             )
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
 
             return redirect('test_dashboard_new')
 
@@ -4620,7 +4638,9 @@ def add_dexa_scan_test(request):
                 notes=notes,
                 reported_by=reported_by_user,
             )
-
+            
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('test_dashboard_new')
 
         return render(request, 'player_app/tests/dexa_scan.html', {
@@ -4833,7 +4853,8 @@ def add_blood_test(request):
                 notes=notes,
                 reported_by=reported_by_user,
             )
-
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('test_dashboard_new')
 
         return render(request, 'player_app/tests/blood_work.html', {
@@ -4944,7 +4965,8 @@ def add_runa3_test(request):
                 gender=player.gender,
                 category=player.age_category,
             )
-
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('runa3_test_view')
 
         return render(request, 'player_app/tests/runa3.html', {
@@ -5081,7 +5103,8 @@ def add_forty_meter_test(request):
                 gender=player.gender,
                 category=player.age_category,
             )
-
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))           
             return redirect('forty_meter_test_view')
 
         return render(request, 'player_app/tests/forty_meter.html', {
@@ -5217,6 +5240,8 @@ def add_twenty_meter_test(request):
                 gender=player.gender,
                 category=player.age_category,
             )
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
 
             return redirect('twenty_meter_test_view')
 
@@ -5357,7 +5382,7 @@ def add_ten_meter_test(request):
                 category=player.age_category,
             )
             if 'phase_id_test' in request.session:
-                return redirect('phase_test')
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('ten_meter_test_view')
 
         return render(request, 'player_app/tests/ten_meter.html', {
@@ -5377,6 +5402,9 @@ def add_ten_meter_test(request):
 
 
 def ten_meter_test_view(request):
+    if 'phase_id_test' in request.session:
+        del request.session['phase_id_test']
+
     test_name = '10m'
     search_query = request.GET.get('search', '').strip()
 
@@ -5488,7 +5516,8 @@ def add_sbj_test(request):
                 gender=player.gender,
                 category=player.age_category,
             )
-
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('sbj_test_view')
 
         return render(request, 'player_app/tests/sbj.html', {
@@ -5507,6 +5536,8 @@ def add_sbj_test(request):
     })
 
 def sbj_test_view(request):
+    if 'phase_id_test' in request.session:
+        del request.session['phase_id_test']
     test_name = 'SBJ'
     search_query = request.GET.get('search', '').strip()
 
@@ -5628,7 +5659,8 @@ def add_yoyo_test(request):
                 gender=player.gender,
                 category=player.age_category,
             )
-
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('yoyo_test_view')
 
         return render(request, 'player_app/tests/yoyo.html', {
@@ -5648,6 +5680,8 @@ def add_yoyo_test(request):
 
 
 def yoyo_test_view(request):
+    if 'phase_id_test' in request.session:
+        del request.session['phase_id_test']
     test_name = 'YoYo Test'
     search_query = request.GET.get('search', '').strip()
 
@@ -5768,7 +5802,8 @@ def add_one_mile_test(request):
                 gender=player.gender,
                 category=player.age_category,
             )
-
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('one_mile_test_view')
 
         return render(request, 'player_app/tests/one_mile.html', {
@@ -5788,6 +5823,8 @@ def add_one_mile_test(request):
 
 
 def one_mile_test_view(request):
+    if 'phase_id_test' in request.session:
+        del request.session['phase_id_test']
     test_name = '1 Mile'
     search_query = request.GET.get('search', '').strip()
 
@@ -5909,6 +5946,8 @@ def add_two_km_test(request):
                 category=player.age_category,
             )
 
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('two_km_test_view')
 
         return render(request, 'player_app/tests/two_km.html', {
@@ -5927,6 +5966,8 @@ def add_two_km_test(request):
     })
 
 def two_km_test_view(request):
+    if 'phase_id_test' in request.session:
+        del request.session['phase_id_test']
     test_name = '2 KM'
     search_query = request.GET.get('search', '').strip()
 
@@ -6036,7 +6077,8 @@ def add_pushups_test(request):
                 gender=player.gender,
                 category=player.age_category,
             )
-
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('pushups_test_view')
 
         return render(request, 'player_app/tests/pushups.html', {
@@ -6056,6 +6098,8 @@ def add_pushups_test(request):
 
 
 def pushups_test_view(request):
+    if 'phase_id_test' in request.session:
+        del request.session['phase_id_test']
     test_name = 'Push-ups'
     search_query = request.GET.get('search', '').strip()
 
@@ -6268,7 +6312,8 @@ def add_msk_injury_assessment(request):
                 comments=comments,
                 
             )
-
+            if 'phase_id_test' in request.session:
+                return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('msk_injury_assessment_list')
 
         return render(request, 'player_app/tests/msk_injury_assessment_form.html', {
@@ -6285,6 +6330,9 @@ def add_msk_injury_assessment(request):
     })
 
 def msk_injury_assessment_list(request):
+    
+    if 'phase_id_test' in request.session:
+        del request.session['phase_id_test']
     test_name = "MSK Injury Assessment"
     search_query = request.GET.get('search', '').strip()
 
@@ -6404,7 +6452,8 @@ def daily_wellness_create_view(request):
             total_rpe=total_rpe,
             created_by=request.user,
         )
-
+        if 'phase_id_test' in request.session:
+            return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
         return redirect('daily_wellness_results_view')
 
     context = {

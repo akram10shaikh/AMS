@@ -129,12 +129,30 @@
             </div>
             <div class="form-group">
                 <label for="phase">Phase:</label>
-                <select id="phase" name="phase" required>
-                    <option value="">---------</option>
+
+                {% if request.session.phase_id_test %}
                     {% for event in events %}
-                        <option value="{{ event.id }}">{{ event.name }}</option>
+                        {% if event.id == request.session.phase_id_test %}
+                            <!-- show phase NAME -->
+                            <input type="text"
+                                id="phase_display"
+                                value="{{ event.name }}"
+                                disabled>
+
+                            <!-- send phase ID -->
+                            <input type="hidden"
+                                name="phase"
+                                value="{{ event.id }}">
+                        {% endif %}
                     {% endfor %}
-                </select>
+                {% else %}
+                    <select id="phase" name="phase" required>
+                        <option value="">---------</option>
+                        {% for event in events %}
+                            <option value="{{ event.id }}">{{ event.name }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
             </div>
                     <div class="form-group">
                         <label for="best">Best:</label>
