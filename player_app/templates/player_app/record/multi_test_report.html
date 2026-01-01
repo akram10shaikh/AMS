@@ -1,0 +1,1231 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Player Record{% endblock %}
+
+{% block extra_head %}
+    <style>
+        :root {
+            --color-primary: #0f172a;
+            --color-secondary: #007CF0;
+            --color-accent: #00DFD8;
+            --color-background: #f4f6fa;
+            --color-card-bg: #fff;
+            --color-text-dark: #1a202c;
+            --color-text-light: #fff;
+            --color-border-light: #d1d5db;
+            --color-border-dark: #e5e7eb;
+            --color-highlight: #d9f7be;
+            --color-input-bg: #f9fafb;
+            --color-dark-green: #1b4d2e;
+            --color-orange: #f59e0b;
+            --color-gray: #363636;
+            --color-light-gray: #f8fafc;
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--color-background);
+            line-height: 1.6;
+        }
+        .welcome-section {
+            height: 260px;
+            background: linear-gradient(to right, var(--color-secondary), var(--color-accent));
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 var(--space-xl);
+        }
+        .welcome-section h1 {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--color-text-light);
+            margin: 0;
+        }
+        .main-card {
+            max-width: 1200px;
+            margin: -80px auto var(--space-xl) auto;
+            background-color: var(--color-card-bg);
+            border-radius: 12px;
+            padding: var(--space-xl);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            position: relative;
+            z-index: 10;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-lg);
+        }
+        .import-button {
+            display: inline-flex;
+            align-items: center;
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            text-decoration: none;
+        }
+        .import-button:hover { background-color: #1e293b; }
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xl);
+            margin-bottom: var(--space-xl);
+        }
+        .form-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            padding: var(--space-xl);
+            background-color: var(--color-card-bg);
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--color-border-dark);
+        }
+        .form-fields label {
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .input {
+            padding: 0.75rem 1rem;
+            font-size: 15px;
+            font-weight: 500;
+            border: 1px solid var(--color-border-light);
+            border-radius: 12px;
+            background-color: var(--color-input-bg);
+            transition: all 0.2s ease-in-out;
+            color: #111827;
+            width: 100%;
+        }
+        select.input { width: 100%; }
+        .input:focus,
+        select.input:focus {
+            outline: none;
+            border-color: #2563eb;
+            background-color: var(--color-card-bg);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        button {
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+            font-weight: 700;
+            font-size: 15px;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%;
+        }
+        button:hover { background-color: #1e293b; transform: translateY(-1px); }
+        .player-info-section {
+            margin-top: var(--space-xl);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+            background-color: var(--color-dark-green);
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            padding: var(--space-md);
+        }
+        .player-info-title {
+            color: var(--color-text-light);
+            text-align: center;
+            font-style: italic;
+            font-weight: 700;
+            margin: 0;
+            padding-bottom: var(--space-sm);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .player-info-card {
+            border-top: 15px solid var(--color-orange);
+            border-bottom: 15px solid var(--color-orange);
+            color: var(--color-text-light);
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: var(--space-md);
+            flex-wrap: wrap;
+        }
+        .player-photo {
+            background-color: var(--color-dark-green);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: 176px;
+            width: 170px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .player-info-table {
+            flex-grow: 1;
+            border-collapse: collapse;
+            font-size: 14px;
+            color: var(--color-text-light);
+            margin-left: 1rem;
+        }
+        .player-info-table th,
+        .player-info-table td {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem;
+            text-align: left;
+        }
+        .player-info-table th {
+            font-weight: normal;
+            background-color: #114224;
+            text-align: center;
+            width: 40%;
+        }
+        .coach-name {
+            align-self: flex-start;
+            padding: var(--space-md);
+            background-color: #114224;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-width: 150px;
+            height: 145px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .chart-container {
+            width: 85%;
+            margin: 2rem auto;
+        }
+        .chart-legend {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 2rem;
+        }
+        table.stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin-top: 1rem;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        table.stats-table thead {
+            background-color: #0f172a;
+            color: #fff;
+        }
+        table.stats-table th, table.stats-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+            vertical-align: middle;
+            font-size: 14px;
+        }
+        table.stats-table tbody tr:hover { background-color: #f9fafb; }
+        .right-align {
+            text-align: right;
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+        }
+        .date-filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .date-filter-group input[type="radio"] { margin-right: 0.5rem; }
+        .select-wrapper { display: flex; flex-direction: column; }
+        .button-wrapper { display: flex; flex-direction: column; }
+        @media (max-width: 900px) {
+            .form-container,
+            .chart-container,
+            .player-info-card { flex-direction: column; }
+            .player-info-table {
+                margin-left: 0;
+                margin-top: 1rem;
+            }
+        }
+
+
+        .card-header {
+            background: linear-gradient(135deg, #ffffffff, #ffffffff);
+            border-radius: 16px 16px 0 0;
+            padding: 16px 24px;
+        }
+
+        .report-settings-card {
+            background: #ffffff;
+            color: #333;
+            border-radius: 12px;
+            padding: 8px 12px;
+            min-width: 260px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+
+        .status-pill {
+            background: #e3f2fd;
+            color: #0d47a1;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .clear-link {
+            font-size: 11px;
+            color: #d32f2f;
+            text-decoration: none;
+        }
+
+        .settings-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .pill {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(0,0,0,0.06);
+            white-space: nowrap;
+        }
+
+        .pill-blue   { background: #e3f2fd; color: #0d47a1; }
+        .pill-green  { background: #e8f5e9; color: #1b5e20; }
+        .pill-purple { background: #f3e5f5; color: #4a148c; }
+
+        .settings-edit-link {
+            display: inline-block;
+            font-size: 11px;
+            color: #1976d2;
+            text-decoration: underline;
+        }
+
+        .tests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--color-light-gray);
+            border-radius: 12px;
+            border: 1px solid var(--color-border-light);
+        }
+        .test-checkbox {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 1.25rem; border: 2px solid var(--color-border-light);
+            border-radius: 12px; background: white; cursor: pointer;
+            transition: all 0.3s ease; position: relative; overflow: hidden;
+        }
+        .test-checkbox:hover { border-color: var(--color-secondary); transform: translateY(-2px); }
+        .test-checkbox.checked { 
+            border-color: var(--color-secondary); 
+            background: linear-gradient(135deg, var(--color-secondary), var(--color-accent));
+            color: white;
+        }
+        .test-checkbox input[type="checkbox"] { width: 22px; height: 22px; accent-color: white; transform: scale(1.2); }
+        .test-label { font-weight: 600; cursor: pointer; flex: 1; font-size: 14px; }
+        .selected-count {
+            background: linear-gradient(135deg, var(--color-secondary), var(--color-accent));
+            color: white; padding: 0.75rem 1.25rem; border-radius: 25px;
+            font-weight: 700; margin-bottom: 1rem; text-align: center;
+        }
+        .player-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .player-header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .stat-number { font-size: 2rem; font-weight: 700; color: var(--accent); }
+
+        .injuries-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-title h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .injuries-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 16px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.02);
+            font-size: 0.95rem;
+        }
+
+        .injuries-table thead {
+            background: linear-gradient(135deg, #1e1e3f, #2a2a5a);
+            color:white;
+        }
+
+        .injuries-table th {
+            padding: 1.25rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .injuries-table td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            vertical-align: middle;
+        }
+
+        .injuries-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .injuries-table tbody tr:hover {
+            background: rgba(79, 70, 229, 0.08);
+            transform: translateX(4px);
+        }
+
+        .severity-badge {
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .severity-minor { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .severity-moderate { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid var(--warning); }
+        .severity-severe { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+
+        .status-badge {
+            padding: 0.3rem 0.7rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .status-open { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .status-closed { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+
+        .date { 
+            font-family: 'SF Mono', Monaco, monospace; 
+            color: var(--text-secondary); 
+            font-size: 0.9rem;
+        }
+
+        .injury-type {
+            font-weight: 500;
+        }
+
+        .injury-bodypart {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .reporter {
+            font-weight: 500;
+            color: var(--accent);
+        }
+
+        .action-btn {
+            background: rgba(79, 70, 229, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(79, 70, 229, 0.3);
+            border-radius: 10px;
+            padding: 0.6rem 1.2rem;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .action-btn:hover {
+            background: rgba(79, 70, 229, 0.25);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .no-injuries {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .no-injuries i { 
+            font-size: 5rem; 
+            opacity: 0.3; 
+            margin-bottom: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .no-injuries h3 { 
+            font-size: 1.75rem; 
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state-gradient {
+            background: linear-gradient(135deg, rgba(79,70,229,0.1), rgba(34,197,94,0.1));
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 1.5rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .injuries-table { font-size: 0.85rem; }
+            .injuries-table th, .injuries-table td { padding: 0.75rem 0.5rem; }
+        }
+            </style>
+{% endblock %}
+
+{% block content %}
+    <div class="welcome-section">
+        <h1>Welcome</h1>
+    </div>
+
+ <main class="main-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+    <h2 class="mb-0 fw-bold black-white">Player Records</h2>
+
+    {% comment %} <div class="settings-section ms-auto">
+        {% if has_session_settings %}
+            <div class="report-settings-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="status-pill">⚙️ Active</span>
+                    <a href="{% url 'delete_session' %}" class="clear-link">Clear</a>
+                </div>
+
+                <div class="settings-pills">
+                    <span class="pill pill-blue">
+                        Min/Max: {{ min_max_formula|title }}
+                    </span>
+                    <span class="pill pill-green">
+                        {{ min_is_better|yesno:"Min Better,Max Better" }}
+                    </span>
+                    <span class="pill pill-purple">
+                        Group: {{ grp_avg_option|default:"Standard"|title }}
+                    </span>
+                </div>
+
+                <a href="{% url 'report_settings' %}" class="settings-edit-link">
+                    Change in Report Settings
+                </a>
+            </div>
+        {% else %}
+            <a href="{% url 'report_settings' %}" class="btn btn-outline-light btn-sm">
+                ⚙️ Configure Report Settings
+            </a>
+        {% endif %}
+    </div> {% endcomment %}
+</div>
+
+
+
+
+        <!-- Form -->
+       <form class="form-container" method="post" action="{% url 'multitest' %}">
+            {% csrf_token %}
+            <div class="form-fields">
+                <!-- DATE FILTER (Keep existing) -->
+                <div class="date-filter-group">
+                    <label>Date Option:</label><br>
+                    <label><input type="radio" id="range" name="date_option" value="range" onclick="toggleDateInputs('range')"> Start Date - End Date</label><br>
+                    <label><input type="radio" id="1month" name="date_option" value="1month" onclick="toggleDateInputs('preset')"> Last 1 Month</label><br>
+                    <label><input type="radio" id="3months" name="date_option" value="3months" onclick="toggleDateInputs('preset')"> Last 3 Months</label><br>
+                    <label><input type="radio" id="6months" name="date_option" value="6months" onclick="toggleDateInputs('preset')"> Last 6 Months</label><br>
+                    <label><input type="radio" id="fy" name="date_option" value="fy" onclick="toggleDateInputs('preset')"> Financial Year</label><br>
+                    <div id="date-range-fields" style="display:none; margin-top:12px;">
+                        <label for="startDateInput">Start Date:</label>
+                        <input type="date" id="startDateInput" name="start_date" class="input" disabled />
+                        <label for="endDateInput">End Date:</label>
+                        <input type="date" id="endDateInput" name="end_date" class="input" disabled />
+                    </div>
+                </div>
+
+                <!-- MULTI TEST SELECTION -->
+                <div class="select-wrapper">
+                    <label><strong>Select Tests:</strong></label>
+                    <div class="selected-count" id="selectedCount">0 Tests Selected</div>
+                    <div class="tests-grid" id="testsGrid">
+                        <div class="test-checkbox" data-test="10m">
+                            <input type="checkbox" name="tests" value="10m" id="test-10m">
+                            <label for="test-10m" class="test-label">⚡ 10m Sprint</label>
+                        </div>
+                        <div class="test-checkbox" data-test="20m">
+                            <input type="checkbox" name="tests" value="20m" id="test-20m">
+                            <label for="test-20m" class="test-label">⚡ 20m Sprint</label>
+                        </div>
+                        <div class="test-checkbox" data-test="YoYo">
+                            <input type="checkbox" name="tests" value="YoYo" id="test-yoyo">
+                            <label for="test-yoyo" class="test-label">🏃 YoYo Test</label>
+                        </div>
+                        <div class="test-checkbox" data-test="SBJ">
+                            <input type="checkbox" name="tests" value="SBJ" id="test-sbj">
+                            <label for="test-sbj" class="test-label">📏 Standing Broad Jump</label>
+                        </div>
+                        <div class="test-checkbox" data-test="Copenhagen">
+                            <input type="checkbox" name="tests" value="Copenhagen" id="test-copenhagen">
+                            <label for="test-copenhagen" class="test-label">🦘 Copen hagen</label>
+                        </div>
+                        <div class="test-checkbox" data-test="S/L Glute Bridges">
+                            <input type="checkbox" name="tests" value="S/L Glute Bridges" id="test-Glute-Bridges">
+                            <label for="test-Glute-Bridges" class="test-label">💪 S/L Glute Bridges</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PLAYER & NUM TESTS -->
+                <div style="display: flex; gap: 1rem;">
+                    <div class="select-wrapper" style="flex: 1;">
+                        <label for="playerSelect">Select Player:</label>
+                        <select id="playerSelect" name="player_id" class="input" required>
+                            <option value="" disabled selected>-- Select Player --</option>
+                            {% for p in players %}
+                                <option value="{{ p.id }}">{{ p.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="select-wrapper" style="flex: 1;">
+                        <label for="numTestsToShow">Show Last N Tests:</label>
+                        <select id="numTestsToShow" name="num_tests" class="input" required>
+                            <option value="" disabled selected>-- Select --</option>
+                            <option value="1">1 Test</option>
+                            <option value="2">2 Tests</option>
+                            <option value="3">3 Tests</option>
+                            <option value="4">4 Tests</option>
+                            <option value="5">5 Tests</option>
+                            <option value="6">6 Tests</option>
+                            <option value="7">7 Tests</option>
+                            <option value="8">8 Tests</option>
+                            <option value="9">9 Tests</option>
+                            <option value="10">10 Tests</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="button-wrapper">
+                    <button type="submit"  style="background: linear-gradient(135deg, var(--color-secondary), var(--color-accent));">
+                        🚀 Fetch Multi Test Report
+                    </button>
+                </div>
+            </div>
+        </form>
+         <!-- Normal Test -->
+        {% if error %}
+            <p style="color:red;">{{ error }}</p>
+        {% endif %}
+    
+        {% if player_info %}
+        <div id="playerInfoSection" class="player-info-section">
+            <h3 class="player-info-title">
+                Individual Report - {{ player_info.name }}
+            </h3>
+            <div class="player-info-card" id="playerInfoCard">
+                <div class="player-photo">
+                    {% if player_info.image %}
+                        <img src="{{ player_info.image.url }}" alt="{{ player_info.name }}"
+                             style="max-width:100%;max-height:100%;object-fit:cover;">
+                    {% else %}
+                        No Image
+                    {% endif %}
+                </div>
+                <table class="player-info-table">
+                    <tr><th>Name</th><td>{{ player_info.name }}</td></tr>
+                    <tr><th>Age</th><td>{{ player_info.age }}</td></tr>
+                    <tr><th>Gender</th><td>{{ player_info.gender }}</td></tr>
+                    <tr><th>Role</th><td>{{ player_info.role }}</td></tr>
+                    <tr><th>Handness</th><td>{{ player_info.handedness }}</td></tr>
+                    <tr><th>Category</th><td>{{ player_info.age_category }}</td></tr>
+                    <tr><th>Batting Style</th><td>{{ player_info.batting_style }}</td></tr>
+                    <tr><th>Bowling Style</th><td>{{ player_info.bowling_style }}</td></tr>
+                    <tr><th>Player Status</th><td>{{ player_info.player_status }}</td></tr>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+        
+    
+{% if total_injuries > 0 %}
+<!-- Player Header -->
+<div class="player-header">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+        <!-- Add player name/title here if needed -->
+    </div>
+    
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="text-sm opacity-80 mb-2">Total Injuries</div>
+            <div class="stat-number">{{ total_injuries }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="text-sm opacity-80 mb-2">Active (Open)</div>
+            <div class="stat-number text-red-400">{{ open_injuries }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="text-sm opacity-80 mb-2">Recovered</div>
+            <div class="stat-number text-green-400">{{ closed_injuries }}</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if injuries %}
+<!-- Injuries Table Section -->
+<section class="injuries-section">
+    <div class="section-title">
+        <h2>
+            <i class="fas fa-clipboard-list text-2xl"></i>
+            Injury History
+        </h2>
+    </div>
+    
+    <!-- FIXED: Proper table container with horizontal scroll -->
+    <div class="table-container">
+        <table class="injuries-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Injury Details</th>
+                    <th>Reported By</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                    <th>Expected Return</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for injury in injuries %}
+                <tr class="group">
+                    <td class="date font-mono">{{ injury.injury_date}}</td>
+                    <td>
+                        <div class="injury-type">{{ injury.name|default:injury.nature_of_injury }}</div>
+                        {% if injury.affected_body_part %}
+                        <div class="injury-bodypart">{{ injury.affected_body_part }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="reporter">
+                        {% if injury.reported_by %}
+                            {{ injury.reported_by.name }}
+                        {% else %}
+                            <span class="opacity-70">Self-Reported</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if injury.severity_rating %}
+                        <span class="severity-badge severity-{{ injury.severity|default:'minor' }}">
+                            {{ injury.severity_rating }}
+                            {% if injury.severity_rating %} ({{ injury.severity_rating }}/10){% endif %}
+                        </span>
+                        {% else %}
+                        <span class="text-gray-500">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ injury.status|default:'open' }}">
+                            {{ injury.get_status_display|default:injury.status|title }}
+                        </span>
+                    </td>
+                    <td class="date">
+                        {% if injury.expected_date_of_return %}
+                            {{ injury.expected_date_of_return|date:"M d, Y" }}
+                        {% else %}
+                            <span class="opacity-60">Not Set</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'organization_injury_detail' injury.pk %}" 
+                           class="action-btn group-hover:scale-105" 
+                           title="View {{ injury.name|default:'Injury' }} Details">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-12 text-gray-400">
+                        <i class="fas fa-inbox text-4xl opacity-50 mb-4 block"></i>
+                        <div>No injury records found for this player</div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+        
+        <!-- 10m Test -->
+
+        {% if test10 %}
+        <div class="table-container" id="statsTableContainer">
+            <h3 >
+                10m Tests
+            </h3>
+            <table class="stats-table" id="statsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Gender</th>
+                        <th>Category</th>
+                        <th>Distance Covered</th>
+                        <th>Predicted VO2max</th>
+                        <th>Best</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in test10 %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.phase }}</td>
+                        <td>{{ row.gender }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.distance_covered }}</td>
+                        <td>{{ row.predicted_vo2max }}</td>
+                        <td>{{ row.best }}</td>                      
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- 20m Tests -->
+        {% if test20 %}
+        <div class="table-container" id="statsTableContainer">
+            
+            <table class="stats-table" id="statsTable">
+               
+                <thead>
+                     <h3 >
+                      20m Tests 
+                    </h3>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Gender</th>
+                        <th>Category</th>
+                        <th>Distance Covered</th>
+                        <th>Predicted VO2max</th>
+                        <th>Best</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in test20 %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.phase }}</td>
+                        <td>{{ row.gender }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.distance_covered }}</td>
+                        <td>{{ row.predicted_vo2max }}</td>
+                        <td>{{ row.best }}</td>                      
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- YoYo Tests -->
+        {% if testYoYo %}
+        <div class="table-container" id="statsTableContainer">
+            <h3 >
+                Yoyo Tests
+            </h3>
+            <table class="stats-table" id="statsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Gender</th>
+                        <th>Category</th>
+                        <th>Distance Covered</th>
+                        <th>Predicted VO2max</th>
+                        <th>Best</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in testYoYo %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.phase }}</td>
+                        <td>{{ row.gender }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.distance_covered }}</td>
+                        <td>{{ row.predicted_vo2max }}</td>
+                        <td>{{ row.best }}</td>                      
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- Standing Broad Jump Tests -->
+        {% if testSBJ %}
+        <div class="table-container" id="statsTableContainer">
+            <table class="stats-table" id="statsTable">
+                <h3 >
+                    Standing Broad Jump Tests
+                </h3>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Gender</th>
+                        <th>Category</th>
+                        <th>Distance Covered</th>
+                        <th>Predicted VO2max</th>
+                        <th>Best</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in testSBJ %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.phase }}</td>
+                        <td>{{ row.gender }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.distance_covered }}</td>
+                        <td>{{ row.predicted_vo2max }}</td>
+                        <td>{{ row.best }}</td>                      
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        
+        <!-- Copenhagen Test s-->
+        {% if testCopenhagen %}
+        <div class="table-container" id="statsTableContainer">
+            <h3 >
+                    Copen Hagen Tests
+            </h3>
+            <table class="stats-table" id="statsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Right</th>
+                        <th>Left</th>
+                        <th>Difference</th>
+                        <th>Ratio</th>
+                        <th>Gender</th>
+                        <th>Category</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in testCopenhagen %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.phase }}</td>
+                        <td>{{ row.right }}</td>
+                        <td>{{ row.left }}</td>
+                        <td>{{ row.difference }}</td>
+                        <td>{{ row.ratio }}</td>
+                        <td>{{ row.gender }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.notes }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- Glute Bridges Test s-->
+        {% if testGluteBridges %}
+        <div class="table-container" id="statsTableContainer">
+            <h3 >
+                 S/L Glute Bridges Tests
+            </h3>
+            <table class="stats-table" id="statsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Right</th>
+                        <th>Left</th>
+                        <th>Difference</th>
+                        <th>Ratio</th>
+                        <th>Gender</th>
+                        <th>Category</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in testGluteBridges %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.phase }}</td>
+                        <td>{{ row.right }}</td>
+                        <td>{{ row.left }}</td>
+                        <td>{{ row.difference }}</td>
+                        <td>{{ row.ratio }}</td>
+                        <td>{{ row.gender }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.notes }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+
+    </main>
+
+<script>
+    const FETCH_REPORT_URL = "{% url 'fetch_multi_test_report' %}";  // New AJAX endpoint
+
+    // Multi-checkbox handler
+    document.querySelectorAll('.test-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('click', function(e) {
+            if (e.target.tagName !== 'INPUT') {
+                const input = this.querySelector('input[type="checkbox"]');
+                input.checked = !input.checked;
+                this.classList.toggle('checked', input.checked);
+                updateSelectedCount();
+            }
+        });
+    });
+
+    function updateSelectedCount() {
+        const count = document.querySelectorAll('input[name="tests"]:checked').length;
+        document.getElementById('selectedCount').textContent = 
+            `${count} Tests Selected${count > 0 ? ` (${count}/7)` : ''}`;
+    }
+
+    // Date toggle (existing)
+    function toggleDateInputs(type) {
+        const dateRangeFields = document.getElementById('date-range-fields');
+        const startDateInput = document.getElementById('startDateInput');
+        const endDateInput = document.getElementById('endDateInput');
+        if (type === 'range') {
+            dateRangeFields.style.display = 'block';
+            startDateInput.disabled = false;
+            endDateInput.disabled = false;
+        } else {
+            dateRangeFields.style.display = 'none';
+            startDateInput.disabled = true;
+            endDateInput.disabled = true;
+        }
+    }
+
+    // ⭐ MAIN FUNCTION: Fetch Multi Test Report
+    function fetchMultiTestReport() {
+        // Get form data
+        const selectedTests = Array.from(document.querySelectorAll('input[name="tests"]:checked'))
+                                .map(cb => cb.value);
+        const playerId = document.getElementById('playerSelect').value;
+        const numTests = document.getElementById('numTestsToShow').value;
+        const dateOption = document.querySelector('input[name="date_option"]:checked')?.value;
+        
+        // Validation
+        if (selectedTests.length === 0) {
+            alert('⚠️ Please select at least one test');
+            return;
+        }
+        if (!playerId || !numTests) {
+            alert('⚠️ Please select player and number of tests');
+            return;
+        }
+        
+        // Get date range
+        let startDate = '', endDate = '';
+        if (dateOption === 'range') {
+            startDate = document.getElementById('startDateInput').value;
+            endDate = document.getElementById('endDateInput').value;
+            if (!startDate || !endDate) {
+                alert('⚠️ Please select start and end dates');
+                return;
+            }
+        }
+        
+        // Show loading
+        document.querySelector('button[onclick="fetchMultiTestReport()"]').textContent = 'Loading...';
+        document.querySelector('button[onclick="fetchMultiTestReport()"]').disabled = true;
+        
+        // Prepare FormData
+        const formData = new FormData();
+        formData.append('tests', selectedTests.join(','));  // Send as comma-separated
+        formData.append('player_id', playerId);
+        formData.append('num_tests', numTests);
+        formData.append('date_option', dateOption);
+        formData.append('start_date', startDate);
+        formData.append('end_date', endDate);
+        
+        // AJAX Request
+        fetch(FETCH_REPORT_URL, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayMultiTestResults(data);
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to fetch report');
+        })
+        .finally(() => {
+            // Reset button
+            document.querySelector('button[onclick="fetchMultiTestReport()"]').textContent = '🚀 Fetch Multi Test Report';
+            document.querySelector('button[onclick="fetchMultiTestReport()"]').disabled = false;
+        });
+    }
+
+    function displayMultiTestResults(data) {
+        // Show player info
+        if (data.player_info) {
+            const playerSection = document.getElementById('playerInfoSection');
+            if (playerSection) {
+                playerSection.style.display = 'block';
+                document.querySelector('.player-info-title').textContent = 
+                    `Multi Test Report - ${data.player_info.name}`;
+            }
+        }
+        
+        // Show stats table
+        if (data.stats_data && data.stats_data.length > 0) {
+            const container = document.getElementById('statsTableContainer');
+            const table = document.getElementById('statsTable');
+            container.style.display = 'block';
+            
+            let thead = '<thead><tr><th>Test</th><th>Date</th><th>Phase</th><th>Best</th><th>Notes</th></tr></thead>';
+            let tbody = '<tbody>';
+            data.stats_data.forEach(row => {
+                tbody += `
+                    <tr>
+                        <td><strong>${row.test}</strong></td>
+                        <td>${row.date}</td>
+                        <td>${row.phase || '—'}</td>
+                        <td>${row.best || '—'}</td>
+                        <td>${row.notes || '—'}</td>
+                    </tr>
+                `;
+            });
+            tbody += '</tbody>';
+            table.innerHTML = thead + tbody;
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Initialize
+    updateSelectedCount();
+</script>
+
+{% endblock%}

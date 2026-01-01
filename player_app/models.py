@@ -831,7 +831,8 @@ class SLGluteBridges(models.Model):
     notes = models.TextField(blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     reported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    
     individual_average_left = models.FloatField(null=True, blank=True)
     individual_average_right = models.FloatField(null=True, blank=True)
 
@@ -1018,6 +1019,7 @@ class SLLungeCalfRaises(models.Model):
     notes = models.TextField(blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     reported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         ordering = ['-date']
@@ -1214,6 +1216,7 @@ class MBRotationalThrows(models.Model):
     notes = models.TextField(blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     reported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         ordering = ['-date']
@@ -1408,6 +1411,7 @@ class CopenhagenTest(models.Model):
     notes = models.TextField(blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     reported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         ordering = ['-date']
@@ -1602,6 +1606,7 @@ class SLHopTest(models.Model):
     notes = models.TextField(blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     reported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         ordering = ['-date']

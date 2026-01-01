@@ -174,6 +174,13 @@ urlpatterns = [
                   path('fetch-players/', views.fetch_players, name='fetch_players'),
                   path('fetch-report/', views.fetch_report, name='fetch_report'),
                   path("player-report/", views.player_report, name="player_report"),
+                  
+                  # path('multi-test-report/', views.multi_test_report, name='multi_test_report'),
+                  path('reports/multi-test/', views.multi_test_report_view, name='multi_test_report'),
+                  path('ajax/fetch-multi-test-report/', views.fetch_multi_test_report, name='fetch_multi_test_report'),
+
+                  path('multitest/',views.multitest,name='multitest'),
+
 
 
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,4 +1,5 @@
 import csv
+from socket import TCP_NODELAY
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
@@ -6360,46 +6361,76 @@ def msk_injury_assessment_list(request):
     }
     return render(request, 'player_app/tests/msk_injury_assessment_list.html', context)
 
-
+from django.http import Http404
 # Organization Player Tests view for all test types
 @login_required
 def organization_player_tests(request, player_id):
-    player = get_object_or_404(Player, pk=player_id)
+    TEST_MODEL_MAP = {
+        # Single-value tests
+        '10m': TenMeterTest,
+        '20m': TwentyMeterTest,
+        '40m': FortyMeterTest,
+        'yoyo': YoYoTest,
+        'sbj': SBJTest,
+        'run_a_3': RunA3Test,
+        'run_a_3x6': None,
+        '1_mile': OneMileTest,
+        'push_ups': PushUpsTest,
+        '2_km': TwoKmTest,
 
-    # Optional org-safety check (adapt to your roles/relations)
-    if hasattr(request.user, 'staff') and player.organization_id != request.user.staff.organization_id:
-        return render(request, 'error.html', {'message': 'No access to this player'})
+        # Asymmetry tests - MATCH YOUR TEMPLATE KEYS
+        's_l_glute_bridges': SLGluteBridges,
+        'sl_lunge_calf_raises': SLLungeCalfRaises,
+        'mb_rotational_throws': MBRotationalThrows,
+        'copenhagen': CopenhagenTest,
+        's_l_hop': SLHopTest,
 
-    base_qs = TestAndResult.objects.filter(player=player).order_by('-date', '-created_at')
-
-    context = {
-        "player": player,
-
-        # Simple time/distance tests
-        "tests_10m":          base_qs.filter(test='10m'),
-        "tests_20m":          base_qs.filter(test='20m'),
-        "tests_40m":          base_qs.filter(test='40m'),
-        "tests_yoyo":         base_qs.filter(test='YoYo'),
-        "tests_sbj":          base_qs.filter(test='SBJ'),
-        "tests_run_a_3":      base_qs.filter(test='Run A 3'),
-        "tests_run_a_3x6":    base_qs.filter(test='Run A 3x6'),
-        "tests_1_mile":       base_qs.filter(test='1 Mile'),
-        "tests_pushups":      base_qs.filter(test='Push-ups'),
-        "tests_2km":          base_qs.filter(test='2 KM'),
-
-        # Asymmetry tests
-        "tests_glute_bridges": base_qs.filter(test='S/L Glute Bridges'),
-        "tests_lunge_calf":    base_qs.filter(test='SL Lunge Calf Raises'),
-        "tests_mb_rot":        base_qs.filter(test='MB Rotational Throws'),
-        "tests_copenhagen":    base_qs.filter(test='Copenhagen'),
-        "tests_sl_hop":        base_qs.filter(test='S/L Hop'),
-
-        # Complex / lab tests
-        "tests_cmj":           base_qs.filter(test='CMJ Scores'),
-        "tests_anthro":        base_qs.filter(test='Anthropometry Test'),
-        "tests_blood":         base_qs.filter(test='Blood Work'),
-        "tests_dexa":          base_qs.filter(test='DEXA Scan Test'),
+        # Complex tests
+        'cmj_scores': CMJTest,
+        'anthropometry': AnthropometryTest,
+        'blood_work': BloodTest,
+        'dexa_scan_test': DexaScanTest,
+        'msk_injury_assessment': MSKInjuryAssessment,
     }
+
+    player = get_object_or_404(Player, pk=player_id)
+    
+    
+    # Org-safety check
+    user_organization = getattr(request.user, 'organization', None)
+    if user_organization and player.organization_id != user_organization.id:
+        raise Http404("Player not found")
+
+    context = {"player": player}
+
+    # Query each test type
+    for test_name, model_cls in TEST_MODEL_MAP.items():
+        if model_cls:
+            try:
+                # Add this debug for SLGluteBridges specifically
+                if test_name == 's_l_glute_bridges':
+                    print("SLG fields:", [f.name for f in SLGluteBridges._meta.fields])
+                    print("Direct query:", SLGluteBridges.objects.filter(player=player).count())
+
+                tests = model_cls.objects.filter(player=player).order_by('-date', '-created_at')[:10]
+
+                
+                # Key will now be exactly: tests_s_l_glute_bridges, etc.
+                key = f"tests_{test_name}"
+                context[key] = tests
+                
+            except Exception:
+                context[f"tests_{test_name}"] = []
+        else:
+            context[f"tests_{test_name}"] = []
+    # Add this before return render() to debug
+    print("=== CONTEXT KEYS ===")
+    print(SLGluteBridges.objects.filter(player=player))
+    for key in context.keys():
+        if key.startswith('tests_'):
+            print(f"{key}: {len(context[key])} items")
+    print("====================")
+
     return render(request, 'player_app/tests/organization_player_tests.html', context)
 
 
@@ -6531,7 +6562,7 @@ def fetch_players(request):
         end_date = request.POST.get('end_date', '')
         
         players_data = []
-        print(test_name)
+        
         # Map test names to models (extend this for all your models)
         test_models = {
             '10m': TenMeterTest,
@@ -7059,3 +7090,283 @@ def player_report(request):
             'grp_avg_option': session_settings.get('grp_avg_option', None),
         }
         return render(request, "player_app/record/player_test.html", context)
+    
+
+def multi_test_report_view(request):
+    """Standalone Multi Test Report View"""
+    players = Player.objects.filter(organization=request.user.organization).order_by('name')
+    
+    context = {
+        'players': players,
+        'selected_tests': [],
+        'selected_player_id': '',
+        'num_tests': '',
+        'error': None,
+    }
+    
+    if request.method == 'POST':
+        try:
+            # Extract form data
+            date_option = request.POST.get('date_option')
+            selected_tests = request.POST.getlist('tests')  # ['10m', 'YoYo', 'SBJ']
+            player_id = request.POST.get('player_id')
+            num_tests = request.POST.get('num_tests')
+            
+            # Validation
+            if not selected_tests:
+                context['error'] = 'Please select at least one test'
+                return render(request, 'multi_test_report.html', context)
+            
+            if not player_id or not num_tests:
+                context['error'] = 'Please select player and number of tests'
+                return render(request, 'multi_test_report.html', context)
+            
+            # Get player
+            player = get_object_or_404(
+                Player, 
+                id=player_id, 
+                organization=request.user.organization
+            )
+            
+            # Calculate date range
+            start_date, end_date = _get_date_range(date_option, request.POST)
+            
+            # Get multi-test stats
+            stats_data = _get_multi_test_stats(
+                player, selected_tests, int(num_tests), start_date, end_date
+            )
+            
+            # Player info
+            player_info = _get_player_info(player)
+            
+            # Update context
+            context.update({
+                'player_info': player_info,
+                'stats_data': stats_data,
+                'selected_tests': selected_tests,
+                'selected_player_id': player_id,
+                'num_tests': num_tests,
+                'error': None,
+            })
+            
+        except Exception as e:
+            context['error'] = f'Error: {str(e)}'
+    
+    return render(request, 'player_app/record/multi_test_report.html', context)
+
+def _get_date_range(date_option, post_data):
+    """Calculate date range based on option"""
+    today = datetime.now().date()
+    
+    if date_option == 'range':
+        start_date = post_data.get('start_date')
+        end_date = post_data.get('end_date')
+        return start_date, end_date
+    elif date_option == '1month':
+        return (today - timedelta(days=30), today)
+    elif date_option == '3months':
+        return (today - timedelta(days=90), today)
+    elif date_option == '6months':
+        return (today - timedelta(days=180), today)
+    elif date_option == 'fy':
+        # Financial Year Apr 1 - Mar 31
+        year = datetime.now().year
+        if datetime.now().month >= 4:
+            start = datetime(year, 4, 1).date()
+            end = datetime(year + 1, 3, 31).date()
+        else:
+            start = datetime(year - 1, 4, 1).date()
+            end = datetime(year, 3, 31).date()
+        return (start, end)
+    else:
+        return (today - timedelta(days=365), today)
+
+def _get_multi_test_stats(player, test_names, num_tests, start_date=None, end_date=None):
+    """Get stats for multiple tests"""
+    all_stats = []
+    
+    for test_name in test_names:
+        # Filter tests
+        queryset = TestAndResult.objects.filter(
+            player=player,
+            test=test_name
+        )
+        
+        if start_date:
+            queryset = queryset.filter(date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(date__lte=end_date)
+        
+        # Get latest N tests
+        latest_tests = queryset.order_by('-date')[:num_tests]
+        
+        for test_result in latest_tests:
+            stat_row = {
+                'test': test_name,
+                'date': test_result.date.strftime('%Y-%m-%d'),
+                'phase': getattr(test_result, 'phase', ''),
+                'best': getattr(test_result, 'best', ''),
+                'notes': getattr(test_result, 'notes', ''),
+                'reported_by': str(getattr(test_result, 'reported_by', '')),
+            }
+            
+            # Test-specific fields
+            if hasattr(test_result, 'distance_covered'):
+                stat_row['distance_covered'] = getattr(test_result, 'distance_covered', '')
+            if hasattr(test_result, 'predicted_vo2max'):
+                stat_row['predicted_vo2max'] = getattr(test_result, 'predicted_vo2max', '')
+            
+            all_stats.append(stat_row)
+    
+    return all_stats
+
+def _get_player_info(player):
+    """Get formatted player info"""
+    return {
+        'name': player.name,
+        'age': player.age,
+        'gender': getattr(player, 'gender', ''),
+        'role': getattr(player, 'role', ''),
+        'handedness': getattr(player, 'handedness', ''),
+        'age_category': getattr(player, 'age_category', ''),
+        'batting_style': getattr(player, 'batting_style', ''),
+        'bowling_style': getattr(player, 'bowling_style', ''),
+        'player_status': getattr(player, 'player_status', ''),
+        'image': getattr(player, 'image', None),
+    }
+
+
+@csrf_exempt
+def fetch_multi_test_report(request):
+    """AJAX endpoint for multi-test report"""
+    try:
+        selected_tests = request.POST.get('tests', '').split(',')
+        player_id = request.POST.get('player_id')
+        num_tests = int(request.POST.get('num_tests', 0))
+        date_option = request.POST.get('date_option')
+        
+        player = get_object_or_404(Player, id=player_id, organization=request.user.organization)
+        start_date, end_date = _get_date_range(date_option, request.POST)
+        
+        stats_data = _get_multi_test_stats(player, selected_tests, num_tests, start_date, end_date)
+        player_info = _get_player_info(player)
+        
+        return JsonResponse({
+            'success': True,
+            # 'player_info': player_info,
+            'stats_data': stats_data,
+            'selected_tests': selected_tests
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+    
+
+from django.db.models import Q
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
+from datetime import date
+
+today = date.today()
+
+def multitest(request):
+    if request.method=='POST':
+        date_option = request.POST.get('date_option')
+        selected_tests = request.POST.getlist('tests')  
+        player_id = request.POST.get('player_id')
+        num_tests = request.POST.get('num_tests')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+      
+
+        date_time = 0
+        if date_option == 'range':
+           
+            if not start_date or not end_date:
+                date_time = (today - timedelta(days=30), today)
+            date_time = (start_date, end_date)
+           
+        
+        elif date_option == '1month':
+            date_time = (today - timedelta(days=30), today)
+            start_date = date_time[0]
+            end_date = date_time[1]
+        
+        elif date_option == '3months':  # Fixed: was "3month"
+            date_time =(today - timedelta(days=90), today)
+            start_date = date_time[0]
+            end_date = date_time[1]
+        
+        elif date_option == '6months':  # Fixed: was "6month"
+            date_time = (today - timedelta(days=180), today)
+            start_date = date_time[0]
+            end_date = date_time[1]
+        
+        elif date_option == 'fy':
+            # Financial Year: April 1 - March 31
+            year = datetime.now().year
+            if datetime.now().month >= 4:
+                start_date = datetime(year, 4, 1).date()
+                end_date = datetime(year + 1, 3, 31).date()
+            else:
+                start_date = datetime(year - 1, 4, 1).date()
+                end_date = datetime(year, 3, 31).date()
+            date_time = (start_date, end_date)
+        
+        else:  # Default: last year
+            date_time = (today - timedelta(days=365), today)
+            start_date = date_time[0]
+            end_date = date_time[1]
+
+        
+        player = Player.objects.get(id=player_id)
+        player_info = Player.objects.get(id=player_id)
+        players = Player.objects.filter(organization=request.user.organization).order_by('name')
+        test10 = None
+        if "10m" in selected_tests:
+            test10 = TenMeterTest.objects.filter(player=player,date__range=[start_date, end_date])[:int(num_tests)]
+            
+        
+        test20 = None
+        if "20m" in selected_tests:
+            test20 = TwentyMeterTest.objects.filter(player=player,date__range=[start_date, end_date])[:int(num_tests)]
+            
+
+        testYoYo = None
+        if "YoYo" in selected_tests:
+            testYoYo = YoYoTest.objects.filter(player=player,date__range=[start_date, end_date])[:int(num_tests)]
+            
+
+        testSBJ = None
+        if "SBJ" in selected_tests:
+            testSBJ = SBJTest.objects.filter(player=player,date__range=[start_date, end_date])[:int(num_tests)]
+            
+
+        testCopenhagen = None
+        if "Copenhagen" in selected_tests:
+            testCopenhagen = CopenhagenTest.objects.filter(player=player,date__range=[start_date, end_date])[:int(num_tests)]
+            
+
+        testGluteBridges = None
+        if "S/L Glute Bridges" in selected_tests:
+            testGluteBridges = SLGluteBridges.objects.filter(player=player,date__range=[start_date, end_date])[:int(num_tests)]
+            
+
+        injuries = Injury.objects.filter(player=player,injury_date__range=[start_date, end_date])
+        
+       
+        context = {
+            "test10":test10,
+            "test20":test20,
+            "testYoYo":testYoYo,
+            "testSBJ":testSBJ,
+            "testCopenhagen":testCopenhagen,
+            "testGluteBridges":testGluteBridges,
+            'player_info':player_info,
+            'players':players,
+            'injuries': injuries,
+            'total_injuries': injuries.count(),
+            'open_injuries': injuries.filter(status='open').count(),
+            'closed_injuries': injuries.filter(status='closed').count(),
+        }
+
+    return render(request,'player_app/record/multi_test_report.html',context)
