@@ -420,6 +420,7 @@
                         <option value="MB Rotational Throws" {% if selected_test == 'MB Rotational Throws' %}selected{% endif %}>MB Rotational Throws</option>
                         <option value="Copenhagen" {% if selected_test == 'Copenhagen' %}selected{% endif %}>Copenhagen</option>
                         <option value="SL Lunge Calf Raises" {% if selected_test == 'SL Lunge Calf Raises' %}selected{% endif %}>SL Lunge Calf Raises</option>
+                        <option value="run_a_3x6" {% if selected_test == 'run_a_3x6' %}selected{% endif %}>Run A 3x6</option>
                        
                     </select>
                 </div>
@@ -620,6 +621,47 @@
         </div>
         {% endif %}
 
+        <!-- Single Test-->
+        {% if stats_data_single %}
+        <div class="table-container" id="statsTableContainer">
+            <table class="stats-table" id="statsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Gender</th>
+                        <th>Category</th>
+                        <th>Trial1</th>
+                        <th>Trial2</th>
+                        <th>Trial3</th>
+                        <th>Trial4</th>
+                        <th>Trial5</th>
+                        <th>Trial6</th>
+                        <th>Average</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in stats_data_single %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.phase }}</td>
+                        <td>{{ row.gender }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.trial1 }}</td>
+                        <td>{{ row.trial2 }}</td>
+                        <td>{{ row.trial3 }}</td>
+                        <td>{{ row.trial4 }}</td>
+                        <td>{{ row.trial5 }}</td>
+                        <td>{{ row.trial6 }}</td>
+                        <td>{{ row.average }}</td>
+                        <td>{{ row.notes }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
 
     </main>
 

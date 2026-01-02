@@ -117,7 +117,7 @@ urlpatterns = [
                   path('delete-session/', views.delete_session, name='delete_session'),
 
                   # Test URLs
-                  path('runa3x6/<str:test_name>/', views.add_run_3x6_test, name='add_run_3x6_test'),
+                  path('runa3x6/', views.add_run_3x6_test, name='add_run_3x6_test'),
                   path('glute-bridges/', views.add_glute_bridges_test, name='add_glute_bridges_test'),
                   path('lunge-calf-raises/', views.add_lunge_calf_raises_test, name='add_lunge_calf_raises_test'),
                   path('mb-rotational-throw/', views.add_mb_rotational_throw_test, name='add_mb_rotational_throw_test'),
@@ -142,7 +142,7 @@ urlpatterns = [
 
 
                   # Test Data View URLs
-                  path('run-3x6-view/<str:test_name>/', views.run_3x6_test_view, name='run_3x6_test_view'),
+                  path('run-3x6-view/', views.run_3x6_test_view, name='run_3x6_test_view'),
                   path('glute-bridges-view/', views.glute_bridges_test_view, name='glute_bridges_test_view'),
                   path('lunge-calf-raises-view/', views.lunge_calf_raises_test_view, name='lunge_calf_raises_test_view'),
                   path('mb-rotational-throw-view/', views.mb_rotational_throw_test_view, name='mb_rotational_throw_test_view'),

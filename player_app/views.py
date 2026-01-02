@@ -3419,9 +3419,9 @@ def add_test_results(request, test_name=None):
         })
 
 # Run A 3x6 test views
-def add_run_3x6_test(request,test_name=None):
+def add_run_3x6_test(request):
     user_organization = getattr(request.user, 'organization', None)
-    
+    test_name = 'Run A 3x6'
     players = Player.objects.filter(organization=user_organization)
     events = CampTournament.objects.filter(is_deleted=False)
     staff = Staff.objects.filter(organization=user_organization)
@@ -3462,23 +3462,26 @@ def add_run_3x6_test(request,test_name=None):
         if not errors:
             phase_data = CampTournament.objects.get(id=int(phase))
             
+             # Staff → User
+            staff_obj = get_object_or_404(Staff, pk=reported_by_id)
+            reported_by = staff_obj.user  # adjust if field name differs
 
             player = Player.objects.get(pk=player_id)
-            reported_by = User.objects.get(pk=reported_by_id)
-            TestAndResult.objects.create(
+
+            RunA3x6Test.objects.create(
                 player=player,
-                test=test,
                 date=date,
                 phase=phase_data,
-                run_a_3x6_attempt1=run_a_3x6_attempt1,
-                run_a_3x6_attempt2=run_a_3x6_attempt2,
-                run_a_3x6_attempt3=run_a_3x6_attempt3,
-                run_a_3x6_attempt4=run_a_3x6_attempt4,
-                run_a_3x6_attempt5=run_a_3x6_attempt5,
-                run_a_3x6_attempt6=run_a_3x6_attempt6,
-                run_a_3x6_average=run_a_3x6_average,
+                trial1=int(run_a_3x6_attempt1),
+                trial2=int(run_a_3x6_attempt2),
+                trial3=int(run_a_3x6_attempt3),
+                trial4=int(run_a_3x6_attempt4),
+                trial5=int(run_a_3x6_attempt5),
+                trial6=int(run_a_3x6_attempt6),
+                average=float(run_a_3x6_average),
                 notes=notes,
-                reported_by=reported_by
+                reported_by=reported_by,
+            
             )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
@@ -3505,12 +3508,17 @@ def add_run_3x6_test(request,test_name=None):
         })
 
 # Run A 3x6 test views
-def run_3x6_test_view(request,test_name=None):
+def run_3x6_test_view(request):
     test_name = 'Run A 3x6'
     search_query = request.GET.get('search', '').strip()
-    results = TestAndResult.objects.filter(test=test_name).select_related('player', 'reported_by').order_by('-date')
 
-    # Filter by player name if search query is present
+    # Use the dedicated model instead of TestAndResult
+    results = (
+        RunA3x6Test.objects
+        .select_related('player', 'phase', 'reported_by')
+        .order_by('-date')
+    )
+
     if search_query:
         results = results.filter(player__name__icontains=search_query)
 
@@ -3518,13 +3526,11 @@ def run_3x6_test_view(request,test_name=None):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    player_ids = results.values_list('player_id', flat=True).distinct()
-
     context = {
         'test_name': test_name,
         'page_obj': page_obj,
         'total_results': paginator.count,
-        'search_query': search_query,  # pass to template for form value retention
+        'search_query': search_query,
     }
     return render(request, 'player_app/tests/runa3x6_data.html', context)
 
@@ -6584,6 +6590,7 @@ def fetch_players(request):
             'DEXA Scan Test':DexaScanTest,
             'Blood Test':BloodTest,
             'MSK Injury Assessment':MSKInjuryAssessment,
+            'run_a_3x6':RunA3x6Test,
             # Add all other tests...
         }
         
@@ -6769,6 +6776,9 @@ def player_report(request):
         "MB Rotational Throws": MBRotationalThrows,
         "Copenhagen": CopenhagenTest,
         "S/L Hop": SLHopTest,
+    }
+    SINGLE_TEST = {
+        "run_a_3x6":RunA3x6Test,
     }
     if test_name in TEST_MODELS:
         Model = TEST_MODELS.get(test_name)
@@ -7089,6 +7099,136 @@ def player_report(request):
             'min_is_better': session_settings.get('min_is_better', False),
             'grp_avg_option': session_settings.get('grp_avg_option', None),
         }
+        return render(request, "player_app/record/player_test.html", context)
+    
+
+    elif test_name in SINGLE_TEST:
+        Model = SINGLE_TEST.get(test_name)
+        if not Model:
+            return render(
+                request,
+                "player_app/record/player_test.html",
+                {"error": "Invalid test name"},
+            )
+
+        qs = Model.objects.filter(player_id=player_id)
+        if start_date and end_date:
+            qs = qs.filter(date__range=[start_date, end_date])
+
+        tests = qs.order_by("-date")[:num_tests]
+        if not tests.exists():
+            return render(
+                request,
+                "player_app/record/player_test.html",
+                {"error": "No tests found for this player and date range"},
+            )
+
+        first_test = tests.first()
+        player = first_test.player
+
+        player_info = Player.objects.get(id=player_id)
+
+        if min_max_formula == 'all_players':
+            min_value = [t.min for t in tests if t.min is not None]
+            max_value = [t.max for t in tests if t.max is not None]
+            max_value = max(max_value)
+
+        elif min_max_formula == "all_players_by_gender":
+            min_value = GenderAggregate.objects.filter(
+                test=test_name, gender=player.gender
+            ).values_list("min", flat=True)
+            max_value = GenderAggregate.objects.filter(
+                test=test_name, gender=player.gender
+            ).values_list("max", flat=True)
+        
+        elif min_max_formula == "category_based":
+            min_value = CategoryAggregate.objects.filter(
+                test=test_name, category=player.age_category
+            ).values_list("min", flat=True)
+            max_value = CategoryAggregate.objects.filter(
+                test=test_name, category=player.age_category
+            ).values_list("max", flat=True)
+
+
+        
+
+        if min_is_better:
+            min_value, max_value = max_value, min_value
+
+        group_average = qs.aggregate(avg=Avg('individual_average'))['avg'] or 0
+        if grp_avg_option == "all_players_date":
+            group_average = qs.aggregate(avg=Avg('individual_average'))['avg'] or 0
+        
+        elif grp_avg_option == "all_players_gender_date":
+            group_average = GenderAggregate.objects.filter(
+                test=test_name, gender=player.gender
+            ).values_list("average", flat=True)[0]
+
+        elif grp_avg_option == "category_based_date":
+            group_average = CategoryAggregate.objects.filter(
+                test=test_name, category=player.age_category
+            ).values_list("average", flat=True)[0]
+        
+        elif grp_avg_option == "camp_or_tournament":
+            group_average = CampAggregate.objects.filter(
+                test=test_name, category=player.age_category
+            ).values_list("average",flat=True)[0]
+
+        individual_averages = [t.individual_average for t in tests if t.individual_average is not None]
+        first_part = individual_averages[0] - min_value[0]
+        second_part = max_value - min_value[0]
+        normalized_scores = first_part / second_part * 100 if second_part != 0 else None
+
+
+        # Prepare chart data
+        chart_data = {
+            "labels": [t.date.strftime("%Y-%m-%d") for t in tests],
+            
+        }
+
+        stats_data = []
+        for t in tests:
+            stats_data.append(
+                {
+                    "date": t.date,
+                    "phase": t.phase.name if t.phase else "",
+                    "trial1": t.trial1,
+                    "trial2": t.trial2,
+                    "trial3": t.trial3,
+                    "trial4": t.trial4,
+                    "trial5": t.trial5,
+                    "trial6": t.trial6,
+                    "average": t.average,
+                    "notes": t.notes or "",
+                    "reported_by": t.reported_by.first_name if t.reported_by else "",
+                    "gender": t.gender,
+                    "category": t.category,
+                    "reported_by_designation": t.reported_by_designation,
+                    "min": t.min,
+                    "max": t.max,
+                    "individual_average": t.individual_average,
+                }
+            )
+
+        context = {
+            "player_info": player_info,
+            "stats_data_single": stats_data,
+            "chart_data": chart_data,         # if you later render chart server‑side or pass to JS
+            "selected_test": test_name,
+            "num_tests": num_tests,
+            "start_date": start_date,
+            "end_date": end_date,
+            "normalized_scores": normalized_scores,
+            "individual_averages": individual_averages[0],
+            "min_value": min_value[0],
+            "max_value": max_value,
+            "group_average": group_average,
+            'session_settings': session_settings,
+            'has_session_settings': bool(session_settings),
+            'min_max_formula': session_settings.get('min_max_formula', 'all_players'),
+            'min_is_better': session_settings.get('min_is_better', False),
+            'grp_avg_option': session_settings.get('grp_avg_option', None),
+            }
         return render(request, "player_app/record/player_test.html", context)
     
 

@@ -286,7 +286,7 @@ if (closeFilterBtn && filterPopover) {
     };
 }
 
-// Column selection popover logic remains unchanged
+// Column selection popover logic
 const columnBtn = document.getElementById("columnSelectBtn");
 const columnPopover = document.getElementById("columnPopover");
 const closeColumnBtn = document.getElementById("closeColumnBtn");
@@ -299,7 +299,7 @@ const ALL_SWAP_COLS = [
     "col-batting", "col-bowling", "col-handedness", "col-age",
     "col-guardian", "col-relation", "col-guardian-mob"
 ];
-const MAX_SELECTABLE = 4; // maximum user-chosen additional columns
+const MAX_SELECTABLE = 4;
 
 function getSelectedCols() {
     return Array.from(colCheckboxes)
@@ -339,13 +339,11 @@ colCheckboxes.forEach(cb => {
     cb.addEventListener("change", enforceMaxSelectable);
 });
 
-// Show all columns popover and initialize checkboxes checked by default
 if (columnBtn && columnPopover) {
     columnBtn.onclick = function() {
         columnPopover.classList.toggle("show-filters");
         columnPopover.style.left = (columnBtn.offsetLeft) + "px";
         columnPopover.style.top = (columnBtn.offsetTop + columnBtn.offsetHeight + 6) + "px";
-        // Initialize all checkboxes checked for showing all columns
         colCheckboxes.forEach(cb => cb.checked = true);
     };
 }
@@ -366,10 +364,81 @@ if (applyColumnsBtn) {
         columnPopover.classList.remove('show-filters');
     };
 }
-document.addEventListener("DOMContentLoaded", function() {
-    // On page load show all columns
-    setTableColumns(ALL_SWAP_COLS);
-});
+
+// UPDATED: Dynamic search with S.No renumbering
+const searchInput = document.getElementById("playerSearchInput");
+const playerTable = document.querySelector(".player-table tbody");
+
+function updateSearchAndSerialNumbers() {
+    const filter = searchInput.value.trim().toLowerCase();
+    const allRows = [...playerTable.rows];
+    let visibleRows = [];
+
+    if (!filter) {
+        // Show all rows
+        allRows.forEach(row => {
+            row.style.display = "";
+        });
+        visibleRows = allRows;
+    } else {
+        // Filter rows based on name or role
+        allRows.forEach(row => {
+            const nameCell = row.querySelector(".col-name");
+            const roleCell = row.querySelector(".col-role");
+
+            const nameText = nameCell ? nameCell.textContent.toLowerCase() : "";
+            const roleText = roleCell ? roleCell.textContent.toLowerCase() : "";
+
+            if (nameText.includes(filter) || roleText.includes(filter)) {
+                row.style.display = "";
+                visibleRows.push(row);
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+
+    // UPDATE S.No for visible rows only
+    visibleRows.forEach((row, index) => {
+        const serialCell = row.querySelector(".col-serial");
+        if (serialCell) {
+            serialCell.textContent = (index + 1);
+        }
+    });
+
+    // Update participation cards
+    updateParticipationCards();
+}
+
+searchInput.addEventListener("input", updateSearchAndSerialNumbers);
+
+// UPDATED: Participation cards count only VISIBLE rows
+function updateParticipationCards() {
+    let fullCount = 0;
+    let limitedCount = 0;
+    let noCount = 0;
+
+    // Only count VISIBLE rows
+    document.querySelectorAll(".player-table tbody tr").forEach(row => {
+        if (row.style.display !== "none") {  // Only visible rows
+            const statusCell = row.querySelector(".col-player-status");
+            if (statusCell) {
+                const statusText = statusCell.textContent.trim().toLowerCase();
+                if (statusText === "full participation") {
+                    fullCount++;
+                } else if (statusText === "limited participation") {
+                    limitedCount++;
+                } else if (statusText === "no participation") {
+                    noCount++;
+                }
+            }
+        }
+    });
+
+    document.getElementById("fullParticipationCount").textContent = fullCount;
+    document.getElementById("limitedParticipationCount").textContent = limitedCount;
+    document.getElementById("noParticipationCount").textContent = noCount;
+}
 
 // Export button logic
 document.getElementById("downloadExcelBtn").onclick = function() {
@@ -377,71 +446,13 @@ document.getElementById("downloadExcelBtn").onclick = function() {
     let params = new URLSearchParams(window.location.search);
     window.location.href = url + (params.toString() ? ("?" + params.toString()) : "");
 };
-</script>
-<script>
-    const searchInput = document.getElementById("playerSearchInput");
-const playerTable = document.querySelector(".player-table tbody");
 
-searchInput.addEventListener("input", function() {
-    const filter = searchInput.value.trim().toLowerCase();
-
-    // If empty, show all rows (clear search)
-    if (!filter) {
-        [...playerTable.rows].forEach(row => {
-            row.style.display = "";  // show row
-        });
-        return;
-    }
-
-    // Loop through table rows and hide those that don't match name or role
-    [...playerTable.rows].forEach(row => {
-        const nameCell = row.querySelector(".col-name");
-        const roleCell = row.querySelector(".col-role");
-
-        // Defensive checks
-        const nameText = nameCell ? nameCell.textContent.toLowerCase() : "";
-        const roleText = roleCell ? roleCell.textContent.toLowerCase() : "";
-
-        if (nameText.includes(filter) || roleText.includes(filter)) {
-            row.style.display = "";  // show matching row
-        } else {
-            row.style.display = "none";  // hide non-matching
-        }
-    });
+// Initialize everything on page load
+document.addEventListener("DOMContentLoaded", function() {
+    setTableColumns(ALL_SWAP_COLS);
+    updateSearchAndSerialNumbers();  // Initial setup
+    updateParticipationCards();
 });
-
-</script>
-
-// Player participation summary script
-<script>
-    function updateParticipationCards() {
-    let fullCount = 0;
-    let limitedCount = 0;
-    let noCount = 0;
-
-    // Loop through all player status cells
-    document.querySelectorAll(".player-table tbody tr").forEach(row => {
-        const statusCell = row.querySelector(".col-player-status");
-        if (statusCell) {
-            const statusText = statusCell.textContent.trim().toLowerCase();
-            if (statusText === "full participation") {
-                fullCount++;
-            } else if (statusText === "limited participation") {
-                limitedCount++;
-            } else if (statusText === "no participation") {
-                noCount++;
-            }
-        }
-    });
-
-    // Update the DOM
-    document.getElementById("fullParticipationCount").textContent = fullCount;
-    document.getElementById("limitedParticipationCount").textContent = limitedCount;
-    document.getElementById("noParticipationCount").textContent = noCount;
-}
-
-// Call this after the table rows are rendered
-updateParticipationCards();
 
 </script>
 {% endblock %}

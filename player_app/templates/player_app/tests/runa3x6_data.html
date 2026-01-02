@@ -74,14 +74,14 @@
                 <td class="player-name">{{ result.player.name }}</td>
                 <td>{{ result.date }}</td>
                 <td>{{ result.phase }}</td>
-                <td>{{ result.run_a_3x6_attempt1 }}</td>
-                <td>{{ result.run_a_3x6_attempt2 }}</td>
-                <td>{{ result.run_a_3x6_attempt3 }}</td>
-                <td>{{ result.run_a_3x6_attempt4 }}</td>
-                <td>{{ result.run_a_3x6_attempt5 }}</td>
-                <td>{{ result.run_a_3x6_attempt6 }}</td>
+                <td>{{ result.trial1 }}</td>
+                <td>{{ result.trial2 }}</td>
+                <td>{{ result.trial3 }}</td>
+                <td>{{ result.trial4 }}</td>
+                <td>{{ result.trial5 }}</td>
+                <td>{{ result.trial6 }}</td>
                 <td>{{ result.notes|default:"-" }}</td>
-                <td>{{ result.run_a_3x6_average }}</td>
+                <td>{{ result.average }}</td>
             </tr>
             {% empty %}
             <tr>

@@ -3621,3 +3621,173 @@ class DailyWellnessTest(models.Model):
 
     def __str__(self):
         return f"{self.player} - {self.date}"
+    
+
+
+class RunA3x6Test(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True)
+    
+    # 3x6 trials
+    trial1 = models.IntegerField(null=True, blank=True)
+    trial2 = models.IntegerField(null=True, blank=True)
+    trial3 = models.IntegerField(null=True, blank=True)
+    trial4 = models.IntegerField(null=True, blank=True)
+    trial5 = models.IntegerField(null=True, blank=True)
+    trial6 = models.IntegerField(null=True, blank=True)
+    
+    # Calculated average from trials
+    average = models.FloatField(null=True, blank=True)
+    
+    notes = models.TextField(blank=True, null=True)
+    reported_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True,
+        related_name='run_a_3x6_test'
+    )
+    gender = models.CharField(null=True, max_length=50)
+    category = models.CharField(null=True, max_length=100)
+    reported_by_designation = models.CharField(max_length=100, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    # per-player stats on `average`
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
+    individual_average = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def calculate_average(self):
+        """Calculate average from 6 trials (ignore None/empty)"""
+        trials = [self.trial1, self.trial2, self.trial3, self.trial4, self.trial5, self.trial6]
+        valid_trials = [t for t in trials if t is not None]
+        return round(sum(valid_trials) / len(valid_trials), 2) if valid_trials else None
+
+    def save(self, *args, **kwargs):
+        """
+        - Calculate average from trials
+        - denormalize gender/category
+        - save
+        - update per-player min/max/avg on `average`
+        - update PlayerAggregate + GenderAggregate + CategoryAggregate + CampAggregate
+        """
+        TEST_NAME = 'run_a_3x6'  # Must exist in TestAndResult.TEST_CHOICES
+
+        # Calculate average from trials
+        self.average = self.calculate_average()
+
+        # denormalize from player
+        if self.player:
+            self.gender = self.player.gender
+            self.category = getattr(self.player, 'age_category', None)
+
+        # first save to ensure pk
+        super().save(*args, **kwargs)
+
+        with transaction.atomic():
+            qs_player = RunA3x6Test.objects.filter(
+                player=self.player,
+                average__isnull=False,
+            )
+
+            if self.average is not None:
+                agg = qs_player.aggregate(
+                    min_val=Min('average'),
+                    max_val=Max('average'),
+                    avg_val=Avg('average'),
+                )
+
+                # update this row
+                self.min = agg['min_val']
+                self.max = agg['max_val']
+                self.individual_average = agg['avg_val']
+                super().save(update_fields=['min', 'max', 'individual_average'])
+
+                # PlayerAggregate for this player + test
+                p_agg, _ = PlayerAggregate.objects.get_or_create(
+                    player=self.player,
+                    test=TEST_NAME,
+                    defaults={
+                        'individual_average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                p_agg.min = agg['min_val']
+                p_agg.max = agg['max_val']
+                p_agg.individual_average = agg['avg_val']
+                p_agg.save(update_fields=['min', 'max', 'individual_average'])
+
+            # GenderAggregate
+            if self.gender:
+                gender_qs = RunA3x6Test.objects.filter(
+                    gender=self.gender,
+                    average__isnull=False,
+                )
+                g_agg = gender_qs.aggregate(
+                    min_val=Min('average'),
+                    max_val=Max('average'),
+                    avg_val=Avg('average'),
+                )
+
+                gender_agg, _ = GenderAggregate.objects.get_or_create(
+                    gender=self.gender,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                gender_agg.min = g_agg['min_val']
+                gender_agg.max = g_agg['max_val']
+                gender_agg.average = g_agg['avg_val']
+                gender_agg.save(update_fields=['min', 'max', 'average'])
+
+            # CategoryAggregate
+            if self.category:
+                cat_qs = RunA3x6Test.objects.filter(
+                    category=self.category,
+                    average__isnull=False,
+                )
+                c_agg = cat_qs.aggregate(
+                    min_val=Min('average'),
+                    max_val=Max('average'),
+                    avg_val=Avg('average'),
+                )
+
+                cat_agg, _ = CategoryAggregate.objects.get_or_create(
+                    category=self.category,
+                    test=TEST_NAME,
+                    defaults={'average': None, 'min': None, 'max': None},
+                )
+                cat_agg.min = c_agg['min_val']
+                cat_agg.max = c_agg['max_val']
+                cat_agg.average = c_agg['avg_val']
+                cat_agg.save(update_fields=['min', 'max', 'average'])
+
+            # Camp/Phase Aggregate
+            if self.phase:
+                camp_qs = RunA3x6Test.objects.filter(
+                    phase=self.phase,
+                    average__isnull=False,
+                )
+                camp_vals = camp_qs.aggregate(
+                    min_val=Min('average'),
+                    max_val=Max('average'),
+                    avg_val=Avg('average'),
+                )
+
+                camp_agg, _ = CampAggregate.objects.get_or_create(
+                    phase=str(self.phase.name),
+                    test=TEST_NAME,
+                    defaults={
+                        'average': None,
+                        'left_min': None, 'left_max': None,
+                        'right_min': None, 'right_max': None,
+                        'min': None, 'max': None,
+                    },
+                )
+                camp_agg.min = camp_vals['min_val']
+                camp_agg.max = camp_vals['max_val']
+                camp_agg.average = camp_vals['avg_val']
+                camp_agg.save(update_fields=['min', 'max', 'average'])

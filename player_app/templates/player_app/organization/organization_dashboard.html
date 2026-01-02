@@ -628,7 +628,13 @@
 
 <!-- Active Injuries Table -->
 <section aria-labelledby="activeInjuriesTitle">
-  <h3 id="activeInjuriesTitle">Active Injuries</h3>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h3 id="activeInjuriesTitle">Active Injuries</h3>
+    <div id="injuriesCounter" style="font-weight: 600; color: #36a9e1; font-size: 16px; min-width: 180px;">
+      Showing <span id="totalInjuriesCount">{{ active_injuries_count }}</span> active injuries
+    </div>
+  </div>
+  
   <table id="activeInjuriesTable" role="grid" aria-describedby="activeInjuriesDesc">
     <caption id="activeInjuriesDesc" class="sr-only">
       List of currently active injuries
@@ -647,7 +653,7 @@
       {% for injury in active_injuries %}
       <tr
         data-date="{{ injury.injury_date|date:'Y-m-d' }}"
-        data-status="{{ injury.status }}"  >
+        data-status="{{ injury.status }}">
         <td class="player-no">{{ forloop.counter }}</td>
         <td class="player-name">{{ injury.player.name }}</td>
         <td class="injury-name">
@@ -673,6 +679,7 @@
     </tbody>
   </table>
 </section>
+
 
 
 
@@ -1476,6 +1483,8 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
+
+
 
 
 {% endblock %}
