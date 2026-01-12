@@ -169,7 +169,7 @@ urlpatterns = [
                   path('daily-log/<int:id>/',views.daily_activity_coach_log,name='daily_activity_coach_log'),
                   path('daily-snc-camp-detail/<int:pk>/',views.daily_snc_camp_detail, name='daily_snc_camp_detail'),
                   path('daily-log-list/<int:camp_id>/', views.daily_snc_camp_logs_list, name='daily_snc_camp_logs_list'),
-
+                  path('snc-logs/', views.snc_camps_dashboard, name='snc_camps_dashboard'),
 
                   path('player-test-select/', views.player_test_select, name='player_test_select'),
                   path('fetch-players/', views.fetch_players, name='fetch_players'),

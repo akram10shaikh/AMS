@@ -1,0 +1,256 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}SNC Camps Dashboard{% endblock %}
+
+{% block extra_head %}
+    <style>
+        :root {
+            --border-color: #e5e7eb;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --accent: #3b82f6;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .team-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+
+        .team-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .team-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 12px 12px 0 0;
+        }
+
+        .log-item {
+            border: 1px solid #f3f4f6;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 2rem;
+            background: var(--bg-secondary);
+            transition: all 0.2s;
+        }
+
+        .log-item:hover {
+            border-color: var(--accent);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+
+        .date-badge {
+            display: inline-flex;
+            align-items: center;
+            background: var(--accent);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .activity-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .activity-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .niggles-tag {
+            display: inline-flex;
+            align-items: center;
+            background: #fef2f2;
+            color: var(--danger);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid #fecaca;
+        }
+
+        .concerns-box {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .recovery-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            background: #f9fafb;
+        }
+
+        .refresh-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--accent);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .refresh-btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-3xl font-bold text-gray-900 mb-3">SNC Camps Dashboard</h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+            Monitor team wellbeing, activities, and recovery across your organization's camps
+        </p>
+    </div>
+
+    <!-- Teams -->
+    {% for team_data in teams_data %}
+        <div class="team-card">
+            <div class="team-header">
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+                        {{ team_data.team.name }}
+                        {% if team_data.team.location %}
+                            <span class="ml-3 text-sm text-gray-500">( {{ team_data.team.location }} )</span>
+                        {% endif %}
+                    </h2>
+                    <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                        {{ team_data.logs|length }} logs
+                    </span>
+                </div>
+            </div>
+
+            <div class="p-2">
+                {% for log in team_data.logs %}
+                    <div class="log-item">
+                        <!-- Date & Meta -->
+                        <div class="flex flex-col lg:flex-row gap-6 mb-6">
+                            <div class="flex flex-col gap-2 min-w-0">
+                                <div class="date-badge">{{ log.date|date:"M d, Y" }}</div>
+                                {% if log.coach_name %}
+                                    <div class="flex items-center text-sm text-gray-700">
+                                        <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                                        {{ log.coach_name }}
+                                    </div>
+                                {% endif %}
+                                {% if log.niggles %}
+                                    <div class="niggles-tag mt-1">
+                                        ⚠️ Niggles reported
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Activities -->
+                            <div class="flex-1">
+                                {% if log.activities.exists %}
+                                    <h4 class="font-semibold text-gray-900 mb-4">Activities</h4>
+                                    <div class="activity-grid">
+                                        {% for activity in log.activities.all %}
+                                            <div class="activity-card">
+                                                <div class="font-medium text-gray-900 mb-2">{{ activity.activity_name }}</div>
+                                                <div class="text-sm text-gray-600 space-y-1">
+                                                    <div>Duration: <span class="font-medium">{{ activity.get_duration_display }}</span></div>
+                                                    <div>Intensity: <span class="font-medium">{{ activity.get_intensity_display }}</span></div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <div class="text-center py-8 text-gray-500">
+                                        No activities recorded
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Concerns & Recovery -->
+                        {% if log.concerns or log.recovery_sessions %}
+                            <div class="flex flex-col lg:flex-row gap-4">
+                                {% if log.concerns %}
+                                    <div class="flex-1 concerns-box">
+                                        <div class="font-medium text-gray-900 mb-2 flex items-center">
+                                            Concerns
+                                        </div>
+                                        <p class="text-sm text-gray-800">{{ log.concerns }}</p>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if log.recovery_sessions %}
+                                    <div class="flex-1 recovery-box">
+                                        <div class="font-medium text-gray-900 mb-2 flex items-center">
+                                            Recovery Sessions
+                                        </div>
+                                        <div class="text-sm text-gray-800">{{ log.recovery_sessions }}</div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div class="no-data">
+                        <div class="text-2xl text-gray-400 mb-4">📋</div>
+                        No SNC logs available for {{ team_data.team.name }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% empty %}
+        <div class="text-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            <div class="text-4xl text-gray-400 mb-4">👥</div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">No Teams Found</h3>
+            <p class="text-gray-600">No teams or logs found for your organization.</p>
+        </div>
+    {% endfor %}
+
+</div>
+{% endblock %}

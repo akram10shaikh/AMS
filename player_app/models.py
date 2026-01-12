@@ -809,6 +809,7 @@ class DailyActivityCamps(models.Model):
 
     def __str__(self):
         return f"{self.log} - {self.activity_name}"
+        
     
 class SLGluteBridges(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='sl_glute_bridges')

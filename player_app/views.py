@@ -1492,6 +1492,32 @@ def daily_snc_camp_logs_list(request, camp_id):
     return render(request, 'player_app/camps/daily_snc_camp_logs_list.html', context)
 
 
+@login_required
+def snc_camps_dashboard(request):
+    # Get all SNC logs for user's organization teams
+    user_logs = DailySncLogCamps.objects.filter(
+        team__organization=request.user.organization  # Adjust based on your User model
+    ).prefetch_related(
+        Prefetch('activities')  # Correct forward relation name
+    ).select_related('team', 'user').order_by('team__name', '-date')
+    
+    # Group logs by team for template
+    from itertools import groupby
+    from operator import attrgetter
+    
+    user_logs = sorted(user_logs, key=attrgetter('team.name', 'date'))
+    teams_data = []
+    for team, logs in groupby(user_logs, key=attrgetter('team')):
+        teams_data.append({
+            'team': team,
+            'logs': list(logs)
+        })
+    
+    context = {
+        'teams_data': teams_data,
+    }
+    return render(request, 'player_app/camps/snc_dashboard.html', context)
+
 # -----------------------------------------------------------------------------------------------------------
 
 from django.db.models import Avg
