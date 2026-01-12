@@ -260,6 +260,8 @@
 <div class="header-container" style="display: flex; justify-content: space-between; align-items: center;color:white;">
     <h1 style="color:white;">Camps & Tournaments</h1>
     {% if user.staff.create_camps_tournaments %}
+
+    <a href="{% url 'wellness_dashboard' %}" class="btn btn-primary">Daily Wellness</a>
     <a href="{% url 'snc_camps_dashboard' %}" class="btn btn-primary">All Daily S&C Coach's Log</a>
     <a href="{% url 'organization_create_camp' %}" class="btn btn-primary">Create New Camp</a>
     {% endif %}

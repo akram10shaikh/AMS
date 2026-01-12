@@ -1,0 +1,208 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Wellness Report - {{ camp.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .welcome-section { 
+        height: 260px; 
+        background:  #007CF0; 
+        display: flex; 
+        align-items: center; 
+        padding: 0 2rem; 
+    }
+    .main-card { 
+        max-width: 1200px; 
+        margin: -80px auto 2rem auto; 
+        background: white; 
+        border-radius: 16px; 
+        padding: 2rem; 
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1); 
+    }
+    
+    .camp-header {
+      
+        color: black;
+        padding: 2rem;
+        border-radius: 16px;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: #f8fafc;
+        padding: 1.5rem;
+        border-radius: 12px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+    }
+    .stat-number { font-size: 2rem; font-weight: 800; color: #007CF0; }
+    
+    .wellness-card { 
+        background: #f8fafc; 
+        border-radius: 12px; 
+        padding: 1.5rem; 
+        margin-bottom: 1rem; 
+        border-left: 5px solid #10B981;
+        transition: all 0.3s ease;
+    }
+    .wellness-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.1); transform: translateY(-2px); }
+    
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    .metric-item {
+        background: white;
+        padding: 0.75rem;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .metric-value { font-weight: 700; font-size: 1.1rem; }
+    .metric-label { font-size: 0.75rem; color: #64748b; margin-top: 0.25rem; }
+    
+    .training-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+    .training-tag { 
+        background: #dcfce7; 
+        color: #166534; 
+        padding: 0.25rem 0.75rem; 
+        border-radius: 20px; 
+        font-size: 0.8rem; 
+        font-weight: 600; 
+    }
+    
+    .back-btn {
+        background: #0f172a;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-section">
+    <h1 style="color: white;">Daily Wellness Report</h1>
+</div>
+
+<main class="main-card">
+    <!-- Camp Header -->
+    <div class="camp-header">
+        <h2 style="margin: 0; font-size: 2rem;">{{ camp.name }}</h2>
+        <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
+            {{ total_tests }} Wellness Test{{ total_tests|pluralize }} from {{ unique_players }} Player{{ unique_players|pluralize }}
+        </p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_tests }}</div>
+            <div style="font-size: 0.9rem; color: #64748b;">Total Tests</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ unique_players }}</div>
+            <div style="font-size: 0.9rem; color: #64748b;">Unique Players</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ wellness_tests|length }}</div>
+            <div style="font-size: 0.9rem; color: #64748b;">In This Camp</div>
+        </div>
+    </div>
+
+    <!-- Wellness Tests -->
+    {% if wellness_tests %}
+        {% for test in wellness_tests %}
+            <div class="wellness-card">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div>
+                        <h4 style="margin: 0 0 0.25rem 0;">{{ test.player.name }}</h4>
+                        <span style="background: #dcfce7; color: #166534; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem;">
+                            {{ test.date|date:"M d, Y" }}
+                        </span>
+                    </div>
+                    {% if test.created_by %}
+                        <small style="color: #64748b;">by {{ test.created_by.get_full_name|default:test.created_by.username }}</small>
+                    {% endif %}
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-value">{{ test.urine_color }}</div>
+                        <div class="metric-label">Urine Color</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">{{ test.soreness_level }}/10</div>
+                        <div class="metric-label">Soreness</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">{{ test.fatigue_level }}/10</div>
+                        <div class="metric-label">Fatigue</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">{{ test.sleep_hours }}h</div>
+                        <div class="metric-label">Sleep</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">{{ test.motivation_level }}/10</div>
+                        <div class="metric-label">Motivation</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">{{ test.total_rpe }}/10</div>
+                        <div class="metric-label">RPE</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">{{ test.balls_bowled }}</div>
+                        <div class="metric-label">Balls</div>
+                    </div>
+                </div>
+
+                <!-- Training -->
+                {% if test.training_session_types %}
+                    <div style="margin-top: 1rem;">
+                        <strong style="color: #1e293b;">🏋️ Training:</strong>
+                        <div class="training-tags">
+                            {% for session in test.training_session_types %}
+                                <span class="training-tag">{{ session }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Pain Alert -->
+                {% if test.has_pain %}
+                    <div style="background: #fee2e2; padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444; margin-top: 1rem;">
+                        <strong style="color: #dc2626;">⚠️ Pain/Niggle: </strong>
+                        {% if test.pain_comment %}{{ test.pain_comment }}{% else %}Reported{% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 4rem 2rem; color: #64748b;">
+            <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.3;">📋</div>
+            <h3>No Wellness Data</h3>
+            <p>No players from <strong>"{{ camp.name }}"</strong> have completed daily wellness tests yet.</p>
+        </div>
+    {% endif %}
+
+    <a href="{% url 'organization_camp_detail' camp_id %}" class="back-btn">← Back to Camps</a>
+</main>
+{% endblock %}

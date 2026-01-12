@@ -1514,6 +1514,7 @@ def snc_camps_dashboard(request):
     if request.method == 'POST':
         report_date = request.POST.get('report_date')
         camp_id = request.POST.get('camp')
+        report_date_end = request.POST.get('report_date_end')
         
 
         context['report_date'] = report_date
@@ -1530,7 +1531,7 @@ def snc_camps_dashboard(request):
             # Filter logs between selected date and today
             report_data = DailySncLogCamps.objects.filter(
                 team=selected_camp,
-                date__range=[start_date, end_date]  # 2025-12-01 → 2026-01-12
+                date__range=[start_date, report_date_end]  # 2025-12-01 → 2026-01-12
             ).prefetch_related('activities').select_related('user').order_by('-date')
             
             context['selected_camp'] = selected_camp
@@ -1539,6 +1540,100 @@ def snc_camps_dashboard(request):
     
     return render(request, 'player_app/camps/snc_dashboard.html', context)
 
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseBadRequest
+from datetime import datetime, date
+from dateutil import parser
+
+def wellness_dashboard(request):
+    """
+    Daily Wellness Report Dashboard - Similar to S&C Camps Dashboard
+    """
+    user_org = getattr(request.user, "organization", None)
+    logs = CampTournament.objects.filter(organization=user_org).order_by('name')
+    
+    report_data = None
+    selected_camp = None
+    report_date = None
+    report_date_end = None
+    
+    # Get all camps/tournaments for dropdown (similar to S&C)
+  
+    
+    if request.method == 'POST':
+        try:
+            report_date = request.POST.get('report_date')
+            report_date_end = request.POST.get('report_date_end')
+            camp_id = request.POST.get('camp')
+            print("Received POST data:", report_date, report_date_end, camp_id)
+            
+            if not all([report_date, report_date_end, camp_id]):
+                return HttpResponseBadRequest("Missing required parameters")
+            
+            # Parse dates
+            start_date = parser.parse(report_date).date()
+            end_date = parser.parse(report_date_end).date()
+            selected_camp = get_object_or_404(CampTournament, id=camp_id)
+            print(f"Parsed dates: start_date={start_date}, end_date={end_date}")
+            # Filter wellness logs for selected camp and date range
+            report_data = DailyWellnessTest.objects.filter(
+                phase=selected_camp,
+                date__range=[report_date, report_date_end]
+            )
+            print(f"Fetched {report_data.count()} wellness logs for camp {selected_camp.name}")
+            # Calculate mood averages for each log
+            
+        except Exception as e:
+            logger.error(f"Error processing report request: {e}")
+            report_data = []
+    
+    context = {
+        'logs': logs,
+        'report_data': report_data,
+        'selected_camp': selected_camp,
+        'report_date': report_date,
+        'report_date_end': report_date_end,
+    }
+    
+    return render(request, 'player_app/camps/daily_wellness_all.html', context)
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import DailyWellnessTest, CampTournament, Player
+
+
+@login_required
+def daily_wellness_camp_report(request, camp_id):
+    """
+    Show Daily Wellness Tests for SPECIFIC CAMP - players who are in camp AND completed tests
+    """
+    user_org = getattr(request.user, "organization", None)
+    
+    # Get the specific camp
+    camp = get_object_or_404(
+        CampTournament, 
+        id=camp_id, 
+        organization=user_org
+    )
+    
+    # ✅ KEY FILTER: Players IN THIS CAMP who have DailyWellnessTest records
+    wellness_tests = DailyWellnessTest.objects.filter(
+        phase=camp  # Direct FK filter ✅
+    ).select_related(
+        'player', 'phase', 'created_by'
+    ).order_by('-date', 'player__name')
+    
+    context = {
+        'camp': camp,
+        'wellness_tests': wellness_tests,
+        'total_tests': wellness_tests.count(),
+        'unique_players': wellness_tests.values('player').distinct().count(),
+        'camp_id': camp_id,
+    }
+
+    
+    return render(request, 'player_app/camps/wellness_report.html', context)
 
 
 

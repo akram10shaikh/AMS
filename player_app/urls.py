@@ -84,7 +84,8 @@ urlpatterns = [
 
                   path('organization/phase/<int:id>/', views.phase_tests_view, name='phase_tests_view'), 
                   path('organization/phase-test/<int:id>/',views.phase_test, name='phase_test'),
-
+                  path('wellness-report/<int:camp_id>/', views.daily_wellness_camp_report, name='daily_wellness_camp_report'),
+                  path('wellness/report/', views.wellness_dashboard, name='wellness_dashboard'),
 
                # Organization Test Results URLs
                   # path('organization/test/dashboard', views.test_dashboard, name='test_dashboard'),
