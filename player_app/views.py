@@ -6711,6 +6711,7 @@ def fetch_players(request):
             'Blood Test':BloodTest,
             'MSK Injury Assessment':MSKInjuryAssessment,
             'run_a_3x6':RunA3x6Test,
+            'Daily Wellness Test':DailyWellnessTest,
             # Add all other tests...
         }
         
@@ -6778,6 +6779,8 @@ def fetch_report(request):
             'DEXA Scan Test':DexaScanTest,
             'Blood Test':BloodTest,
             'MSK Injury Assessment':MSKInjuryAssessment,
+            'run_a_3x6':RunA3x6Test,
+            'Daily Wellness Test':DailyWellnessTest,
         }
 
         Model = TEST_MODELS.get(test_name)
@@ -6899,6 +6902,9 @@ def player_report(request):
     }
     SINGLE_TEST = {
         "run_a_3x6":RunA3x6Test,
+    }
+    DAILY_WELLNESS = {
+        "Daily Wellness Test":DailyWellnessTest,
     }
     if test_name in TEST_MODELS:
         Model = TEST_MODELS.get(test_name)
@@ -7349,6 +7355,58 @@ def player_report(request):
             'min_is_better': session_settings.get('min_is_better', False),
             'grp_avg_option': session_settings.get('grp_avg_option', None),
             }
+        return render(request, "player_app/record/player_test.html", context)
+    
+    elif test_name in DAILY_WELLNESS:
+        Model = DAILY_WELLNESS.get(test_name)
+        if not Model:
+            return render(
+                request,
+                "player_app/record/player_test.html",
+                {"error": "Invalid test name"},
+            )
+
+        qs = Model.objects.filter(player_id=player_id)
+        if start_date and end_date:
+            qs = qs.filter(date__range=[start_date, end_date])
+
+        tests = qs.order_by("-date")[:num_tests]
+        if not tests.exists():
+            return render(
+                request,
+                "player_app/record/player_test.html",
+                {"error": "No tests found for this player and date range"},
+            )
+        print(tests)
+        stats_data_wellness = []
+        for t in tests:
+            stats_data_wellness.append(
+                {
+                    "date": t.date,
+                    "phase": t.phase.name if t.phase else "",
+                    "urine_color": t.urine_color,
+                    "fatigue_level": t.fatigue_level,
+                    "soreness_level": t.soreness_level,          
+                    "sleep_hours": t.sleep_hours,
+                    "has_pain": t.has_pain,
+                    "pain_comment": t.pain_comment,
+                    "motivation_level": t.motivation_level,
+                    "balls_bowled": t.balls_bowled,
+                    "training_session_types": t.training_session_types,
+                    "total_rpe": t.total_rpe,
+                    "reported_by": t.created_by.first_name if t.created_by else "",
+                }
+            )
+
+        context = {
+            "stats_data_wellness": tests,
+            "selected_test": test_name,
+            'session_settings': session_settings,
+            'has_session_settings': bool(session_settings),
+            'min_max_formula': session_settings.get('min_max_formula', 'all_players'),
+            'min_is_better': session_settings.get('min_is_better', False),
+            'grp_avg_option': session_settings.get('grp_avg_option', None),
+        }
         return render(request, "player_app/record/player_test.html", context)
     
 

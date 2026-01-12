@@ -56,7 +56,7 @@ admin.site.register(OneMileTest)
 admin.site.register(CMJTest)
 admin.site.register(MSKInjuryAssessment)
 admin.site.register(RunA3x6Test)
-
+admin.site.register(DailyWellnessTest)
 admin.site.register(GenderAggregate)
 admin.site.register(CategoryAggregate)
 admin.site.register(PlayerAggregate)
