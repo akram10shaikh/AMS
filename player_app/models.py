@@ -761,7 +761,7 @@ class DailySncLogCamps(models.Model):
     coach_name = models.CharField(max_length=100, null=True,blank=True)
     date = models.DateField(null=True)
 
-    enddate = models.DateField(null=True)
+
 
     # Wellbeing & logistics
     concerns = models.TextField(blank=True)

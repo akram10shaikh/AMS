@@ -1397,7 +1397,7 @@ def daily_activity_coach_log(request,id):
         coach_name = request.POST.get("coach_name", "").strip()
         date = request.POST.get("session_date")  # yyyy-mm-dd
         concerns = request.POST.get("concerns", "").strip()
-        enddate = request.POST.get("session_date_end")  # yyyy-mm-dd
+       
         niggles_value = request.POST.get("niggles")  # "yes" / "no"
         niggles = niggles_value == "yes"
 
@@ -1416,7 +1416,6 @@ def daily_activity_coach_log(request,id):
         log, created = DailySncLogCamps.objects.update_or_create(
             team=teams,
             date=date,
-            enddate=enddate,
             defaults={
                 "user": request.user,
                 "coach_name": coach_name,
@@ -1490,33 +1489,58 @@ def daily_snc_camp_logs_list(request, camp_id):
         'sort_order': sort_order,
     }
     return render(request, 'player_app/camps/daily_snc_camp_logs_list.html', context)
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.db.models import Prefetch
+from datetime import datetime, timedelta
+from .models import DailySncLogCamps, CampTournament, DailyActivityCamps
 
+from datetime import datetime, date  # Add 'date' import
 
 @login_required
 def snc_camps_dashboard(request):
-    # Get all SNC logs for user's organization teams
-    user_logs = DailySncLogCamps.objects.filter(
-        team__organization=request.user.organization  # Adjust based on your User model
-    ).prefetch_related(
-        Prefetch('activities')  # Correct forward relation name
-    ).select_related('team', 'user').order_by('team__name', '-date')
+    user_org = getattr(request.user, "organization", None)
     
-    # Group logs by team for template
-    from itertools import groupby
-    from operator import attrgetter
-    
-    user_logs = sorted(user_logs, key=attrgetter('team.name', 'date'))
-    teams_data = []
-    for team, logs in groupby(user_logs, key=attrgetter('team')):
-        teams_data.append({
-            'team': team,
-            'logs': list(logs)
-        })
+    logs = CampTournament.objects.filter(organization=user_org).order_by('name')
     
     context = {
-        'teams_data': teams_data,
+        'logs': logs,
+        'report_date': '',
+        'camp': '',
+        'selected_camp': None,
+        'report_data': None,
     }
+    
+    if request.method == 'POST':
+        report_date = request.POST.get('report_date')
+        camp_id = request.POST.get('camp')
+        
+
+        context['report_date'] = report_date
+        context['camp'] = camp_id
+        
+        if report_date and camp_id:
+            selected_camp = get_object_or_404(CampTournament, id=camp_id, organization=user_org)
+            
+            # ✅ FIXED: report_date → TODAY (Jan 12, 2026)
+            start_date = datetime.strptime(report_date, '%Y-%m-%d').date()
+            end_date = date.today()  # CURRENT DATE (2026-01-12)
+
+            
+            # Filter logs between selected date and today
+            report_data = DailySncLogCamps.objects.filter(
+                team=selected_camp,
+                date__range=[start_date, end_date]  # 2025-12-01 → 2026-01-12
+            ).prefetch_related('activities').select_related('user').order_by('-date')
+            
+            context['selected_camp'] = selected_camp
+            context['report_data'] = report_data
+            context['date_range'] = f"{start_date} → Today ({end_date})"
+    
     return render(request, 'player_app/camps/snc_dashboard.html', context)
+
+
+
 
 # -----------------------------------------------------------------------------------------------------------
 
