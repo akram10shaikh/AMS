@@ -1397,7 +1397,7 @@ def daily_activity_coach_log(request,id):
         coach_name = request.POST.get("coach_name", "").strip()
         date = request.POST.get("session_date")  # yyyy-mm-dd
         concerns = request.POST.get("concerns", "").strip()
-
+        enddate = request.POST.get("session_date_end")  # yyyy-mm-dd
         niggles_value = request.POST.get("niggles")  # "yes" / "no"
         niggles = niggles_value == "yes"
 
@@ -1416,6 +1416,7 @@ def daily_activity_coach_log(request,id):
         log, created = DailySncLogCamps.objects.update_or_create(
             team=teams,
             date=date,
+            enddate=enddate,
             defaults={
                 "user": request.user,
                 "coach_name": coach_name,
@@ -6439,44 +6440,151 @@ def organization_player_tests(request, player_id):
 
     return render(request, 'player_app/tests/organization_player_tests.html', context)
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.utils import timezone
+from datetime import datetime
+import json
 
 @login_required
 def daily_wellness_create_view(request):
+    """Daily wellness form with dynamic player filtering"""
     user_org = getattr(request.user, "organization", None)
-
-    players = Player.objects.filter(organization=user_org)
+    
+    all_players = Player.objects.filter(organization=user_org).order_by('name')
     phases = CampTournament.objects.filter(organization=user_org, is_deleted=False)
-
+    session_phase_id = request.session.get('phase_id_test')
+    
+    context = {
+        "players": all_players,
+        "phases": phases,
+        "session_phase_id": session_phase_id,
+        "range_1_10": range(1, 11),
+        "range_0_10": range(0, 11),
+    }
+    
     if request.method == "POST":
-        # selected player & phase from form
+        return handle_wellness_submission(request, user_org)
+    
+    return render(request, "player_app/tests/daily_wellness_form.html", context)
+
+
+@csrf_exempt
+@login_required
+def filter_players_ajax(request):
+    """AJAX endpoint: Filter players participating in specific phase ON SELECTED DATE"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST only'})
+    
+    try:
+        phase_id = request.POST.get('phase_id')
+        date_str = request.POST.get('date')
+        user_org = getattr(request.user, "organization", None)
+        
+        if not phase_id or not date_str:
+            return JsonResponse({
+                'success': True, 
+                'players': [],
+                'message': 'Please select phase and date',
+                'count': 0
+            })
+        
+        selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        phase = get_object_or_404(
+            CampTournament, 
+            id=phase_id, 
+            organization=user_org, 
+            is_deleted=False
+        )
+        
+
+        active_players = Player.objects.filter(
+            camps=phase,
+            organization=user_org,
+        ).distinct().order_by('name')
+        
+
+        
+        players_data = []
+        for player in active_players:
+            players_data.append({
+                'id': player.id,
+                'name': player.name,
+                'age': getattr(player, 'age', 'N/A'),
+                'role': getattr(player, 'role', 'N/A'),
+                'status': getattr(player, 'player_status', 'Active'),
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'players': players_data,
+            'count': len(players_data),
+            'message': f'{len(players_data)} players available'
+        })
+        
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Invalid date format'})
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+def handle_wellness_submission(request, user_org):
+    """Extracted form submission logic with validation"""
+    try:
+
+        
+
+        phase_id = request.POST.get("phase_id") or request.POST.get("phase-id")
         player_id = request.POST.get("player_id")
-        phase_id = request.POST.get("phase_id")
-
-        player = get_object_or_404(Player, id=player_id, organization=user_org)
-        phase = get_object_or_404(CampTournament, id=phase_id,
-                                  organization=user_org, is_deleted=False)
-
         date = request.POST.get("date")
+        
 
-        urine_color = request.POST.get("urine_color")
+        
+        if not all([phase_id, player_id, date]):
+            messages.error(request, 'Phase, Player, and Date are required')
+            return redirect('daily_wellness_create_view')
+        
+        # Get objects
+        player = get_object_or_404(Player, id=player_id, organization=user_org)
+        phase = get_object_or_404(
+            CampTournament, 
+            id=phase_id, 
+            organization=user_org, 
+            is_deleted=False
+        )
+        
+
+        if not player.camps.filter(id=phase.id).exists():
+            messages.error(request, f'{player.name} is not registered for {phase.name}')
+            return redirect('daily_wellness_create_view')
+        
+        # Parse form data with safe defaults
+        end_date = request.POST.get("enddate") or None
+        urine_color = request.POST.get("urine_color", "")
         soreness_level = int(request.POST.get("soreness_level", 0))
         fatigue_level = int(request.POST.get("fatigue_level", 0))
         sleep_hours = float(request.POST.get("sleep_hours", 0))
-
-        has_pain_raw = request.POST.get("has_pain")  # "true"/"false"
-        has_pain = has_pain_raw == "true"
+        has_pain_raw = request.POST.get("has_pain", "false")
+        has_pain = has_pain_raw.lower() == "true"
         pain_comment = request.POST.get("pain_comment", "").strip()
-
         motivation_level = int(request.POST.get("motivation_level", 0))
         balls_bowled = int(request.POST.get("balls_bowled", 0))
-
         training_session_types = request.POST.getlist("training_session_types")
         total_rpe = int(request.POST.get("total_rpe", 0))
+        
 
-        DailyWellnessTest.objects.create(
+        # Create wellness test
+        wellness_test = DailyWellnessTest.objects.create(
             player=player,
             phase=phase,
             date=date,
+            end_date=end_date,
             urine_color=urine_color,
             soreness_level=soreness_level,
             fatigue_level=fatigue_level,
@@ -6488,42 +6596,53 @@ def daily_wellness_create_view(request):
             training_session_types=training_session_types,
             total_rpe=total_rpe,
             created_by=request.user,
-        )
-        if 'phase_id_test' in request.session:
-            return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
-        return redirect('daily_wellness_results_view')
 
-    context = {
-        "players": players,
-        "phases": phases,
-        "range_1_10": range(1, 11),
-        "range_0_10": range(0, 11),
-    }
-    return render(request, "player_app/tests/daily_wellness_form.html", context)
+        )
+        
+
+        messages.success(request, f'✅ Wellness report submitted for {player.name}!')
+        
+        if 'phase_id_test' in request.session:
+            return redirect('phase_tests_view', id=request.session.get('phase_id_test'))
+        return redirect('daily_wellness_results_view')
+        
+    except ValueError as e:
+
+        messages.error(request, 'Please check numeric values (0-10 scale)')
+        return redirect('daily_wellness_create_view')
+    except Exception as e:
+
+        messages.error(request, f'Error saving: {str(e)}')
+        return redirect('daily_wellness_create_view')
+
+
 
 @login_required
 def daily_wellness_results_view(request):
+    """Results view with search and pagination (unchanged logic, improved)"""
     user_org = getattr(request.user, "organization", None)
-
-    # Base queryset: all wellness tests for this organization
+    
+    if not user_org:
+        messages.error(request, "No organization access")
+        return redirect('dashboard')
+    
+    # Base queryset
     qs = DailyWellnessTest.objects.select_related("player", "phase").filter(
         player__organization=user_org
     )
-
+    
     # Search by player name
     search_query = request.GET.get("search", "").strip()
     if search_query:
-        qs = qs.filter(
-            Q(player__name__icontains=search_query)
-        )
-
+        qs = qs.filter(Q(player__name__icontains=search_query))
+    
     total_results = qs.count()
-
+    
     # Pagination
     page_number = request.GET.get("page", 1)
-    paginator = Paginator(qs.order_by("-date", "-id"), 25)  # 25 rows per page
-    page_obj = paginator.get_page(page_number)  # safe for invalid page numbers [web:167]
-
+    paginator = Paginator(qs.order_by("-date", "-id"), 25)
+    page_obj = paginator.get_page(page_number)
+    
     context = {
         "page_obj": page_obj,
         "search_query": search_query,
@@ -6534,6 +6653,7 @@ def daily_wellness_results_view(request):
         "player_app/tests/daily_wellness_results.html",
         context,
     )
+
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -7399,6 +7519,216 @@ def fetch_multi_test_report(request):
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+    
+
+def handle_test_preview(request):
+    """Preview available test counts for dropdown"""
+    try:
+        player_id = request.POST.get('player_id')
+        selected_tests = [t.strip() for t in request.POST.get('tests', '').split(',') if t.strip()]
+        
+        if not player_id:
+            return JsonResponse({
+                'success': True,
+                'max_tests': 0,
+                'message': 'Please select a player'
+            })
+        
+        player = get_object_or_404(Player, id=player_id, organization=request.user.organization)
+        max_count = 0
+        test_counts = {}
+        
+        for test_type in selected_tests:
+            count = count_player_tests(player, test_type)
+            test_counts[test_type] = count
+            max_count = max(max_count, count)
+        
+        if max_count == 0:
+            return JsonResponse({
+                'success': True,
+                'max_tests': 0,
+                'message': f'No test data found for selected tests: {", ".join(selected_tests)}'
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'max_tests': max_count,
+            'test_counts': test_counts,
+            'message': f'{max_count} tests available'
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+def count_player_tests(player, test_type):
+    """Count player's tests for specific type"""
+    test_counts = {
+        '10m': TenMeterTest.objects.filter(player=player).count(),
+        '20m': TwentyMeterTest.objects.filter(player=player).count(),
+        'YoYo': YoYoTest.objects.filter(player=player).count(),
+        'SBJ': SBJTest.objects.filter(player=player).count(),
+        'Copenhagen': CopenhagenTest.objects.filter(player=player).count(),
+        'S/L Glute Bridges': SLGluteBridges.objects.filter(player=player).count(),
+    }
+    return test_counts.get(test_type, 0)
+
+
+
+def fetch_speed_tests(player, test_type, selected_tests, num_tests, start_date, end_date):  # ← NEW (was _get_test_data)
+    """Fetch speed/endurance test data"""
+    if test_type not in selected_tests:
+        return []
+    
+    model_map = {
+        '10m': TenMeterTest,
+        '20m': TwentyMeterTest,
+        'YoYo': YoYoTest,
+        'SBJ': SBJTest,
+    }
+    
+    model = model_map.get(test_type)
+    if not model:
+        return []
+    
+    tests = model.objects.filter(
+        player=player,
+        date__gte=start_date,
+        date__lte=end_date
+    ).order_by('-date')[:num_tests]
+    
+    return [
+        {
+            'date': test.date.strftime('%Y-%m-%d'),
+            'phase': getattr(test, 'phase', 'N/A'),
+            'gender': player.gender,
+            'category': getattr(player, 'age_category', 'N/A'),
+            'distance_covered': getattr(test, 'distance_covered', 'N/A'),
+            'predicted_vo2max': getattr(test, 'predicted_vo2max', 'N/A'),
+            'best': getattr(test, 'distance_covered', 'N/A'),
+        }
+        for test in tests
+    ]
+
+def fetch_asymmetry_tests(player, test_type, selected_tests, num_tests, start_date, end_date):  # ← NEW (was _get_asymmetry_test_data)
+    """Fetch asymmetry test data"""
+    if test_type not in selected_tests:
+        return []
+    
+    model_map = {
+        'Copenhagen': CopenhagenTest,
+        'S/L Glute Bridges': SLGluteBridges,
+    }
+    
+    model = model_map.get(test_type)
+    if not model:
+        return []
+    
+    tests = model.objects.filter(
+        player=player,
+        date__gte=start_date,
+        date__lte=end_date
+    ).order_by('-date')[:num_tests]
+    
+    return [
+        {
+            'date': test.date.strftime('%Y-%m-%d'),
+            'phase': getattr(test, 'phase', 'N/A'),
+            'right': getattr(test, 'right_side', 'N/A'),
+            'left': getattr(test, 'left_side', 'N/A'),
+            'difference': getattr(test, 'difference', 'N/A'),
+            'ratio': getattr(test, 'ratio', 'N/A'),
+            'gender': player.gender,
+            'category': getattr(player, 'age_category', 'N/A'),
+            'notes': getattr(test, 'notes', ''),
+        }
+        for test in tests
+    ]
+
+def parse_date_filter(date_option, post_data):  # ← NEW (was _get_date_range)
+    """Parse date range from filter options"""
+    today = timezone.now().date()
+    
+    if date_option == 'range':
+        return post_data.get('start_date'), post_data.get('end_date')
+    
+    elif date_option == '1month':
+        return today - timedelta(days=30), today
+    elif date_option == '3months':
+        return today - timedelta(days=90), today
+    elif date_option == '6months':
+        return today - timedelta(days=180), today
+    elif date_option == 'fy':
+        year = today.year
+        if today.month < 4:
+            start = timezone.datetime(year-1, 4, 1).date()
+            end = timezone.datetime(year, 3, 31).date()
+        else:
+            start = timezone.datetime(year, 4, 1).date()
+            end = timezone.datetime(year+1, 3, 31).date()
+        return start, end
+    else:
+        return today - timedelta(days=30), today
+
+def format_player_data(player):  # ← NEW (was _get_player_info)
+    """Format player information for frontend"""
+    return {
+        'name': player.name,
+        'age': player.age,
+        'gender': player.gender,
+        'role': getattr(player, 'role', 'N/A'),
+        'handedness': getattr(player, 'handedness', 'N/A'),
+        'age_category': getattr(player, 'age_category', 'N/A'),
+        'batting_style': getattr(player, 'batting_style', 'N/A'),
+        'bowling_style': getattr(player, 'bowling_style', 'N/A'),
+        'player_status': getattr(player, 'player_status', 'Active'),
+        'image': player.image.url if player.image else None,
+    }
+
+
+@csrf_exempt
+def get_player_test_data(request):  # ← NEW NAME (was fetch_multi_test_report)
+    """AJAX endpoint for player test data with preview counts"""
+    try:
+        action = request.POST.get('action')
+        
+        if action == 'preview_test_counts':
+            return handle_test_preview(request)  # ← NEW
+        
+        # Main report generation
+        selected_tests = [t.strip() for t in request.POST.get('tests', '').split(',') if t.strip()]
+        player_id = request.POST.get('player_id')
+        num_tests = int(request.POST.get('num_tests', 0))
+        date_option = request.POST.get('date_option')
+        
+        player = get_object_or_404(Player, id=player_id, organization=request.user.organization)
+        start_date, end_date = parse_date_filter(date_option, request.POST)  # ← NEW
+        
+        # Generate individual test data
+        sprint10m_data = fetch_speed_tests(player, '10m', selected_tests, num_tests, start_date, end_date)  # ← NEW
+        sprint20m_data = fetch_speed_tests(player, '20m', selected_tests, num_tests, start_date, end_date)
+        yoyo_data = fetch_speed_tests(player, 'YoYo', selected_tests, num_tests, start_date, end_date)
+        sbj_data = fetch_speed_tests(player, 'SBJ', selected_tests, num_tests, start_date, end_date)
+        copenhagen_data = fetch_asymmetry_tests(player, 'Copenhagen', selected_tests, num_tests, start_date, end_date)  # ← NEW
+        glute_data = fetch_asymmetry_tests(player, 'S/L Glute Bridges', selected_tests, num_tests, start_date, end_date)
+        
+        player_details = format_player_data(player)  # ← NEW
+        
+        return JsonResponse({
+            'success': True,
+            'player_info': player_details,
+            'test10m': sprint10m_data,
+            'test20m': sprint20m_data,
+            'testYoYo': yoyo_data,
+            'testSBJ': sbj_data,
+            'testCopenhagen': copenhagen_data,
+            'testGluteBridges': glute_data,
+            'selected_tests': selected_tests,
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
     
 
 from django.db.models import Q

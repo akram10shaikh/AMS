@@ -675,17 +675,7 @@
                     <div class="select-wrapper" style="flex: 1;">
                         <label for="numTestsToShow">Show Last N Tests:</label>
                         <select id="numTestsToShow" name="num_tests" class="input" required>
-                            <option value="" disabled selected>-- Select --</option>
-                            <option value="1">1 Test</option>
-                            <option value="2">2 Tests</option>
-                            <option value="3">3 Tests</option>
-                            <option value="4">4 Tests</option>
-                            <option value="5">5 Tests</option>
-                            <option value="6">6 Tests</option>
-                            <option value="7">7 Tests</option>
-                            <option value="8">8 Tests</option>
-                            <option value="9">9 Tests</option>
-                            <option value="10">10 Tests</option>
+                            <option value="" disabled selected>No Test available</option>
                         </select>
                     </div>
                 </div>
@@ -1067,9 +1057,8 @@
 
 
     </main>
-
 <script>
-    const FETCH_REPORT_URL = "{% url 'fetch_multi_test_report' %}";  // New AJAX endpoint
+    const FETCH_REPORT_URL = "{% url 'player_test_data' %}";
 
     // Multi-checkbox handler
     document.querySelectorAll('.test-checkbox').forEach(checkbox => {
@@ -1086,10 +1075,10 @@
     function updateSelectedCount() {
         const count = document.querySelectorAll('input[name="tests"]:checked').length;
         document.getElementById('selectedCount').textContent = 
-            `${count} Tests Selected${count > 0 ? ` (${count}/7)` : ''}`;
+            `${count} Tests Selected${count > 0 ? ` (${count}/6)` : ''}`;
     }
 
-    // Date toggle (existing)
+    // Date toggle
     function toggleDateInputs(type) {
         const dateRangeFields = document.getElementById('date-range-fields');
         const startDateInput = document.getElementById('startDateInput');
@@ -1105,26 +1094,139 @@
         }
     }
 
-    // ⭐ MAIN FUNCTION: Fetch Multi Test Report
-    function fetchMultiTestReport() {
-        // Get form data
-        const selectedTests = Array.from(document.querySelectorAll('input[name="tests"]:checked'))
-                                .map(cb => cb.value);
+    // ⭐ FIXED: Dynamic dropdown handlers
+    function setupDynamicDropdown() {
+        document.getElementById('playerSelect').addEventListener('change', handlePlayerChange);
+        document.querySelectorAll('input[name="tests"]').forEach(checkbox => {
+            checkbox.addEventListener('change', handleTestChange);
+        });
+    }
+
+    function handlePlayerChange() {
+        console.log('🎯 Player changed:', document.getElementById('playerSelect').value);
+        updateTestDropdown();
+    }
+
+    function handleTestChange() {
+        console.log('🎯 Tests changed:', getSelectedTests());
+        updateTestDropdown();
+    }
+
+    function updateTestDropdown() {
+        const playerId = document.getElementById('playerSelect').value;
+        if (playerId && getSelectedTests().length > 0) {
+            updateNumTestsOptions(playerId);
+        } else {
+            showNoTestsMessage();
+        }
+    }
+
+    function getSelectedTests() {
+        return Array.from(document.querySelectorAll('input[name="tests"]:checked'))
+            .map(cb => cb.value);
+    }
+
+    // ⭐ UPDATED: Show "No tests" message when no data
+    async function updateNumTestsOptions(playerId) {
+        const selectedTests = getSelectedTests();
+        
+        if (selectedTests.length === 0) {
+            console.log('❌ No tests selected');
+            showNoTestsMessage();
+            return;
+        }
+
+        console.log('🔄 Fetching test counts for:', selectedTests, 'Player:', playerId);
+
+        const formData = new FormData();
+        formData.append('player_id', playerId);
+        formData.append('tests', selectedTests.join(','));
+        formData.append('action', 'preview_test_counts');
+
+        try {
+            const response = await fetch(FETCH_REPORT_URL, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                credentials: 'same-origin'
+            });
+            
+            const data = await response.json();
+            console.log('📊 Test count response:', data);
+            
+            if (data.success) {
+                if (data.max_tests && data.max_tests > 0) {
+                    populateNumTestsOptions(data.max_tests);
+                } else {
+                    showNoTestsMessage(data.message || 'No test data found for selected tests');
+                }
+            } else {
+                showNoTestsMessage('Error loading test data');
+            }
+        } catch (error) {
+            console.error('❌ Error:', error);
+            showNoTestsMessage('Failed to load test data');
+        }
+    }
+
+    // ⭐ NEW: Show "No tests available" message
+    function showNoTestsMessage(message = 'No tests available') {
+        const numTestsSelect = document.getElementById('numTestsToShow');
+        numTestsSelect.innerHTML = `
+            <option value="" disabled selected style="color: #ff6b6b;">❌ ${message}</option>
+        `;
+        console.log('📋 Showing no tests message:', message);
+    }
+
+    // Populate N tests dropdown based on available tests
+    function populateNumTestsOptions(maxTests) {
+        const numTestsSelect = document.getElementById('numTestsToShow');
+        numTestsSelect.innerHTML = '<option value="" disabled selected>-- Select --</option>';
+        
+        const maxOption = Math.min(maxTests, 10);
+        
+        for (let i = 1; i <= maxOption; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = `${i} Test${i > 1 ? 's' : ''}`;
+            numTestsSelect.appendChild(option);
+        }
+        
+        // Auto-select reasonable default
+        if (maxOption >= 3) {
+            numTestsSelect.value = '3';
+        } else if (maxOption > 0) {
+            numTestsSelect.value = maxOption.toString();
+        }
+        
+        console.log('✅ Dropdown updated with max:', maxTests);
+    }
+
+    // Reset dropdown (no longer used - replaced by showNoTestsMessage)
+    function resetNumTestsOptions() {
+        showNoTestsMessage('Please select tests first');
+    }
+
+    // ⭐ MAIN FUNCTION: Fetch Multi Test Report (unchanged)
+    async function fetchMultiTestReport() {
+        const selectedTests = getSelectedTests();
         const playerId = document.getElementById('playerSelect').value;
         const numTests = document.getElementById('numTestsToShow').value;
         const dateOption = document.querySelector('input[name="date_option"]:checked')?.value;
-        
-        // Validation
+
         if (selectedTests.length === 0) {
             alert('⚠️ Please select at least one test');
             return;
         }
-        if (!playerId || !numTests) {
-            alert('⚠️ Please select player and number of tests');
+        if (!playerId) {
+            alert('⚠️ Please select a player');
             return;
         }
-        
-        // Get date range
+        if (!numTests || numTests === '') {
+            alert('⚠️ No tests available for this player');
+            return;
+        }
+
         let startDate = '', endDate = '';
         if (dateOption === 'range') {
             startDate = document.getElementById('startDateInput').value;
@@ -1134,98 +1236,57 @@
                 return;
             }
         }
-        
-        // Show loading
-        document.querySelector('button[onclick="fetchMultiTestReport()"]').textContent = 'Loading...';
-        document.querySelector('button[onclick="fetchMultiTestReport()"]').disabled = true;
-        
-        // Prepare FormData
+
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Loading...';
+        submitBtn.disabled = true;
+
         const formData = new FormData();
-        formData.append('tests', selectedTests.join(','));  // Send as comma-separated
+        formData.append('tests', selectedTests.join(','));
         formData.append('player_id', playerId);
         formData.append('num_tests', numTests);
         formData.append('date_option', dateOption);
         formData.append('start_date', startDate);
         formData.append('end_date', endDate);
-        
-        // AJAX Request
-        fetch(FETCH_REPORT_URL, {
-            method: 'POST',
-            body: formData,
-            headers: { 'X-CSRFToken': getCookie('csrftoken') },
-            credentials: 'same-origin'
-        })
-        .then(response => response.json())
-        .then(data => {
+
+        try {
+            const response = await fetch(FETCH_REPORT_URL, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                credentials: 'same-origin'
+            });
+            
+            const data = await response.json();
             if (data.success) {
                 displayMultiTestResults(data);
             } else {
                 alert('Error: ' + (data.error || 'Unknown error'));
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
             alert('Failed to fetch report');
-        })
-        .finally(() => {
-            // Reset button
-            document.querySelector('button[onclick="fetchMultiTestReport()"]').textContent = '🚀 Fetch Multi Test Report';
-            document.querySelector('button[onclick="fetchMultiTestReport()"]').disabled = false;
-        });
-    }
-
-    function displayMultiTestResults(data) {
-        // Show player info
-        if (data.player_info) {
-            const playerSection = document.getElementById('playerInfoSection');
-            if (playerSection) {
-                playerSection.style.display = 'block';
-                document.querySelector('.player-info-title').textContent = 
-                    `Multi Test Report - ${data.player_info.name}`;
-            }
-        }
-        
-        // Show stats table
-        if (data.stats_data && data.stats_data.length > 0) {
-            const container = document.getElementById('statsTableContainer');
-            const table = document.getElementById('statsTable');
-            container.style.display = 'block';
-            
-            let thead = '<thead><tr><th>Test</th><th>Date</th><th>Phase</th><th>Best</th><th>Notes</th></tr></thead>';
-            let tbody = '<tbody>';
-            data.stats_data.forEach(row => {
-                tbody += `
-                    <tr>
-                        <td><strong>${row.test}</strong></td>
-                        <td>${row.date}</td>
-                        <td>${row.phase || '—'}</td>
-                        <td>${row.best || '—'}</td>
-                        <td>${row.notes || '—'}</td>
-                    </tr>
-                `;
-            });
-            tbody += '</tbody>';
-            table.innerHTML = thead + tbody;
+        } finally {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
         }
     }
 
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
+    // [Keep your existing displayMultiTestResults, renderTestTable, getCookie functions]
+    function displayMultiTestResults(data) { /* your code */ }
+    function renderTestTable(testName, data, isAsymmetry = false) { /* your code */ }
+    function getCookie(name) { /* your code */ }
 
-    // Initialize
-    updateSelectedCount();
+    // ⭐ CRITICAL INITIALIZATION
+    document.addEventListener('DOMContentLoaded', function() {
+        setupDynamicDropdown();
+        updateSelectedCount();
+        showNoTestsMessage('Select tests & player to see available tests');
+    });
 </script>
+
+
+
 
 {% endblock%}

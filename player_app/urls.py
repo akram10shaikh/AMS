@@ -163,6 +163,7 @@ urlpatterns = [
                   path('pushups-test-view/', views.pushups_test_view, name='pushups_test_view'),
                   path('msk-injury-assessment-list/', views.msk_injury_assessment_list, name='msk_injury_assessment_list'),
                   path('daily-wellness-view/',views.daily_wellness_results_view,name='daily_wellness_results_view'),
+                  path('daily-wellness/filter-players/', views.filter_players_ajax, name='filter_players_ajax'),
 
                   # Daily Activity of Coachs
                   path('daily-log/<int:id>/',views.daily_activity_coach_log,name='daily_activity_coach_log'),
@@ -180,6 +181,8 @@ urlpatterns = [
                   path('ajax/fetch-multi-test-report/', views.fetch_multi_test_report, name='fetch_multi_test_report'),
 
                   path('multitest/',views.multitest,name='multitest'),
+
+                  path('player-test-data/', views.get_player_test_data, name='player_test_data'),
 
 
 

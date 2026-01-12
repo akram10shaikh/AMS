@@ -59,6 +59,7 @@
             <th>No</th>
             <th>Player</th>
             <th>Date</th>
+            <th>End Date</th>
             <th>Phase</th>
             <th>Urine Color</th>
             <th>Soreness (1–10)</th>
@@ -78,6 +79,7 @@
             <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
             <td class="player-name">{{ result.player.name }}</td>
             <td>{{ result.date }}</td>
+            <td>{{ result.end_date }}</td>
             <td>{{ result.phase.name }}</td>
             <td>{{ result.get_urine_color_display }}</td>
             <td>{{ result.soreness_level }}</td>

@@ -553,13 +553,13 @@ class TestAndResult(models.Model):
 class PlayerAggregate(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     test = models.CharField(max_length=32, choices=TestAndResult.TEST_CHOICES)
-    individual_average = models.FloatField(null=True)
-    left_min = models.FloatField(null=True)
-    left_max = models.FloatField(null=True)
-    right_min = models.FloatField(null=True)
-    right_max = models.FloatField(null=True)
-    min = models.FloatField(null=True)
-    max = models.FloatField(null=True)
+    individual_average = models.FloatField(null=True, blank=True)
+    left_min = models.FloatField(null=True, blank=True)
+    left_max = models.FloatField(null=True, blank=True)
+    right_min = models.FloatField(null=True, blank=True)
+    right_max = models.FloatField(null=True, blank=True)
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -569,14 +569,14 @@ class PlayerAggregate(models.Model):
 class GenderAggregate(models.Model):
     gender = models.CharField(max_length=10)  # e.g., Male, Female
     test = models.CharField(max_length=32, choices=TestAndResult.TEST_CHOICES)
-    average = models.FloatField(null=True)
-    left_min = models.FloatField(null=True)
-    left_max = models.FloatField(null=True)
-    right_min = models.FloatField(null=True)
-    right_max = models.FloatField(null=True)
+    average = models.FloatField(null=True, blank=True)
+    left_min = models.FloatField(null=True, blank=True)
+    left_max = models.FloatField(null=True, blank=True)
+    right_min = models.FloatField(null=True, blank=True)
+    right_max = models.FloatField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
-    min = models.FloatField(null=True)
-    max = models.FloatField(null=True)
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.gender} - {self.test}"
@@ -585,14 +585,14 @@ class GenderAggregate(models.Model):
 class CategoryAggregate(models.Model):
     category = models.CharField(max_length=64)
     test = models.CharField(max_length=32, choices=TestAndResult.TEST_CHOICES)
-    average = models.FloatField(null=True)
-    left_min = models.FloatField(null=True)
-    left_max = models.FloatField(null=True)
-    right_min = models.FloatField(null=True)
-    right_max = models.FloatField(null=True)
+    average = models.FloatField(null=True, blank=True)
+    left_min = models.FloatField(null=True, blank=True)
+    left_max = models.FloatField(null=True, blank=True)
+    right_min = models.FloatField(null=True, blank=True)
+    right_max = models.FloatField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
-    min = models.FloatField(null=True)
-    max = models.FloatField(null=True)
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.category} - {self.test}"
@@ -601,14 +601,14 @@ class CategoryAggregate(models.Model):
 class CampAggregate(models.Model):
     phase = models.CharField(max_length=64)
     test = models.CharField(max_length=32, choices=TestAndResult.TEST_CHOICES)
-    average = models.FloatField(null=True)
-    left_min = models.FloatField(null=True)
-    left_max = models.FloatField(null=True)
-    right_min = models.FloatField(null=True)
-    right_max = models.FloatField(null=True)
+    average = models.FloatField(null=True, blank=True)
+    left_min = models.FloatField(null=True, blank=True)
+    left_max = models.FloatField(null=True, blank=True)
+    right_min = models.FloatField(null=True, blank=True)
+    right_max = models.FloatField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
-    min = models.FloatField(null=True)
-    max = models.FloatField(null=True)
+    min = models.FloatField(null=True, blank=True)
+    max = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.phase} - {self.test}"
@@ -758,8 +758,10 @@ class DailySncLogCamps(models.Model):
     """
     team = models.ForeignKey(CampTournament, on_delete=models.CASCADE,null=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='snc_logs')
-    coach_name = models.CharField(max_length=100, null=True)
+    coach_name = models.CharField(max_length=100, null=True,blank=True)
     date = models.DateField(null=True)
+
+    enddate = models.DateField(null=True)
 
     # Wellbeing & logistics
     concerns = models.TextField(blank=True)
@@ -3554,6 +3556,7 @@ class DailyWellnessTest(models.Model):
     )
 
     date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
 
     # 1) Urine color (single choice)
     URINE_COLOR_CHOICES = [

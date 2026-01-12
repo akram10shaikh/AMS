@@ -220,45 +220,55 @@
     <form method="post">
         {% csrf_token %}
 
-        <!-- Player select -->
+        <!-- Phase select -->
         <div class="form-row">
-            <label for="player">Player</label>
-            <select id="player" name="player_id" required>
-                <option value="">Select player…</option>
+            <label for="phase">Phase</label>
+            {% if request.session.phase_id_test %}
+                {% for ph in phases %}
+                    {% if ph.id == request.session.phase_id_test %}
+                        <input type="text" id="phase" value="{{ ph.name }}" disabled style="width:100%;">
+                        <input type="hidden" name="phase-id" value="{{ ph.id }}">
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <select id="phaseSelect" name="phase_id" required>
+                    <option value="">---------</option>
+                    {% for ph in phases %}
+                        <option value="{{ ph.id }}" data-phase-id="{{ ph.id }}">{{ ph.name }}</option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+        </div>
+
+        <!-- Date select -->
+        <div class="form-row">
+            <label for="date">Start Date</label>
+            <input type="date" id="dateSelect" name="date" required>
+        </div>
+         <div class="form-row">
+            <label for="date">End Date</label>
+            <input type="date" id="dateSelect" name="enddate" required>
+        </div>
+
+        <!-- Player select with loading indicator -->
+        <div class="form-row">
+            <label for="player">Player <span id="loadingIndicator" style="display:none;">🔄 Loading...</span></label>
+            <select id="playerSelect" name="player_id" required disabled>
+                <option value="">Select phase & date first...</option>
                 {% for p in players %}
-                    <option value="{{ p.id }}">{{ p.name }}</option>
+                    <option value="{{ p.id }}" 
+                            data-name="{{ p.name }}"
+                            data-phase="{{ p.phase.id }}"
+                            data-phase-start="{{ p.phase.start_date|date:'Y-m-d' }}"
+                            data-phase-end="{{ p.phase.end_date|date:'Y-m-d' }}">
+                        {{ p.name }}
+                    </option>
                 {% endfor %}
             </select>
         </div>
 
-        <!-- Phase select -->
-        <div class="form-row">
-            <label for="phase">Phase</label>
-              {% if request.session.phase_id_test %}
-                     {% for ph in phases %}
-                        {% if ph.id == request.session.phase_id_test %}
-                            <!-- show phase NAME -->
-                            <input type="text"
-                                id="phase"
-                                value="{{ ph.name }}"
-                                disabled width="100%">
 
-                            <!-- send phase ID -->
-                            <input type="hidden"
-                                name="phase-id"
-                                value="{{ ph.id }}" width="100%">
-                        {% endif %}
-                    {% endfor %}
-                {% else %}
-                 <select id="phase" name="phase_id" required>
-                        <option value="">---------</option>
-                        {% for ph in phases %}
-                            <option value="{{ ph.id }}">{{ ph.name }}</option>
-                        {% endfor %}
-                    </select>
-                {% endif %}
-        </div>
-
+       
         {% comment %} <div class="form-group">
                 <label for="phase">Phase:</label>
 
@@ -286,11 +296,6 @@
                     </select>
                 {% endif %}
         </div> {% endcomment %}
-
-        <div class="form-row">
-            <label for="date">Date</label>
-            <input type="date" id="date" name="date" required>
-        </div>
 
         <!-- Urine color -->
         <hr>
@@ -458,4 +463,117 @@
         </div>
     </form>
 </div>
+<script>
+const FILTER_PLAYERS_URL = "{% url 'filter_players_ajax' %}";
+
+document.addEventListener('DOMContentLoaded', function() {
+    const phaseSelect = document.getElementById('phaseSelect');
+    const dateSelect = document.getElementById('dateSelect');
+    const playerSelect = document.getElementById('playerSelect');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    
+    // ✅ FIXED: Get phase ID properly from session OR dropdown
+    function getSelectedPhaseId() {
+        // 1. Check session phase input first
+        const sessionPhaseInput = document.querySelector('input[name="phase-id"]');
+        if (sessionPhaseInput && sessionPhaseInput.value) {
+            return sessionPhaseInput.value;  // Returns string ID
+        }
+        
+        // 2. Check phase dropdown
+        if (phaseSelect && phaseSelect.value) {
+            return phaseSelect.value;  // Returns string ID from <option value="123">
+        }
+        
+        return null;
+    }
+    
+    // Event listeners
+    if (phaseSelect) {
+        phaseSelect.addEventListener('change', filterPlayersByPhaseAndDate);
+    }
+    
+    dateSelect.addEventListener('change', filterPlayersByPhaseAndDate);
+    
+    function filterPlayersByPhaseAndDate() {
+        // ✅ FIXED: Always get STRING ID
+        const selectedPhaseId = getSelectedPhaseId();
+        const selectedDate = dateSelect.value;
+        
+        console.log('🔍 Filtering - Phase ID:', selectedPhaseId, 'Type:', typeof selectedPhaseId, 'Date:', selectedDate);
+        
+        // Both required
+        if (!selectedPhaseId || !selectedDate) {
+            playerSelect.innerHTML = '<option value="">Select phase & date first...</option>';
+            playerSelect.disabled = true;
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            return;
+        }
+        
+        // Show loading
+        if (loadingIndicator) loadingIndicator.style.display = 'inline';
+        playerSelect.disabled = true;
+        playerSelect.innerHTML = '<option value="">🔄 Loading players...</option>';
+        
+        // ✅ FIXED: Send phase_id as STRING
+        const formData = new FormData();
+        formData.append('phase_id', selectedPhaseId);  // Now sends "123", not [object]
+        formData.append('date', selectedDate);
+        
+        console.log('📤 Sending phase_id:', selectedPhaseId, 'Date:', selectedDate);
+        
+        fetch(FILTER_PLAYERS_URL, {
+            method: 'POST',
+            body: formData,
+            headers: { 
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('📥 Backend response:', data);
+            
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            
+            if (data.success && data.players && data.players.length > 0) {
+                playerSelect.innerHTML = `<option value="">${data.count} players available</option>`;
+                data.players.forEach(player => {
+                    const option = document.createElement('option');
+                    option.value = player.id;
+                    option.textContent = player.name + (player.role ? ` (${player.role})` : '');
+                    playerSelect.appendChild(option);
+                });
+                playerSelect.disabled = false;
+            } else {
+                playerSelect.innerHTML = `<option value="" disabled>${data.message || 'No players found'}</option>`;
+                playerSelect.disabled = true;
+            }
+        })
+        .catch(error => {
+            console.error('❌ AJAX Error:', error);
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            playerSelect.innerHTML = '<option value="" disabled>Error loading players</option>';
+            playerSelect.disabled = true;
+        });
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+
+
 {% endblock %}
