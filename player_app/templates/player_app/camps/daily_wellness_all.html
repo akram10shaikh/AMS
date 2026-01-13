@@ -154,7 +154,7 @@
             <h3>{{ selected_camp.name }}</h3>
             <p>{{ report_date }} to {{ report_date_end }} | {{ report_data|length }} records</p>
         </div>
-
+        <a href="{% url 'organization_camps_tournaments'  %}" class="back-btn">← Back to Camps</a>
         <table class="data-table">
             <thead>
                 <tr>
