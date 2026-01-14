@@ -1,5 +1,5 @@
 from datetime import date
-
+from .utils import age_for_current_season, get_season_cutoff
 from django.core.exceptions import ValidationError
 from django.db import models
 from accounts.models import Organization,Staff
@@ -11,6 +11,7 @@ from django.db.models.signals import post_save
 from .utils import age_for_current_season
 from django.db.models import Min, Max
 from django.db import transaction
+from django.utils.dateparse import parse_date
 # Group model
 class Player_Group(models.Model):
     name = models.CharField(max_length=100)
@@ -162,9 +163,39 @@ class Player(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True,null=True)
     def save(self, *args, **kwargs):
+        if isinstance(self.date_of_birth, str):
+            try:
+                self.date_of_birth = parse_date(self.date_of_birth)
+            except:
+                raise ValueError("Invalid date_of_birth format")
+        
         if self.date_of_birth:
             self.current_age = age_for_current_season(self.date_of_birth)
+            
+            # Auto-set age_category based on age + gender
+            if self.current_age and self.gender:
+                category = self._get_age_category()
+                if category:
+                    self.age_category = category
+        
         super().save(*args, **kwargs)
+
+    def _get_age_category(self):
+        """Map current_age + gender to Age_category_choices"""
+        if not self.current_age or not self.gender:
+            return None
+        
+        age = self.current_age
+        if self.gender.lower() == 'male':
+            if age < 16: return 'boys under 16'
+            elif age <= 19: return 'boys under 19'
+            elif age < 23: return 'men under 23'
+            else: return 'men senior'
+        else:  # female
+            if age < 15: return 'girls under 15'
+            elif age <= 19: return 'girls under 19'
+            elif age < 23: return 'women under 23'
+            else: return 'women senior'
 
     def __str__(self):
         return self.name

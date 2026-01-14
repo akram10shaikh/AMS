@@ -717,7 +717,7 @@ def organization_injury_list(request):
     #     key = ps['player_status']
     #     if key in status_map:
     #         status_map[key] = ps['count']
-
+    
     context = {
         'year_choices': list(range(2020, today.year + 1)),
         'injuries': injuries,
