@@ -6982,7 +6982,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
-
+from django.db.models import Sum
 @csrf_protect
 @require_http_methods(["GET", "POST"])
 def player_report(request):
@@ -7080,6 +7080,8 @@ def player_report(request):
         if min_max_formula == 'all_players':
             min_value = [t.min for t in tests if t.min is not None]
             max_value = [t.max for t in tests if t.max is not None]
+            max_value = max(max_value) if max_value else None
+            min_value = min(min_value) if min_value else None
 
         elif min_max_formula == "all_players_by_gender":
             min_value = GenderAggregate.objects.filter(
@@ -7088,7 +7090,9 @@ def player_report(request):
             max_value = GenderAggregate.objects.filter(
                 test=test_name, gender=player.gender
             ).values_list("max", flat=True)
-        
+            min_value = min(min_value) if min_value else None
+            max_value = max(max_value) if max_value else None
+
         elif min_max_formula == "category_based":
             min_value = CategoryAggregate.objects.filter(
                 test=test_name, category=player.age_category
@@ -7096,13 +7100,19 @@ def player_report(request):
             max_value = CategoryAggregate.objects.filter(
                 test=test_name, category=player.age_category
             ).values_list("max", flat=True)
+            print("CATEGORY BASED MIN/MAX RAW:", min_value, max_value)
+            min_value = min(min_value) if min_value else None
+            max_value = max(max_value) if max_value else None
+            print("CATEGORY BASED MIN/MAX:", min_value, max_value)
 
         if min_is_better:
             min_value, max_value = max_value, min_value
 
         group_average = qs.aggregate(avg=Avg('individual_average'))['avg'] or 0
+
         if grp_avg_option == "all_players_date":
             group_average = qs.aggregate(avg=Avg('individual_average'))['avg'] or 0
+            
         
         elif grp_avg_option == "all_players_gender_date":
             group_average = GenderAggregate.objects.filter(
@@ -7123,9 +7133,10 @@ def player_report(request):
                 t.individual_average for t in tests if t.individual_average is not None
             ]
 
-        individual_averages = [t.individual_average for t in tests if t.individual_average is not None]
-        first_part = individual_averages[0] - min_value[0]
-        second_part = max_value[0] - min_value[0]
+        individual_averages = tests.aggregate(total_avg=Sum('best'))['total_avg'] or 0
+        individual_averages = individual_averages / len(tests) if tests else 0
+        first_part = individual_averages - min_value
+        second_part = max_value - min_value
         normalized_scores = first_part / second_part * 100 if second_part != 0 else None
 
 
@@ -7164,9 +7175,9 @@ def player_report(request):
             "start_date": start_date,
             "end_date": end_date,
             "normalized_scores": normalized_scores,
-            "individual_averages": individual_averages[0],
-            "min_value": min_value[0],
-            "max_value": max_value[0],
+            "individual_averages": individual_averages,
+            "min_value": min_value,
+            "max_value": max_value,
             "group_average": group_average,
             'session_settings': session_settings,
             'has_session_settings': bool(session_settings),
