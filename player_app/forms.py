@@ -274,7 +274,7 @@ class InjuryForm(forms.ModelForm):
             'player', 'reported_by', 'name', 'injury_date','diagnosis_date',
             'venue', 'team', 'type_of_activity','side','diagnosis_remarks','action_taken','traning_participation',
             'nature_of_injury', 'expected_date_of_return',
-            'notes', 'affected_body_part', 'severity_rating', 'player_status','unknown_injury_date',
+            'notes', 'affected_body_part', 'severity_rating', 'player_status','unknown_injury_date','camp_tournament',
         ]
         widgets = {
             'player': forms.Select(attrs={'class': 'form-control'}),
@@ -283,7 +283,7 @@ class InjuryForm(forms.ModelForm):
             'venue': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Venue'}),
             'team': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Team'}),
             'type_of_activity': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Type of activity at time of injury'}),
-            
+            'camp_tournament': forms.Select(attrs={'class': 'form-control','placeholder': 'Select Camp/Tournament'}),
             'nature_of_injury': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nature of injury'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Notes', 'rows':2}),
             'affected_body_part': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Body region injured'}),
@@ -297,11 +297,14 @@ class InjuryForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         players_qs = kwargs.pop('players_qs', None)
         physios_qs = kwargs.pop('physios_qs', None)
+        camps_qs = kwargs.pop('camps_qs', None)
         super().__init__(*args, **kwargs)
         if players_qs is not None:
             self.fields['player'].queryset = players_qs
         if physios_qs is not None:
             self.fields['reported_by'].queryset = physios_qs
+        if camps_qs is not None:
+            self.fields['camp_tournament'].queryset = camps_qs  # NEW: Filter camps
     def clean_severity_rating(self):
         value = self.cleaned_data.get('severity_rating')
         if value is None:
@@ -354,7 +357,7 @@ class InjuryFormUpdate(forms.ModelForm):
             'player', 'reported_by', 'name', 'injury_date','diagnosis_date',
             'venue', 'team', 'type_of_activity', 'unknown_injury_date',
             'cause_of_injury', 'nature_of_injury', 'expected_date_of_return',
-            'notes', 'affected_body_part', 'severity_rating', 'side','diagnosis_remarks','action_taken','traning_participation',
+            'notes', 'affected_body_part', 'severity_rating', 'side','diagnosis_remarks','action_taken','traning_participation', 'camp_tournament',
         ]
         widgets = {
             'player': forms.Select(attrs={'class': 'form-control'}),
@@ -371,17 +374,23 @@ class InjuryFormUpdate(forms.ModelForm):
             'action_taken': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Action Taken', 'rows': 2}),
             'traning_participation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Training Participation'}),
             'severity_rating': forms.NumberInput(attrs={'class': 'form-control','placeholder': 'Severity Rating','min': 1,'max': 10,}),
+            'camp_tournament': forms.Select(attrs={'class': 'form-control','placeholder': 'Select Camp/Tournament'}),
 
             }
 
     def __init__(self, *args, **kwargs):
         players_qs = kwargs.pop('players_qs', None)
         physios_qs = kwargs.pop('physios_qs', None)
+        camps_qs = kwargs.pop('camps_qs', None)  
         super().__init__(*args, **kwargs)
         if players_qs is not None:
             self.fields['player'].queryset = players_qs
         if physios_qs is not None:
             self.fields['reported_by'].queryset = physios_qs
+        
+        if camps_qs is not None:
+            self.fields['camp_tournament'].queryset = camps_qs  # NEW: Filter camps
+
 
         # Initialize multiple select field with list if instance value exists
         if self.instance and self.instance.affected_body_part:

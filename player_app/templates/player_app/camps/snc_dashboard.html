@@ -39,7 +39,7 @@
     }
     
     .main-card {
-        max-width: 1200px;
+        max-width: 1400px;
         margin: -80px auto var(--space-xl) auto;
         background-color: var(--color-card-bg);
         border-radius: 12px;
@@ -104,16 +104,9 @@
         transition: transform 0.2s ease;
     }
     button:hover { transform: translateY(-1px); }
-    
-    /* Results Styles */
-    .report-results {
-        margin-top: var(--space-xl);
-        padding: var(--space-xl);
-        background: var(--color-card-bg);
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        border: 1px solid var(--color-border-dark);
-    }
+
+    /* Table & Stats Styles */
+    .report-results { margin-top: var(--space-xl); }
     .report-header {
         background: linear-gradient(135deg, var(--color-secondary), var(--color-accent));
         color: white;
@@ -122,90 +115,85 @@
         margin-bottom: var(--space-lg);
         text-align: center;
     }
-    .snc-log-card {
-        background: var(--color-light-gray);
-        border-radius: 12px;
+    
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: white;
         padding: 1.5rem;
-        margin-bottom: 1rem;
-        border-left: 5px solid var(--color-secondary);
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        border-left: 4px solid var(--color-secondary);
         transition: all 0.3s ease;
     }
-    .snc-log-card:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        transform: translateY(-2px);
-    }
-    .log-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 1rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-    .log-title {
-        font-size: 1.2rem;
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+    .stat-number {
+        font-size: 2.5rem;
         font-weight: 700;
-        color: var(--color-text-dark);
-    }
-    .log-date {
-        background: rgba(255,255,255,0.2);
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-    
-    .metrics-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin: 1.5rem 0;
-    }
-    .metric-card {
-        background: white;
-        padding: 1.25rem;
-        border-radius: 10px;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    .metric-value {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: var(--color-secondary);
+        background: linear-gradient(135deg, var(--color-secondary), var(--color-accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
         margin-bottom: 0.25rem;
     }
-    .metric-label {
-        font-size: 0.85rem;
+    .stat-label {
         color: var(--color-gray);
+        font-size: 0.9rem;
+        font-weight: 500;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
-    
-    .activities-section {
+
+    .report-table {
+        width: 100%;
         background: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        margin-top: 1rem;
-        border-left: 4px solid var(--color-accent);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid var(--color-border-dark);
+        margin-bottom: 2rem;
     }
-    .activity-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 0;
+    .report-table th {
+        background: linear-gradient(135deg, var(--color-secondary), var(--color-accent));
+        color: white;
+        padding: 1.2rem 1rem;
+        font-weight: 600;
+        text-align: left;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .report-table td {
+        padding: 1.2rem 1rem;
         border-bottom: 1px solid #f0f0f0;
+        vertical-align: top;
     }
-    .activity-row:last-child { border-bottom: none; }
+    .report-table tr:hover { background-color: #f8fafc; }
+    .report-table tbody tr:last-child td { border-bottom: none; }
     
-    .concerns-section, .recovery-section {
-        margin-top: 1rem;
-        padding: 1.25rem;
-        border-radius: 10px;
-        border-left: 4px solid;
+    .intensity-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-align: center;
+        min-width: 2rem;
     }
-    .concerns-section { background: #fef7e0; border-left-color: #f59e0b; }
-    .recovery-section { background: #ecfdf5; border-left-color: #10b981; }
-    
+    .intensity-1 { background: #e0f2fe; color: #0369a1; }
+    .intensity-2 { background: #dbeafe; color: #1e40af; }
+    .intensity-3 { background: #fef3c7; color: #d97706; }
+    .intensity-4 { background: #fed7aa; color: #c2410c; }
+    .intensity-5 { background: #fecaca; color: #dc2626; }
+    .status-yes { color: #10b981; font-weight: 600; }
+    .status-no { color: #6b7280; }
+    .niggles-yes { color: #ef4444; font-weight: 600; }
+
     .no-results {
         text-align: center;
         padding: 3rem;
@@ -227,48 +215,18 @@
         background: #1e293b;
         transform: translateY(-1px);
     }
-    
+
     @media (max-width: 768px) {
-        .metrics-grid { grid-template-columns: 1fr 1fr; }
-        .log-header { flex-direction: column; align-items: flex-start; }
+        .summary-stats { grid-template-columns: 1fr 1fr; }
+        .report-table { font-size: 0.85rem; }
+        .report-table th, .report-table td { padding: 0.75rem 0.5rem; }
     }
-    .activities-table {
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-.activity-row {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    gap: 1rem;
-    padding: 1rem;
-    border-bottom: 1px solid #f0f0f0;
-    align-items: center;
-}
-.activity-row:last-child { border-bottom: none; }
-.activity-name { font-weight: 600; color: var(--color-text-dark); }
-.activity-duration { text-align: center; font-weight: 500; }
-.intensity-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 0.85rem;
-    text-align: center;
-    min-width: 2rem;
-}
-.intensity-1 { background: #e0f2fe; color: #0369a1; }
-.intensity-2 { background: #dbeafe; color: #1e40af; }
-.intensity-3 { background: #fef3c7; color: #d97706; }
-.intensity-4 { background: #fed7aa; color: #c2410c; }
-.intensity-5 { background: #fecaca; color: #dc2626; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="welcome-section">
-    <h1>Daily S&C Coach Report</h1>
+    <h1>📊 Daily S&C Coach Report</h1>
 </div>
 
 <main class="main-card">
@@ -276,17 +234,17 @@
     <div class="card-header">
         <h2>Daily S&C Coach Report</h2>
         {% if report_data %}
-            <a href="{% url 'snc_camps_dashboard' %}" class="back-to-form">← Back to Form</a>
+            <a href="{% url 'snc_camps_dashboard' %}" class="back-to-form">← Back to Dashboard</a>
         {% endif %}
     </div>
 
-    <!-- FORM: Show when no report selected -->
+    <!-- FORM -->
     {% if not report_data %}
         <form class="form-container" method="post" action="{% url 'snc_camps_dashboard' %}">
             {% csrf_token %}
             <div class="form-fields">
                 <div class="date-filter-group">
-                    <label><strong>Select Date:</strong></label>
+                    <label><strong>Select Start Date:</strong></label>
                     <input type="date" name="report_date" class="input" 
                            value="{{ report_date|default:'' }}" required>
                 </div>
@@ -295,136 +253,168 @@
                     <input type="date" name="report_date_end" class="input" 
                            value="{{ report_date_end|default:'' }}" required>
                 </div>
-
                 <div class="select-wrapper">
                     <label><strong>Camp / Tournament:</strong></label>
                     <select id="campSelect" name="camp" class="input" required>
-                        <option value="" {% if not camp %}selected{% endif %}>
-                            -- Select Camp or Tournament --
-                        </option>
+                        <option value="" {% if not camp %}selected{% endif %}>-- Select Camp or Tournament --</option>
                         {% for log in logs %}
-                            <option value="{{ log.id }}" 
-                                    {% if camp == log.id|stringformat:"s" %}selected{% endif %}>
+                            <option value="{{ log.id }}" {% if camp == log.id|stringformat:"s" %}selected{% endif %}>
                                 {{ log.name }}
                             </option>
                         {% endfor %}
                     </select>
                 </div>
-
                 <div class="button-wrapper">
-                    <button type="submit">
-                        🚀 Generate S&C Report
-                    </button>
+                    <button type="submit">🚀 Generate S&C Report</button>
                 </div>
             </div>
         </form>
     {% endif %}
 
-    <!-- RESULTS: Show when report_data exists -->
+    <!-- RESULTS -->
     {% if report_data %}
         <div class="report-results">
             <div class="report-header">
-                <h3>📊 {{ selected_camp.team.name }}</h3>
-                <p><strong>{{ report_date }}</strong> | {{ report_data|length }} S&C Log{{ report_data|length|pluralize }}</p>
+                <h3>🏆 {{ selected_camp.team.name }}</h3>
+                <p><strong>{{ report_date }} to {{ report_date_end }}</strong> | {{ report_data|length }} S&C Logs</p>
             </div>
 
+            <!-- Summary Statistics - NO FILTERS NEEDED -->
+            <div class="summary-stats">
+                <div class="stat-card">
+                    <div class="stat-number">{{ report_data|length }}</div>
+                    <div class="stat-label">Total Logs</div>
+                </div>
+                <div class="stat-card">
+                    {% with niggle_count=0 %}
+                    {% for log in report_data %}
+                        {% if log.niggles %}{% with niggle_count=forloop.counter %}{% endwith %}{% endif %}
+                    {% endfor %}
+                    <div class="stat-number">{{ niggle_count }}</div>
+                    <div class="stat-label">Niggles Reported</div>
+                    {% endwith %}
+                </div>
+                <div class="stat-card">
+                    {% with activity_count=0 %}
+                    {% for log in report_data %}
+                        {% for activity in log.activities.all %}
+                            {% with activity_count=forloop.parentloop.counter %}{% endwith %}
+                        {% endfor %}
+                    {% endfor %}
+                    <div class="stat-number">{{ activity_count }}</div>
+                    <div class="stat-label">Total Activities</div>
+                    {% endwith %}
+                </div>
+                <div class="stat-card">
+                    {% with coach_count=0 %}
+                    {% for log in report_data %}
+                        {% ifchanged log.coach_name %}{% with coach_count=forloop.counter %}{% endwith %}{% endifchanged %}
+                    {% endfor %}
+                    <div class="stat-number">{{ coach_count }}</div>
+                    <div class="stat-label">Unique Coaches</div>
+                    {% endwith %}
+                </div>
+            </div>
+
+            <!-- 1. Daily Summary Table -->
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Coach</th>
+                        <th>Niggles</th>
+                        <th>Activities</th>
+                        <th>Concerns</th>
+                        <th>Recovery</th>
+                        <th>End Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in report_data %}
+                    <tr>
+                        <td><strong>{{ log.date|date:"M d, Y" }}</strong></td>
+                        <td>
+                            {{ log.coach_name|default:"S&C Coach" }}<br>
+                            <small style="color: var(--color-gray);">
+                                by {{ log.user.get_full_name|default:log.user.username }}
+                            </small>
+                        </td>
+                        <td>{% if log.niggles %}<span class="status-yes">✅ Yes</span>{% else %}<span class="status-no">❌ No</span>{% endif %}</td>
+                        <td><strong>{{ log.activities.all|length }}</strong></td>
+                        <td>{% if log.concerns %}<span class="status-yes">✅ Yes</span>{% else %}<span class="status-no">❌ No</span>{% endif %}</td>
+                        <td>{% if log.recovery_sessions %}<span class="status-yes">✅ Yes</span>{% else %}<span class="status-no">❌ No</span>{% endif %}</td>
+                        <td>{{ log.enddate|date:"M d"|default:"—" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--color-gray);">No logs found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- 2. Activities Table -->
             {% for log in report_data %}
-                <div class="snc-log-card">
-                    <div class="log-header">
-                        <div class="log-title">
-                            {{ log.coach_name|default:"S&C Log" }}
-                            {% if log.user %}
-                                <span style="font-weight: 500; color: var(--color-gray);">by {{ log.user.get_full_name|default:log.user.username }}</span>
-                            {% endif %}
-                        </div>
-                        <div class="log-date">{{ log.date|date:"M d, Y" }}</div>
-                    </div>
+            {% if log.activities.all %}
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th colspan="5" style="text-align:left;">
+                            📋 Activities - {{ log.date|date:"M d, Y" }} ({{ log.coach_name }})
+                        </th>
+                    </tr>
+                    <tr>
+                        <th>Activity Name</th>
+                        <th>Duration</th>
+                        <th>Intensity</th>
+                        <th>Coach</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in log.activities.all %}
+                    <tr>
+                        <td><strong>{{ activity.activity_name }}</strong></td>
+                        <td>{{ activity.duration|default:"—" }}</td>
+                        <td>
+                            <span class="intensity-badge intensity-{{ activity.intensity|default:'0' }}">
+                                {{ activity.intensity|default:"—" }}
+                            </span>
+                        </td>
+                        <td>{{ log.coach_name }}</td>
+                        <td>{{ log.date|date:"M d" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+            {% endfor %}
 
-                    <!-- Niggles Status -->
-                    {% if log.niggles %}
-                        <div style="background: #fee2e2; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #ef4444;">
-                            <strong>⚠️ Niggles Reported</strong>
-                        </div>
-                    {% endif %}
-
-                    <!-- Main Metrics -->
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <div class="metric-value">{{ log.date|date:"SHORT_DATE_FORMAT" }}</div>
-                            <div class="metric-label">Date</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-value">{{ log.coach_name|default:"—" }}</div>
-                            <div class="metric-label">Coach</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-value">
-                                {% if log.niggles %}Yes{% else %}No{% endif %}
-                            </div>
-                            <div class="metric-label">Niggles</div>
-                        </div>
-                        {% if log.enddate %}
-                            <div class="metric-card">
-                                <div class="metric-value">{{ log.enddate|date:"M d" }}</div>
-                                <div class="metric-label">End Date</div>
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Activities -->
-                  {% if log.activities.all %}
-                    <div class="activities-section">
-                        <h4 style="margin: 0 0 1rem 0; color: var(--color-text-dark);">📋 Daily Activities ({{ log.activities.all|length }})</h4>
-                        
-                        <div class="activities-table">
-                            <div>
-                                <div class="activity-row">
-                                    <div class="activity-name">Activity Name</div>
-                                    <div class="activity-duration">Duration</div>
-                                    <div class="activity-intensity">Intensity</div>
-                                </div>
-                            </div>
-                            {% for activity in log.activities.all %}
-                                <div class="activity-row">
-                            
-                                    <div class="activity-name">{{ activity.activity_name }}</div>
-                                    <div class="activity-duration">{{ activity.duration|default:"—" }}</div>
-                                    <div class="activity-intensity">
-                                        <span class="intensity-badge intensity-{{ activity.intensity|default:"0" }}">
-                                            {{ activity.intensity|default:"—" }}
-                                        </span>
-                                    </div>
-                                </div>
-                            {% empty %}
-                                <p style="text-align: center; color: var(--color-gray);">No activities recorded</p>
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endif %}
-
-                    <!-- Concerns -->
-                    {% if log.concerns %}
-                        <div class="concerns-section">
-                            <h4 style="margin: 0 0 0.75rem 0; color: #d97706;">⚠️ Concerns</h4>
-                            <div style="line-height: 1.6; color: #92400e;">{{ log.concerns }}</div>
-                        </div>
-                    {% endif %}
-
-                    <!-- Recovery Sessions -->
-                    {% if log.recovery_sessions %}
-                        <div class="recovery-section">
-                            <h4 style="margin: 0 0 0.75rem 0; color: #047857;">🩹 Recovery Sessions</h4>
-                            <div style="line-height: 1.6; color: #065f46;">{{ log.recovery_sessions }}</div>
-                        </div>
-                    {% endif %}
-                </div>
-            {% empty %}
-                <div class="no-results">
-                    <div style="font-size: 4rem; opacity: 0.3; margin-bottom: 1rem;">📭</div>
-                    <h3>No S&C Logs Found</h3>
-                    <p>No data available for <strong>{{ selected_camp.team.name }}</strong> on <strong>{{ report_date }}</strong></p>
-                    <a href="{% url 'snc_camps_dashboard' %}" class="back-to-form">🔄 Try Different Selection</a>
-                </div>
+            <!-- 3. Concerns & Recovery -->
+            {% for log in report_data %}
+            {% if log.concerns or log.recovery_sessions %}
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th colspan="4" style="text-align:left;">
+                            ⚠️ Concerns & Recovery - {{ log.date|date:"M d, Y" }}
+                        </th>
+                    </tr>
+                    <tr>
+                        <th>Coach</th>
+                        <th>Concerns</th>
+                        <th>Recovery Sessions</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>{{ log.coach_name }}</strong></td>
+                        <td style="max-width:300px;">{{ log.concerns|truncatewords:20|linebreaks|default:"—" }}</td>
+                        <td>{{ log.recovery_sessions|truncatewords:20|linebreaks|default:"—" }}</td>
+                        <td>{{ log.date|date:"M d, Y" }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            {% endif %}
             {% endfor %}
         </div>
     {% endif %}

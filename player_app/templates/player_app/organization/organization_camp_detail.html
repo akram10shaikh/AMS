@@ -2,8 +2,6 @@
 {% load static %}
 
 {% block extra_head %}
-
-
 <style>
     body {
         background: radial-gradient(circle at top left, #f4f5f6ff 0, #edeff9ff 45%, #cbcccfff 100%);
@@ -282,6 +280,92 @@
         box-shadow: 0 16px 40px rgba(129,140,248,0.75);
     }
 
+    /* NEW: Test Section Styles - Dark Theme */
+    .test-card {
+        background: rgba(17, 24, 39, 0.95);
+        border: 1px solid rgba(75,85,99,0.6);
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 25px rgba(15,23,42,0.75);
+        margin-bottom: 1.25rem;
+        padding: 1.25rem;
+    }
+
+    .test-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .test-card-header h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #e5e7eb;
+        margin: 0;
+        letter-spacing: 0.03em;
+    }
+
+    .badge-dark {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(56,189,248,0.2), rgba(129,140,248,0.25));
+        color: #e0f2fe;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border: 1px solid rgba(96,165,250,0.4);
+    }
+
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        border-radius: 0.5rem;
+        background: rgba(31,41,55,0.6);
+    }
+
+    .test-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        min-width: 420px;
+        background: transparent;
+    }
+
+    .test-table thead {
+        background: rgba(17,24,39,0.95);
+    }
+
+    .test-table th {
+        padding: 0.875rem 0.75rem;
+        text-align: left;
+        color: #9ca3af;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.78rem;
+        border-bottom: 2px solid rgba(75,85,99,0.8);
+    }
+
+    .test-table td {
+        padding: 0.875rem 0.75rem;
+        text-align: left;
+        color: #e5e7eb;
+        border-bottom: 1px solid rgba(55,65,81,0.7);
+    }
+
+    .test-table tbody tr {
+        background: rgba(31,41,55,0.4);
+        transition: background 0.15s ease;
+    }
+
+    .test-table tbody tr:hover {
+        background: rgba(59,130,246,0.15);
+    }
+
+    .test-table tbody tr:nth-child(even) {
+        background: rgba(31,41,55,0.6);
+    }
+
     @media (max-width: 576px) {
         .camp-wrapper {
             margin-top: 1.5rem;
@@ -398,6 +482,130 @@
             <p class="empty-text">No participants added yet.</p>
         {% endif %}
     </div>
+
+    <!-- NEW: Tests Section -->
+    {% if test_data or TEST_SPECIAL or OTHER_TEST %}
+    <div class="card-dark">
+        <h2 class="card-title">Tests Overview</h2>
+        <div class="phase-header" style="margin-bottom: 1.5rem;">
+            <h3 style="margin: 0 0 0.5rem 0; color: #e5e7eb; font-size: 1.1rem;">Camp Performance Tests</h3>
+            <p style="margin: 0; color: #9ca3af; font-size: 0.9rem;">Performance metrics and test results for camp participants</p>
+        </div>
+
+        {% if not all_empty %}
+            {% for test_type, tests in test_data.items %}
+                {% if tests %}
+                    <section class="test-card">
+                        <div class="test-card-header">
+                            <h3>{{ test_type }}</h3>
+                            <span class="badge-dark">{{ tests|length }} tests</span>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="test-table">
+                                <thead>
+                                    <tr>
+                                        <th>Player</th>
+                                        <th>Date</th>
+                                        <th>Best</th>
+                                        <th>Distance</th>
+                                        <th>Vo2 Max</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for test in tests %}
+                                        <tr>
+                                            <td>{{ test.player.name }}</td>
+                                            <td>{{ test.date }}</td>
+                                            <td>{{ test.best }}</td>
+                                            <td>{{ test.distance_covered }}</td>
+                                            <td>{{ test.predicted_vo2max }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Special Test Data -->
+            {% for test_type, tests in TEST_SPECIAL.items %}
+                {% if tests %}
+                    <section class="test-card">
+                        <div class="test-card-header">
+                            <h3>{{ test_type }}</h3>
+                            <span class="badge-dark">{{ tests|length }} tests</span>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="test-table">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Player</th>
+                                        <th>Date</th>
+                                        <th>Right</th>
+                                        <th>Left</th>
+                                        <th>Difference</th>
+                                        <th>Ratio</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for test in tests %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>{{ test.player.name }}</td>
+                                            <td>{{ test.date }}</td>
+                                            <td>{{ test.right }}</td>
+                                            <td>{{ test.left }}</td>
+                                            <td>{{ test.difference }}</td>
+                                            <td>{{ test.ratio }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Other Tests -->
+            {% for name, data in OTHER_TEST.items %}
+                {% if data.rows %}
+                <section class="test-card">
+                    <div class="test-card-header">
+                        <h3>{{ name }}</h3>
+                        <span class="badge-dark">{{ data.rows|length }} tests</span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="test-table">
+                            <thead>
+                                <tr>
+                                    {% for h in data.headers %}
+                                        <th>{{ h|capfirst }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in data.rows %}
+                                    <tr>
+                                        {% for value in row %}
+                                            <td>{{ value }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <p class="empty-text mb-0">No test data available for this camp.</p>
+        {% endif %}
+    </div>
+    {% endif %}
 
     <!-- Activity history -->
     <div class="card-dark">

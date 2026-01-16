@@ -323,7 +323,7 @@ class Injury(models.Model):
     updated_at = models.DateTimeField(auto_now=True,null=True)
     created_at = models.DateTimeField(auto_now_add=True,null=True)
     unknown_injury_date = models.BooleanField(default=False)
-
+    camp_tournament = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True, blank=True, related_name='injuries')
 
     def __str__(self):
         return f"{self.player.name} - {self.nature_of_injury} ({self.severity})"
@@ -791,8 +791,7 @@ class DailySncLogCamps(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='snc_logs')
     coach_name = models.CharField(max_length=100, null=True,blank=True)
     date = models.DateField(null=True)
-
-
+    end_date = models.DateField(null=True)
 
     # Wellbeing & logistics
     concerns = models.TextField(blank=True)

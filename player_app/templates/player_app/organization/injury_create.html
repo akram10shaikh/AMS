@@ -155,6 +155,15 @@
                     <label for="{{ form.player_status.id_for_label }}">Player Status</label>
                     {{ form.player_status }}
                 </div>
+
+                <div class="form-group">
+                    <label for="{{ form.camp_tournament.id_for_label }}">Camp/Tournament</label>
+                    {{ form.camp_tournament }}
+                    {% if form.camp_tournament.errors %}
+                        <div class="text-danger">{{ form.camp_tournament.errors }}</div>
+                    {% endif %}
+                </div>
+                
                 <div class="form-group">
                     <label for="{{ form.severity.id_for_label }}">Side</label>
                     {{ form.side }}

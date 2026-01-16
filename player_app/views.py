@@ -1276,7 +1276,68 @@ def organization_camp_detail(request, camp_id):
     Displays details of a specific camp/tournament.
     """
     camp = get_object_or_404(CampTournament, id=camp_id)
-    return render(request, 'player_app/organization/organization_camp_detail.html', {'camp': camp})
+    phase = get_object_or_404(CampTournament, id=camp_id, 
+                             organization=request.user.organization)
+    
+    # Dict of all test querysets by phase
+    test_data = {
+        '10m': TenMeterTest.objects.filter(phase=phase).select_related('player')[:50],
+        '20m': TwentyMeterTest.objects.filter(phase=phase).select_related('player')[:50],
+        '40m': FortyMeterTest.objects.filter(phase=phase).select_related('player')[:50],
+        'YoYo':YoYoTest.objects.filter(phase=phase).select_related('player')[:50],
+        'SBJ': SBJTest.objects.filter(phase=phase).select_related('player')[:50],
+        'Run A 3': RunA3Test.objects.filter(phase=phase).select_related('player')[:50],
+        # 'Run A 3x6':
+        '1 Mile': OneMileTest.objects.filter(phase=phase).select_related('player')[:50],
+        'Push-ups': PushUpsTest.objects.filter(phase=phase).select_related('player')[:50],
+        '2 KM': TwoKmTest.objects.filter(phase=phase).select_related('player')[:50],
+    }
+    all_empty = not any(qs.exists() for qs in test_data.values())
+
+    TEST_SPECIAL = {
+        'S/L Glute Bridges': SLGluteBridges.objects.filter(phase=phase).select_related('player')[:50],
+        'S/L Lunge Calf Raises': SLLungeCalfRaises.objects.filter(phase=phase).select_related('player')[:50],
+        'MB Rotational Throws': MBRotationalThrows.objects.filter(phase=phase).select_related('player')[:50],
+        'Copenhagen': CopenhagenTest.objects.filter(phase=phase).select_related('player')[:50],
+        'S/L Hop': SLHopTest.objects.filter(phase=phase).select_related('player')[:50],
+    }
+    
+    other_test_models = {
+        "CMJ Scores": CMJTest,
+        "Anthropometry Test": AnthropometryTest,
+        "Blood Work": BloodTest,
+        "DEXA Scan Test": DexaScanTest,
+        "MSK Injury Assessment": MSKInjuryAssessment,
+    }
+
+    OTHER_TEST = {}
+    for label, model in other_test_models.items():
+        qs = model.objects.filter(phase=phase).select_related("player")[:50]
+
+        rows = []
+        headers = None
+
+        for obj in qs:
+            row_dict = obj_to_row(obj)          # dict without excluded keys
+            if headers is None:
+                headers = list(row_dict.keys())  # order fixed from first row
+            rows.append([row_dict[h] for h in headers])
+
+        OTHER_TEST[label] = {
+            "headers": headers or [],
+            "rows": rows,
+        }
+
+    context = {
+        "phase": phase,
+        "test_data": test_data,
+        "total_tests": sum(len(tests) for tests in test_data.values()),
+        "all_empty": all_empty,
+        "TEST_SPECIAL": TEST_SPECIAL,
+        "OTHER_TEST": OTHER_TEST,
+        'camp': camp,
+    }
+    return render(request, 'player_app/organization/organization_camp_detail.html', context)
 
 
 def obj_to_row(obj):
@@ -1396,6 +1457,7 @@ def daily_activity_coach_log(request,id):
         team = request.POST.get("team", "").strip()
         coach_name = request.POST.get("coach_name", "").strip()
         date = request.POST.get("session_date")  # yyyy-mm-dd
+        end_date = request.POST.get("session_date_end")  # yyyy-mm-dd
         concerns = request.POST.get("concerns", "").strip()
        
         niggles_value = request.POST.get("niggles")  # "yes" / "no"
@@ -1416,6 +1478,7 @@ def daily_activity_coach_log(request,id):
         log, created = DailySncLogCamps.objects.update_or_create(
             team=teams,
             date=date,
+            end_date=end_date,
             defaults={
                 "user": request.user,
                 "coach_name": coach_name,
@@ -1489,6 +1552,7 @@ def daily_snc_camp_logs_list(request, camp_id):
         'sort_order': sort_order,
     }
     return render(request, 'player_app/camps/daily_snc_camp_logs_list.html', context)
+
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Prefetch
@@ -1834,11 +1898,13 @@ def organization_dashboard_org(request):
         injuries = injuries.filter(player__gender=selected_gender)
 
     total_injuries_count = injuries.count()
+    
     active_injuries = injuries.filter(status='open')
     active_injuries_count = active_injuries.count()
 
     recovered_injuries = injuries.filter(status='closed')  # or 'closed' etc.
     recovered_injuries_count = recovered_injuries.count()
+    
     participation_counts = CampTournament.objects.filter(
         participants__in=players
     ).annotate(
