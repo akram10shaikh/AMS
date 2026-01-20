@@ -475,13 +475,121 @@
         {% if camp.participants.exists %}
             <ul class="participants-list">
                 {% for participant in camp.participants.all %}
-                    <li>{{ participant.name }}</li>
+                    <li>{{ forloop.counter }}. {{ participant.name }}</li>
                 {% endfor %}
             </ul>
         {% else %}
             <p class="empty-text">No participants added yet.</p>
         {% endif %}
     </div>
+
+    {% if snc_logs %}
+    <div class="card-dark">
+        <div class="phase-header" style="margin-bottom: 1.5rem;">
+            <h3 style="margin: 0 0 0.5rem 0; color: #e5e7eb; font-size: 1.1rem;">S&C Coach Logs</h3>
+            <p style="margin: 0; color: #9ca3af; font-size: 0.9rem;">Daily strength & conditioning activities logged by coaches</p>
+        </div>
+        
+        <section class="test-card">
+            <div class="test-card-header">
+                <h3>S&C Logs Overview</h3>
+                <span class="badge-dark">{{ snc_logs|length }} logs</span>
+            </div>
+            <div class="table-wrapper">
+                <table class="test-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                        
+                            <th>Team</th>
+                            <th>Coach</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in snc_logs %}
+                        <tr>
+                            <td><strong>{{ log.date|date:"d M Y" }}</strong></td>
+                           
+                            <td>{{ log.team.name|default:"—" }}</td>
+                            <td>{{ log.coach_name|default:"—" }}</td>
+                            <td>
+                                <a href="{% url 'daily_snc_camp_detail' log.id %}"
+                                   class="btn btn-sm btn-outline-soft btn-pill">
+                                    View Log
+                                </a>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                No S&C logs available for this camp
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    {% endif %}
+
+
+
+    <!-- NEW: Injuries Section (BELOW S&C, ABOVE Tests) -->
+    {% if camp_injuries %}
+    <div class="card-dark">
+        <div class="phase-header" style="margin-bottom: 1.5rem;">
+            <h3 style="margin: 0 0 0.5rem 0; color: #e5e7eb; font-size: 1.1rem;">Injury Report</h3>
+            <p style="margin: 0; color: #9ca3af; font-size: 0.9rem;">Injuries & medical assessments during this camp</p>
+        </div>
+        
+        {% for injury in camp_injuries %}
+        <section class="test-card injury-card">
+            <div class="test-card-header">
+                <h3>{{ injury.injury_type }} ({{ injury.severity }}/10)</h3>
+                <div class="injury-meta">
+                    <span class="badge-warning">Reported {{ injury.injury_date|date:"d M Y" }}</span>
+                    {% if injury.expected_date_of_return %}
+                    <span class="badge-info">Expected Return: {{ injury.expected_date_of_return|date:"d M Y" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="test-table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Side</th>
+                            <th>Body Part</th>
+                            <th>Physio</th>
+                            <th>Status</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>{{ injury.player.name }}</strong></td>
+                            <td>{{ injury.side|title }}</td>
+                            <td>{{ injury.affected_body_part }}</td>
+                            <td>{{ injury.reported_by.name|default:"—" }}</td>
+                            <td>
+                                <span class="status-badge status-{{ injury.status|lower }}">
+                                    {{ injury.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'organization_injury_detail' injury.id %}"
+                                   class="btn btn-sm btn-outline-soft btn-pill">
+                                    View Details
+                                </a>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <!-- NEW: Tests Section -->
     {% if test_data or TEST_SPECIAL or OTHER_TEST %}

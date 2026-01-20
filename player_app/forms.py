@@ -329,8 +329,23 @@ BODY_PART_CHOICES = [
     ('right-leg', 'Right Leg'),
     ('left-foot', 'Left Foot'),
     ('right-foot', 'Right Foot'),
-]
-
+    ('obliques-left', 'Obliques Left'),
+    ('obliques-right', 'Obliques Right'),
+    ('rotator-cuff-left', 'Rotator Cuff Left'),
+    ('rotator-cuff-right', 'Rotator Cuff Right'),
+    ('finger-left', 'Finger Left'),
+    ('finger-right', 'Finger Right'),
+    ('lower-back', 'Lower Back'),
+    ('knee-left', 'Knee Left'),
+    ('knee-right', 'Knee Right'),
+    ('hamstring-left', 'Hamstring Left'),
+    ('hamstring-right', 'Hamstring Right'),
+    ('shin-left', 'Shin Left'),
+    ('shin-right', 'Shin Right'),
+    ('ankle-left', 'Ankle Left'),
+    ('ankle-right', 'Ankle Right'),
+    ('other', 'Other'),
+]   
 class InjuryFormUpdate(forms.ModelForm):
     injury_date = forms.DateField(
         widget=forms.DateInput(attrs={'type': 'date', 'placeholder': 'Injury Date'})
@@ -350,7 +365,12 @@ class InjuryFormUpdate(forms.ModelForm):
         }),
         label='Affected Body Parts',
     )
-
+    side = forms.ChoiceField(
+        choices=SIDE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control', 'placeholder': 'Side of body injured'}),
+        required=True,
+        label='Side of body injured'
+    )
     class Meta:
         model = Injury
         fields = [

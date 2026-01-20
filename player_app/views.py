@@ -843,6 +843,7 @@ def organization_create_injury(request):
             print(form.errors)# Print all form errors in console for debugging
     else:
         # GET: Create empty form with filtered choices
+        
         form = InjuryForm(players_qs=players_qs, physios_qs=physios_qs)
     
     context = {
@@ -1273,21 +1274,20 @@ def organization_delete_camp(request, camp_id):
 
 def organization_camp_detail(request, camp_id):
     """
-    Displays details of a specific camp/tournament.
+    Displays details of a specific camp/tournament with S&C Logs, Injuries, and Tests.
     """
     camp = get_object_or_404(CampTournament, id=camp_id)
     phase = get_object_or_404(CampTournament, id=camp_id, 
-                             organization=request.user.organization)
+                              organization=request.user.organization)
     
     # Dict of all test querysets by phase
     test_data = {
         '10m': TenMeterTest.objects.filter(phase=phase).select_related('player')[:50],
         '20m': TwentyMeterTest.objects.filter(phase=phase).select_related('player')[:50],
         '40m': FortyMeterTest.objects.filter(phase=phase).select_related('player')[:50],
-        'YoYo':YoYoTest.objects.filter(phase=phase).select_related('player')[:50],
+        'YoYo': YoYoTest.objects.filter(phase=phase).select_related('player')[:50],
         'SBJ': SBJTest.objects.filter(phase=phase).select_related('player')[:50],
         'Run A 3': RunA3Test.objects.filter(phase=phase).select_related('player')[:50],
-        # 'Run A 3x6':
         '1 Mile': OneMileTest.objects.filter(phase=phase).select_related('player')[:50],
         'Push-ups': PushUpsTest.objects.filter(phase=phase).select_related('player')[:50],
         '2 KM': TwoKmTest.objects.filter(phase=phase).select_related('player')[:50],
@@ -1312,15 +1312,22 @@ def organization_camp_detail(request, camp_id):
 
     OTHER_TEST = {}
     for label, model in other_test_models.items():
-        qs = model.objects.filter(phase=phase).select_related("player")[:50]
+        qs = model.objects.filter(phase=phase).select_related('player__organization')[:50]
 
         rows = []
         headers = None
 
         for obj in qs:
-            row_dict = obj_to_row(obj)          # dict without excluded keys
+            row_dict = obj_to_row(obj)
+            
+            # ✅ Fix player name display (handles both player/player_id)
+            if 'player_id' in row_dict:
+                row_dict['player_id'] = obj.player.name if obj.player else 'Unknown Player'
+            elif 'player' in row_dict:
+                row_dict['player'] = obj.player.name if obj.player else 'Unknown Player'
+            
             if headers is None:
-                headers = list(row_dict.keys())  # order fixed from first row
+                headers = list(row_dict.keys())
             rows.append([row_dict[h] for h in headers])
 
         OTHER_TEST[label] = {
@@ -1328,7 +1335,18 @@ def organization_camp_detail(request, camp_id):
             "rows": rows,
         }
 
+    # 🔥 NEW: S&C Logs (TOP section) - Optimized with prefetch_related for activities
+    snc_logs = DailySncLogCamps.objects.filter(team=phase).prefetch_related('activities')[:10]
+
+    # 🔥 NEW: Injuries (MIDDLE section) - Optimized
+    camp_injuries = Injury.objects.filter(
+        camp_tournament=phase,
+        player__organization=request.user.organization
+    ).select_related('player').order_by('-injury_date')[:10]
+
     context = {
+        'snc_logs': snc_logs,
+        'camp_injuries': camp_injuries,
         "phase": phase,
         "test_data": test_data,
         "total_tests": sum(len(tests) for tests in test_data.values()),
@@ -1338,6 +1356,7 @@ def organization_camp_detail(request, camp_id):
         'camp': camp,
     }
     return render(request, 'player_app/organization/organization_camp_detail.html', context)
+
 
 
 def obj_to_row(obj):
@@ -1449,71 +1468,168 @@ def _slugify_activity(name: str) -> str:
     return slug
 
 # Daily Activity log view for S&C Coach's
-def daily_activity_coach_log(request,id):
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.db import transaction
+from .models import CampTournament, Organization, DailySncLogCamps, DailyActivityCamps, Injury, Player, Staff
+
+def _slugify_activity(activity_name):
+    """Helper to slugify activity names (same as template JS)"""
+    return activity_name.lower().replace(" / ", "_").replace(" ", "_").replace("/", "_")
+
+def daily_activity_coach_log(request, id):
     camp = get_object_or_404(CampTournament, id=id)
     organization = get_object_or_404(Organization, user=request.user)
+    players_qs = Player.objects.filter(organization=organization)
+    physios_qs = Staff.objects.filter(organization=organization, role__iexact='Physio')
     
     if request.method == "POST":
-        team = request.POST.get("team", "").strip()
-        coach_name = request.POST.get("coach_name", "").strip()
-        date = request.POST.get("session_date")  # yyyy-mm-dd
-        end_date = request.POST.get("session_date_end")  # yyyy-mm-dd
-        concerns = request.POST.get("concerns", "").strip()
-       
-        niggles_value = request.POST.get("niggles")  # "yes" / "no"
-        niggles = niggles_value == "yes"
-
-        recovery_list = request.POST.getlist("recovery")  # many checkboxes
-        recovery_sessions = ",".join(recovery_list)
-
-        if not (team and coach_name and date):
-            messages.error(request, "Team, coach name and date are required.")
-            return render(
-                request,
-                "player_app/camps/daily_activity.html",  # ✅ Use existing template
-                {"activities": ACTIVITY_NAMES, "camp": camp, "organization": organization},
-            )
-        teams = CampTournament.objects.get(name=team)
-        # create / update header row (unique team + date)
-        log, created = DailySncLogCamps.objects.update_or_create(
-            team=teams,
-            date=date,
-            end_date=end_date,
-            defaults={
-                "user": request.user,
-                "coach_name": coach_name,
-                "concerns": concerns,
-                "niggles": niggles,
-                "recovery_sessions": recovery_sessions,
-            },
-        )
-
-        # clear previous activities for this day (if updating)
-        log.activities.all().delete()
-
-        # create activities
-        for activity_name in ACTIVITY_NAMES:
-            slug = _slugify_activity(activity_name)
-            duration_key = f"activities[{slug}][duration]"
-            intensity_key = f"activities[{slug}][intensity]"
-
-            duration = (request.POST.get(duration_key) or "").strip()
-            intensity = (request.POST.get(intensity_key) or "").strip()
-
-            # rule: only save when duration selected
-            if duration:
-                DailyActivityCamps.objects.create(
-                    log=log,
-                    activity_name=activity_name,
-                    duration=duration,
-                    intensity=intensity,
+        with transaction.atomic():  # Ensure all data saves atomically
+            team = request.POST.get("team", "").strip()
+            coach_name = request.POST.get("coach_name", "").strip()
+            date = request.POST.get("session_date")
+            end_date = request.POST.get("session_date_end")
+            concerns = request.POST.get("concerns", "").strip()
+            
+            niggles_value = request.POST.get("niggles")
+            niggles = niggles_value == "yes"
+            
+            recovery_list = request.POST.getlist("recovery")
+            recovery_sessions = ",".join(recovery_list)
+            
+            if not (team and coach_name and date):
+                messages.error(request, "Team, coach name and date are required.")
+                return render(
+                    request,
+                    "player_app/camps/daily_activity.html",
+                    {
+                        "activities": ACTIVITY_NAMES, 
+                        "camp": camp, 
+                        "organization": organization,
+                        "players_qs": players_qs,
+                        "physios_qs": physios_qs,
+                    },
                 )
-
-        messages.success(request, "Daily S&C camp log saved.")
-        return redirect("daily_snc_camp_detail", pk=log.pk)
-
-    # GET
-    return render(request,"player_app/camps/daily_activity.html",{"activities": ACTIVITY_NAMES,"camp":camp,"organization":organization},)
+            
+            teams = CampTournament.objects.get(name=team)
+            
+            # Create/update main log entry
+            log, created = DailySncLogCamps.objects.update_or_create(
+                team=teams,
+                date=date,
+                end_date=end_date,
+                defaults={
+                    "user": request.user,
+                    "coach_name": coach_name,
+                    "concerns": concerns,
+                    "niggles": niggles,
+                    "recovery_sessions": recovery_sessions,
+                },
+            )
+            
+            # Clear previous activities
+            log.activities.all().delete()
+            
+            # Save activities
+            for activity_name in ACTIVITY_NAMES:
+                slug = _slugify_activity(activity_name)
+                duration_key = f"activities[{slug}][duration]"
+                intensity_key = f"activities[{slug}][intensity]"
+                
+                duration = request.POST.get(duration_key, "").strip()
+                intensity = request.POST.get(intensity_key, "").strip()
+                
+                if duration:  # Only save if duration selected
+                    DailyActivityCamps.objects.create(
+                        log=log,
+                        activity_name=activity_name,
+                        duration=duration,
+                        intensity=intensity,
+                    )
+            
+            # **NEW: Handle Injury Data when niggles == True**
+            if niggles:
+                player_id = request.POST.get('player')
+                reported_by_id = request.POST.get('reported_by')
+                injury_date = request.POST.get('injury_date')
+                name = request.POST.get('title')  # Title field
+                nature_of_injury = request.POST.get('nature_of_injury')
+                diagnosis_date = request.POST.get('diagnosis_date')
+                severity_rating = request.POST.get('severity')
+                venue = request.POST.get('venue')
+                type_of_activity = request.POST.get('type_of_activity')
+                notes = request.POST.get('notes')
+                action_taken = request.POST.get('action_taken')
+                player_status = request.POST.get('player_status')
+                expected_date_of_return = request.POST.get('expected_date_of_return')
+                side = request.POST.get('side')
+                camp_tournament = camp.id
+                team = teams
+                organization = organization
+                affected_body_parts = request.POST.getlist('affected_body_part')
+                
+                print(player_id, reported_by_id, injury_date, name, nature_of_injury, diagnosis_date, severity_rating,
+                      venue, type_of_activity, notes, action_taken, player_status, expected_date_of_return, side, affected_body_parts)
+                phase_obj = get_object_or_404(CampTournament, id=camp.id)
+                player = get_object_or_404(Player, id=player_id)
+                
+                print(phase_obj, player)
+                # Staff → User
+                staff_obj = get_object_or_404(Staff, id=reported_by_id)
+                reported_by_user = staff_obj.user 
+                # Get affected body parts (handles multiple selections)
+                print("Reported by user:", reported_by_user)
+                
+                # Validate required injury fields
+                if player_id:  # Player & Title required
+                    try:
+                        injury = Injury.objects.create(
+                            player_id=player_id,
+                            reported_by_id=reported_by_id or None,
+                            injury_date=injury_date or None,
+                            name=name,
+                            nature_of_injury=nature_of_injury or '',
+                            diagnosis_date=diagnosis_date or None,
+                            severity_rating=severity_rating or 0,
+                            venue=venue or '',
+                            type_of_activity=type_of_activity or '',
+                            notes=notes or '',
+                            action_taken=action_taken or '',
+                            player_status=player_status or 'no participation',
+                            expected_date_of_return=expected_date_of_return or None,
+                            side=side or 'bilateral',
+                            camp_tournament_id=camp.id,
+                            affected_body_part=affected_body_parts,
+                            team=team,
+                        )
+                        
+                        # Save body parts (assuming Injury model has ManyToMany or JSONField)
+                        print("Injury created with ID:", injury.id)
+                        messages.success(request, f"Daily log AND injury report saved successfully!")
+                        
+                    except Exception as e:
+                        print("Error saving injury:", e)
+                        messages.error(request, f"Injury save failed: {str(e)}")
+                else:
+                    messages.warning(request, "Injury reported but missing required fields (Player/Title). Log saved.")
+            
+            else:
+                messages.success(request, "Daily S&C camp log saved.")
+            
+            return redirect("daily_snc_camp_detail", pk=log.pk)
+    
+    # GET request - render form
+    return render(
+        request,
+        "player_app/camps/daily_activity.html",
+        {
+            "activities": ACTIVITY_NAMES,
+            "camp": camp,
+            "organization": organization,
+            "players_qs": players_qs,
+            "physios_qs": physios_qs,
+        },
+    )
 
 
 # Daily Activity log view page
@@ -1597,10 +1713,14 @@ def snc_camps_dashboard(request):
                 team=selected_camp,
                 date__range=[start_date, report_date_end]  # 2025-12-01 → 2026-01-12
             ).prefetch_related('activities').select_related('user').order_by('-date')
+            niggles_count = report_data.filter(niggles=True).count()
+            
             
             context['selected_camp'] = selected_camp
             context['report_data'] = report_data
-            context['date_range'] = f"{start_date} → Today ({end_date})"
+            context['date_range'] = f"{start_date} → Today ({report_date_end})"
+            context['report_date_end'] = report_date_end
+            context['niggles_count']=niggles_count
     
     return render(request, 'player_app/camps/snc_dashboard.html', context)
 

@@ -229,6 +229,136 @@
       margin-bottom: 6px;
     }
   }
+  .injury-section {
+    margin-top: 28px;
+    display: none;
+  }
+  .injury-section.show {
+    display: block;
+    animation: slideDown 0.3s ease-out;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .injury-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e4f0;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.12);
+    padding: 24px;
+    margin-bottom: 18px;
+  }
+  
+  .injury-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px 24px;
+    margin-bottom: 20px;
+  }
+  
+  .injury-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .injury-field label {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #111827;
+  }
+  
+  .injury-field select,
+  .injury-field input,
+  .injury-field textarea {
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    background-color: #f9fafb;
+    transition: border-color 0.12s ease;
+  }
+  
+  .injury-field select:focus,
+  .injury-field input:focus,
+  .injury-field textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.08);
+    background-color: #ffffff;
+  }
+  
+  .player-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 120px;
+    gap: 24px;
+    margin: 20px 0;
+  }
+  
+  .player-details-table {
+    font-size: 0.88rem;
+    color: #374151;
+    line-height: 1.6;
+  }
+  
+  .player-details-table td {
+    padding: 8px 16px 8px 0;
+  }
+  
+  .player-photo img {
+    width: 100px;
+    height: 105px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+  }
+  
+  .body-container {
+    margin-top: 12px;
+  }
+  
+  #body-diagram {
+    width: 280px;
+    height: auto;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+  }
+  
+   .marker {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: #ef4444;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+    z-index: 10;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  .marker:hover {
+    transform: scale(1.3);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
+  }
+
+  .submit-btn {
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-top: 16px;
+  }
+  
+  .submit-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px rgba(37, 99, 235, 0.4);
+  }
 </style>
 {% endblock %}
 
@@ -332,19 +462,166 @@
                   placeholder="Your answer"></textarea>
       </div>
 
-      <div class="snc-field" style="margin-top: 14px;">
+            <div class="snc-field" style="margin-top: 14px;">
         <label>Any niggles, aches, or injuries? <span class="snc-required">*</span></label>
         <div class="snc-choice-group">
           <label class="snc-choice">
-            <input type="radio" name="niggles" value="yes" required>
+            <input type="radio" name="niggles" value="yes" required id="niggles-yes">
             <span>Yes</span>
           </label>
           <label class="snc-choice">
-            <input type="radio" name="niggles" value="no">
+            <input type="radio" name="niggles" value="no" id="niggles-no">
             <span>No</span>
           </label>
         </div>
       </div>
+    </section>
+
+    <!-- NEW: Injury Form Section (hidden by default) -->
+    <div class="injury-section" id="injury-section">
+      <div class="snc-card">
+        <h2 class="snc-card-title" style="color: #ef4444; font-size: 1.05rem;">
+          <i class="fas fa-exclamation-triangle"></i> Report Injury Details
+        </h2>
+        
+        
+          
+          <!-- Hidden fields for context -->
+          <input type="hidden" name="team" value="{{ camp.name }}">
+          <input type="hidden" name="camp_tournament" value="{{ camp.id }}">
+          
+          <div class="injury-row">
+            <div class="injury-field">
+              <label>Player Name <span style="color: #dc2626;">*</span></label>
+             
+                <label class="snc-choice">
+                  <select name="player" class="snc-select" required>
+                     {% for player in players_qs %}
+                      <option value="{{ player.id }}">{{ player.name }}</option>
+                     {% endfor %}
+                  </select>
+                </label>
+              
+            </div>
+            <div class="injury-field">
+              <label>Reported By (Physio)</label>
+              <select name="reported_by" class="snc-select">
+                {% for physio in physios_qs %}
+                  <option value="{{ physio.id }}">{{ physio.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="injury-field">
+              <label>Injury Date</label>
+              <input type="date" name="injury_date" class="snc-input">
+            </div>
+          </div>
+          <div class="injury-row">
+            <div class="injury-field">
+              <label>Title</label>
+              <input type="text" name="title" class="snc-input">
+            </div>
+            <div class="injury-field">
+              <label>Nature of Injury</label>
+              <input type="text" name="nature_of_injury" class="snc-input">
+            </div>
+            <div class="injury-field">
+              <label>Diagnosis Date</label>
+              <input type="date" name="diagnosis_date" class="snc-input">
+          </div>
+        </div>
+
+        <div class="injury-row">
+            <div class="injury-field">
+              <label>Severity</label>
+              <input type="number" name="severity" class="snc-input">
+            </div>
+            <div class="injury-field">
+              <label>Venue</label>
+              <input type="text" name="venue" class="snc-input">
+            </div>
+            <div class="injury-field">
+              <label>Type of Activity</label>
+              <input type="text" name="type_of_activity" class="snc-input">
+            </div>
+        </div>
+        
+        <div class="injury-row">
+            <div class="injury-field">
+              <label>Notes</label>
+              <textarea name="notes" class="snc-textarea"></textarea>
+            </div>
+            <div class="injury-field">
+              <label>Action Taken</label>
+              <textarea name="action_taken" class="snc-textarea"></textarea>
+            </div>
+            <div class="injury-field">
+              <label>Player Status</label>
+              <select name="player_status" class="snc-select">
+                <option value="full participation">Full Participation</option>
+                <option value="limited participation">Limited Participation</option>
+                <option value="no participation">No Participation</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Body part selector + diagram -->
+          <div class="injury-row">
+            <div class="injury-field">
+              <label>Expected Return</label>
+              <input type="date" name="expected_date_of_return" class="snc-input">
+            </div>
+            <div class="injury-field">
+              <label>Side</label>
+              <select name="side" class="snc-select">
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+                <option value="bilateral">Bilateral</option>
+              </select>
+            </div>
+            <div class="injury-field">
+              <label for="part-select">Body part affected</label>
+              <select id="part-select" multiple size="12" name="affected_body_part" class="form-control">
+                <option value="head">Head</option>
+                <option value="neck">Neck</option>
+                <option value="chest">Chest</option>
+                <option value="obliques-left">Obliques Left</option>
+                <option value="obliques-right">Obliques Right</option>
+                <option value="abdomen">Abdomen</option>
+                <option value="rotator-cuff-left">Rotator Cuff Left</option>
+                <option value="rotator-cuff-right">Rotator Cuff Right</option>
+                <option value="left-arm">Left Arm</option>
+                <option value="right-arm">Right Arm</option>
+                <option value="finger-left">Finger Left</option>
+                <option value="finger-right">Finger Right</option>
+                <option value="left-hand">Left Hand</option>
+                <option value="right-hand">Right Hand</option>
+                <option value="lower-back">Lower Back</option>
+                <option value="knee-left">Knee Left</option>
+                <option value="knee-right">Knee Right</option>
+                <option value="shin-left">Shin Left</option>
+                <option value="shin-right">Shin Right</option>
+                <option value="hamstring-left">Hamstring Left</option>
+                <option value="hamstring-right">Hamstring Right</option>
+                <option value="left-leg">Left Leg</option>
+                <option value="right-leg">Right Leg</option>
+                <option value="ankle-left">Ankle Left</option>
+                <option value="ankle-right">Ankle Right</option>
+                <option value="left-foot">Left Foot</option>
+                <option value="right-foot">Right Foot</option>
+              </select>
+            </div>
+          </div>
+  
+  <div class="body-container" style="position: relative; margin-top: 12px;">
+    <img id="body-diagram" src="{% static 'image.jpg' %}" alt="Body Diagram" 
+         style="width: 300px; height: auto; border-radius: 10px; border: 1px solid #e2e8f0;">
+    <!-- Markers will appear here -->
+  </div>
+</div>
+
+      </div>
+    
     </section>
 
     <!-- Actions -->
@@ -376,20 +653,21 @@
 
   const durationOptions = [
     { value: "",   label: "Select duration" },
+    { value: "0",  label: "0 hrs" },
     { value: "<1", label: "< 1 hr" },
-    { value: "1-2", label: "1 – 2 hrs" },
-    { value: "2-3", label: "2 – 3 hrs" },
-    { value: "3-4", label: "3 – 4 hrs" },
+    { value: "1-2", label: "1 - 2 hrs" },
+    { value: "2-3", label: "2 - 3 hrs" },
+    { value: "3-4", label: "3 - 4 hrs" },
     { value: ">4", label: "> 4 hrs" }
   ];
 
   const intensityOptions = [
     { value: "", label: "Select intensity" },
-    { value: "1", label: "1 – Very Low" },
-    { value: "2", label: "2 – Low" },
-    { value: "3", label: "3 – Moderate" },
-    { value: "4", label: "4 – High" },
-    { value: "5", label: "5 – Very High" }
+    { value: "1", label: "1 - Very Low" },
+    { value: "2", label: "2 - Low" },
+    { value: "3", label: "3 - Moderate" },
+    { value: "4", label: "4 - High" },
+    { value: "5", label: "5 - Very High" }
   ];
 
   function slugify(text) {
@@ -473,4 +751,92 @@
     });
   });
 </script>
+<script>
+  // Your existing activities code...
+  
+  document.addEventListener("DOMContentLoaded", function() {
+    // Your existing code...
+    
+    // NEW: Niggles radio toggle
+    const nigglesYes = document.getElementById('niggles-yes');
+    const nigglesNo = document.getElementById('niggles-no');
+    const injurySection = document.getElementById('injury-section');
+    
+    function toggleInjuryForm() {
+      injurySection.classList.toggle('show', nigglesYes.checked);
+    }
+    
+    nigglesYes.addEventListener('change', toggleInjuryForm);
+    nigglesNo.addEventListener('change', toggleInjuryForm);
+    
+    // Injury form player select (same as your original)
+    const playerSelect = document.querySelector('#id_player'); // Adjust selector
+    // ... rest of your player fetch logic ...
+    
+    // Body diagram markers (same as your original)
+    // ... body parts logic ...
+  });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const bodyParts = {
+    "head": {x: 120, y: 35},
+    "neck": {x: 75, y: 55},
+    "chest": {x: 75, y: 85},
+    "obliques-left": {x: 50, y: 110},
+    "obliques-right": {x: 80, y: 110},
+    "lower-back": {x: 235, y: 110},
+    "abdomen": {x: 75, y: 130},
+    "rotator-cuff-left": {x: 30, y: 60},
+    "rotator-cuff-right": {x: 100, y: 60},
+    "left-arm": {x: 35, y: 85},
+    "right-arm": {x: 115, y: 85},
+    "finger-left": {x: 14, y: 145},
+    "finger-right": {x: 125, y: 145},
+    "left-hand": {x: 15, y: 145},
+    "right-hand": {x: 135, y: 145},
+    "knee-left": {x: 50, y: 195},
+    "knee-right": {x: 78, y: 195},
+    "shin-left": {x: 48, y: 230},
+    "shin-right": {x: 80, y: 230},
+    "hamstring-left": {x: 225, y: 180},
+    "hamstring-right": {x: 250, y: 180},
+    "left-leg": {x: 60, y: 215},
+    "right-leg": {x: 90, y: 215},
+    "ankle-left": {x: 40, y: 255},
+    "ankle-right": {x: 85, y: 255},
+    "left-foot": {x: 45, y: 260},
+    "right-foot": {x: 85, y: 260},
+  };
+
+  const partSelect = document.getElementById('part-select');
+  const bodyContainer = document.querySelector('.body-container');
+  const bodyDiagram = document.getElementById('body-diagram');
+
+  function updateMarkers() {
+    // Remove old markers
+    document.querySelectorAll('.marker').forEach(marker => marker.remove());
+
+    // Add markers for selected parts
+    const selected = Array.from(partSelect.selectedOptions).map(opt => opt.value);
+    selected.forEach(part => {
+      if (bodyParts[part]) {
+        const marker = document.createElement('div');
+        marker.className = 'marker';
+        marker.style.left = bodyParts[part].x + 'px';
+        marker.style.top = bodyParts[part].y + 'px';
+        marker.title = part.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        bodyContainer.appendChild(marker);
+      }
+    });
+  }
+
+  // Update on selection change
+  partSelect.addEventListener('change', updateMarkers);
+  
+  // Initial update (if pre-selected)
+  updateMarkers();
+});
+</script>
+
 {% endblock %}

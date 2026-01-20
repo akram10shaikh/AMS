@@ -286,15 +286,12 @@
                     <div class="stat-label">Total Logs</div>
                 </div>
                 <div class="stat-card">
-                    {% with niggle_count=0 %}
-                    {% for log in report_data %}
-                        {% if log.niggles %}{% with niggle_count=forloop.counter %}{% endwith %}{% endif %}
-                    {% endfor %}
-                    <div class="stat-number">{{ niggle_count }}</div>
+                    
+                    <div class="stat-number">{{ niggles_count }}</div>
                     <div class="stat-label">Niggles Reported</div>
-                    {% endwith %}
+                    
                 </div>
-                <div class="stat-card">
+                {% comment %} <div class="stat-card">
                     {% with activity_count=0 %}
                     {% for log in report_data %}
                         {% for activity in log.activities.all %}
@@ -304,8 +301,8 @@
                     <div class="stat-number">{{ activity_count }}</div>
                     <div class="stat-label">Total Activities</div>
                     {% endwith %}
-                </div>
-                <div class="stat-card">
+                </div> {% endcomment %}
+                {% comment %} <div class="stat-card">
                     {% with coach_count=0 %}
                     {% for log in report_data %}
                         {% ifchanged log.coach_name %}{% with coach_count=forloop.counter %}{% endwith %}{% endifchanged %}
@@ -313,7 +310,7 @@
                     <div class="stat-number">{{ coach_count }}</div>
                     <div class="stat-label">Unique Coaches</div>
                     {% endwith %}
-                </div>
+                </div> {% endcomment %}
             </div>
 
             <!-- 1. Daily Summary Table -->
