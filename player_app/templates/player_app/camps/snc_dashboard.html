@@ -221,6 +221,175 @@
         .report-table { font-size: 0.85rem; }
         .report-table th, .report-table td { padding: 0.75rem 0.5rem; }
     }
+
+
+    .intensity-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.intensity-table th,
+.intensity-table td {
+    border: 1px solid #000;
+    text-align: center;
+    padding: 6px;
+}
+
+.intensity-table thead th {
+    background: #a9cbe8;
+    font-weight: bold;
+}
+
+.intensity-label {
+    background: #c6b7e2;
+    font-weight: bold;
+    width: 120px;
+}
+
+.intensity-cell {
+    height: 32px;
+}
+.header-banner {
+    background-color: #1e5021; 
+    padding: 20px;
+}
+
+.header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;     
+    justify-content: center; 
+    text-align: center;
+}
+
+.title h1,
+.title h2 {
+    margin: 5px 0;
+    color: #ffffff;
+}
+
+.info-table table {
+    margin-top: 15px;
+    border-collapse: collapse;
+}
+
+.info-table th,
+.info-table td {
+    padding: 8px 12px;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.info-table th {
+    font-weight: bold;
+}
+.section-header {
+    background: #9b0000;
+    color: #ffffff;
+    text-align: center;
+    font-weight: 700;
+    padding: 8px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 14px;
+    border-radius: 5px 5px 0 0;
+}
+.report-section {
+    width: 100%;
+    background: #ffffff;
+    font-family: Arial, sans-serif;
+}
+
+.chart-box {
+    padding: 10px 15px;
+    border-bottom: 2px solid #000;
+}
+
+.table-box {
+    padding: 0;
+    border-bottom: 3px solid #274e13;
+}
+
+.section-block {
+    margin-bottom: 20px;
+}
+
+.table-box table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.table-box th,
+.table-box td {
+    border: 1px solid #000;
+    padding: 6px;
+    text-align: center;
+}
+
+.table-box thead th {
+    background: #a9cbe8;
+    font-weight: bold;
+}
+
+.table-box .row-label {
+    background: #c6b7e2;
+    font-weight: bold;
+    width: 120px;
+}
+
+.recovery-section {
+    background-color: #1e5021;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center; 
+}
+
+.recovery-section .section-header {
+    background: #9b0000; 
+    color: #fff;
+    font-weight: 700;
+    padding: 8px;
+    border-radius: 8px 8px 0 0;
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+.recovery-section .info-table {
+    display: inline-block; 
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin-top: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.recovery-section table {
+    border-collapse: collapse;
+    margin: 0 auto; 
+    text-align: center;
+    width: auto; 
+}
+
+.recovery-section th,
+.recovery-section td {
+    padding: 8px 15px;
+    border: 1px solid #d1d5db;
+    color: #1a202c;
+
+}
+
+.recovery-section th {
+    background: #a9cbe8;
+    color:#000;
+    font-weight : 600;
+}
+
+.recovery-section td {
+    font-weight: 500;
+    background-color: #e5e7eb;
+}
+
 </style>
 {% endblock %}
 
@@ -232,7 +401,7 @@
 <main class="main-card">
     <!-- Header -->
     <div class="card-header">
-        <h2>Daily S&C Coach Report</h2>
+        <!-- <h2>Daily S&C Coach Report</h2> -->
         {% if report_data %}
             <a href="{% url 'snc_camps_dashboard' %}" class="back-to-form">← Back to Dashboard</a>
         {% endif %}
@@ -273,147 +442,732 @@
 
     <!-- RESULTS -->
     {% if report_data %}
+
+        <div class="header-banner">
+    <div class="header-content">
+        <div class="title">
+            <h1>Kerala Cricket Association</h1>
+            <h2>Weekly Report – {{ selected_camp.name }}</h2>
+        </div>
+
+        <div class="info-table">
+            <table>
+                <tr>
+                    <th>Team</th>
+                    <td>{{ selected_camp.name }}</td>
+                </tr>
+                <tr>
+                    <th>Date</th>
+                    <td>{{ report_date }} to {{ report_date_end }}</td>
+                </tr>
+            </table>
+        </div>
+   <div class="info-table">
+            <table>
+                <tr>
+                    <th>Total Number of Session </th>
+                    <td>{{ report_data|length }}</td>
+                    <th>Players Injured</th>
+                    <td></td>
+                </tr>
+              
+            </table>
+        </div>
+    </div>
+</div>
         <div class="report-results">
-            <div class="report-header">
-                <h3>🏆 {{ selected_camp.team.name }}</h3>
-                <p><strong>{{ report_date }} to {{ report_date_end }}</strong> | {{ report_data|length }} S&C Logs</p>
-            </div>
-
-            <!-- Summary Statistics - NO FILTERS NEEDED -->
-            <div class="summary-stats">
-                <div class="stat-card">
-                    <div class="stat-number">{{ report_data|length }}</div>
-                    <div class="stat-label">Total Logs</div>
-                </div>
-                <div class="stat-card">
-                    
-                    <div class="stat-number">{{ niggles_count }}</div>
-                    <div class="stat-label">Niggles Reported</div>
-                    
-                </div>
-                {% comment %} <div class="stat-card">
-                    {% with activity_count=0 %}
-                    {% for log in report_data %}
-                        {% for activity in log.activities.all %}
-                            {% with activity_count=forloop.parentloop.counter %}{% endwith %}
-                        {% endfor %}
-                    {% endfor %}
-                    <div class="stat-number">{{ activity_count }}</div>
-                    <div class="stat-label">Total Activities</div>
-                    {% endwith %}
-                </div> {% endcomment %}
-                {% comment %} <div class="stat-card">
-                    {% with coach_count=0 %}
-                    {% for log in report_data %}
-                        {% ifchanged log.coach_name %}{% with coach_count=forloop.counter %}{% endwith %}{% endifchanged %}
-                    {% endfor %}
-                    <div class="stat-number">{{ coach_count }}</div>
-                    <div class="stat-label">Unique Coaches</div>
-                    {% endwith %}
-                </div> {% endcomment %}
-            </div>
-
-            <!-- 1. Daily Summary Table -->
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Coach</th>
-                        <th>Niggles</th>
-                        <th>Activities</th>
-                        <th>Concerns</th>
-                        <th>Recovery</th>
-                        <th>End Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in report_data %}
-                    <tr>
-                        <td><strong>{{ log.date|date:"M d, Y" }}</strong></td>
-                        <td>
-                            {{ log.coach_name|default:"S&C Coach" }}<br>
-                            <small style="color: var(--color-gray);">
-                                by {{ log.user.get_full_name|default:log.user.username }}
-                            </small>
-                        </td>
-                        <td>{% if log.niggles %}<span class="status-yes">✅ Yes</span>{% else %}<span class="status-no">❌ No</span>{% endif %}</td>
-                        <td><strong>{{ log.activities.all|length }}</strong></td>
-                        <td>{% if log.concerns %}<span class="status-yes">✅ Yes</span>{% else %}<span class="status-no">❌ No</span>{% endif %}</td>
-                        <td>{% if log.recovery_sessions %}<span class="status-yes">✅ Yes</span>{% else %}<span class="status-no">❌ No</span>{% endif %}</td>
-                        <td>{{ log.enddate|date:"M d"|default:"—" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--color-gray);">No logs found</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
             <!-- 2. Activities Table -->
-            {% for log in report_data %}
-            {% if log.activities.all %}
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th colspan="5" style="text-align:left;">
-                            📋 Activities - {{ log.date|date:"M d, Y" }} ({{ log.coach_name }})
-                        </th>
-                    </tr>
-                    <tr>
-                        <th>Activity Name</th>
-                        <th>Duration</th>
-                        <th>Intensity</th>
-                        <th>Coach</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for activity in log.activities.all %}
-                    <tr>
-                        <td><strong>{{ activity.activity_name }}</strong></td>
-                        <td>{{ activity.duration|default:"—" }}</td>
-                        <td>
-                            <span class="intensity-badge intensity-{{ activity.intensity|default:'0' }}">
-                                {{ activity.intensity|default:"—" }}
-                            </span>
-                        </td>
-                        <td>{{ log.coach_name }}</td>
-                        <td>{{ log.date|date:"M d" }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% endif %}
-            {% endfor %}
+{% for log in report_data %}
+    {% if log.activities.all %}
+        <div class="report-section">
 
-            <!-- 3. Concerns & Recovery -->
-            {% for log in report_data %}
-            {% if log.concerns or log.recovery_sessions %}
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th colspan="4" style="text-align:left;">
-                            ⚠️ Concerns & Recovery - {{ log.date|date:"M d, Y" }}
-                        </th>
-                    </tr>
-                    <tr>
-                        <th>Coach</th>
-                        <th>Concerns</th>
-                        <th>Recovery Sessions</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>{{ log.coach_name }}</strong></td>
-                        <td style="max-width:300px;">{{ log.concerns|truncatewords:20|linebreaks|default:"—" }}</td>
-                        <td>{{ log.recovery_sessions|truncatewords:20|linebreaks|default:"—" }}</td>
-                        <td>{{ log.date|date:"M d, Y" }}</td>
-                    </tr>
-                </tbody>
-            </table>
-            {% endif %}
-            {% endfor %}
+            <!-- INTENSITY -->
+            <div class="section-block">
+                <div class="section-header">Session Intensity Distribution - {{ log.date|date:"M d, Y" }}</div>
+                <div class="chart-box">
+                    <canvas id="activityIntensityChart-{{ log.id }}" height="100"></canvas>
+                </div>
+                <div class="table-box">
+                    <div id="intensityTableContainer-{{ log.id }}"></div>
+                </div>
+            </div>
+
+            <!-- DURATION -->
+            <div class="section-block">
+                <div class="section-header">Session Duration Distribution - {{ log.date|date:"M d, Y" }}</div>
+                <div class="chart-box">
+                    <canvas id="activityDurationChart-{{ log.id }}" height="100"></canvas>
+                </div>
+                <div class="table-box">
+                    <div id="durationTableContainer-{{ log.id }}"></div>
+                </div>
+            </div>
+
+           <!-- 🔹 RECOVERY / CONCERNS -->
+{% if log.concerns or log.recovery_sessions %}
+<div class="recovery-section">
+    <div class="section-header">Concerns & Recovery - {{ log.date|date:"M d, Y" }}</div>
+    <div class="info-table">
+        <table>
+            <tr>
+                <th>Concerns</th>
+                <th>Recovery Sessions</th>
+            </tr>
+            <tr>
+                <td>{% if log.concerns %}✅ {{ log.concerns }}{% else %}—{% endif %}</td>
+                <td>{% if log.recovery_sessions %}✅ {{ log.recovery_sessions }}{% else %}—{% endif %}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+{% endif %}
         </div>
     {% endif %}
+{% endfor %}
+<!-- --------------------page2--------------->
+       <div class="header-banner">
+    <div class="header-content">
+        <div class="title">
+            <h1>Kerala Cricket Association</h1>
+            <h2>Weekly Report – {{ selected_camp.name }}</h2>
+        </div>
+
+        <div class="info-table">
+            <table>
+                <tr>
+                    <th>Team</th>
+                    <td>{{ selected_camp.name }}</td>
+                </tr>
+                <tr>
+                    <th>Date</th>
+                    <td>{{ report_date }} to {{ report_date_end }}</td>
+                </tr>
+            </table>
+        </div>
+   <div class="info-table">
+            <table>
+                <tr>
+                    <th>Total Number of Session </th>
+                    <td>{{ report_data|length }}</td>
+                    <th>Players Injured</th>
+                    <td></td>
+                </tr>
+              
+            </table>
+        </div>
+    </div>
+</div>
+<div class="skill-based">
+     <div class="section-header">Skill based sessions</div>
+       <div class="chart-box">
+                    <canvas id="skillBasedChart" height="100"></canvas>
+                </div>
+    <div id="skillBasedTableContainer"></div>
+
+</div>
+<div class="skill-based">
+     <div class="section-header">S & C Based Sessions</div>
+       <div class="chart-box">
+                    <canvas id="scBasedChart" height="100"></canvas>
+                </div>
+  <div id="scBasedTableContainer"></div>
+</div>
+<div class="skill-based">
+     <div class="section-header">Others</div>
+       <div class="chart-box">
+                   <canvas id="otherBasedChart"></canvas>
+
+                </div>
+  <div id="otherSkillsTableContainer"></div>
+</div>
+
+    {% endif %}
 </main>
+
+{{ report_data_json|json_script:"report-data" }}
+
+<script>
+
+const reportData = [
+    {% for log in report_data %}
+    {
+        id: {{ log.id }},
+        date: "{{ log.date|date:'Y-m-d' }}",
+        coach_name: "{{ log.coach_name|default:'S&C Coach'|escapejs }}",
+        niggles: {{ log.niggles|yesno:"true,false" }},
+        concerns: "{{ log.concerns|default:''|escapejs }}",
+        recovery_sessions: "{{ log.recovery_sessions|default:''|escapejs }}",
+        enddate: "{% if log.enddate %}{{ log.enddate|date:'Y-m-d' }}{% endif %}",
+        user: "{{ log.user.get_full_name|default:log.user.username|escapejs }}",
+        activities: [
+            {% for activity in log.activities.all %}
+            {
+                name: "{{ activity.activity_name|escapejs }}",
+                duration: "{{ activity.duration|default:'' }}",
+                intensity: {{ activity.intensity|default:0 }}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+console.log("Full Report Data:", reportData);
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+function getGreenShadeSimple(intensity) {
+    return intensity >= 4 ? '#93C47D' : '#166534';
+}
+
+function mapDuration(duration) {
+    switch(duration) {
+        case '<1':
+        case '&lt;1':
+            return 0.5;
+        case '1-2':
+            return 1.5;
+        case '2-3':
+            return 2.5;
+        case '3-4':
+            return 3.5;
+        case '>4':
+        case '&gt;4':
+            return 4.5;
+        default:
+            return 0; 
+    }
+}
+
+function getDurationColor(duration) {
+    const shortDurations = ['<1','&lt;1','1-2','2-3'];
+    const longDurations = ['3-4','>4','&gt;4'];     
+
+    if (shortDurations.includes(duration)) return '#01762c';
+    if (longDurations.includes(duration)) return '#d80303'; 
+    return '#a1a1aa'; 
+}                       
+reportData.forEach((log) => {
+    const activityLabels = log.activities.map(a => a.name);
+
+    /* ---------- Intensity Chart ---------- */
+    const intensityData = log.activities.map(a => a.intensity);
+    const intensityColors = log.activities.map(a => getGreenShadeSimple(a.intensity));
+
+    const intensityCanvas = document.getElementById(`activityIntensityChart-${log.id}`);
+    const intensityLegendDiv = document.createElement('div');
+    intensityLegendDiv.style.marginBottom = '0.5rem';
+    intensityLegendDiv.innerHTML = `
+        <span style="display:inline-block;width:20px;height:20px;background:#166534;margin-right:5px;border-radius:4px;"></span> Low Intensity
+        <span style="display:inline-block;width:20px;height:20px;background:#93C47D;margin-left:15px;margin-right:5px;border-radius:4px;"></span> High Intensity
+    `;
+    intensityCanvas.parentNode.insertBefore(intensityLegendDiv, intensityCanvas);
+
+    const ctxIntensity = intensityCanvas.getContext('2d');
+    new Chart(ctxIntensity, {
+        type: 'bar',
+        data: {
+            labels: activityLabels,
+            datasets: [{
+                label: `Intensity - ${log.date}`,
+                data: intensityData,
+                backgroundColor: intensityColors,
+                borderColor: '#166534',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false }, tooltip: { enabled: true } },
+            scales: {
+                y: { beginAtZero: true, max: 5, title: { display: true, text: 'Intensity (1-5)' } },
+                x: { title: { display: true, text: 'Activity Name' }, ticks: { autoSkip: false, maxRotation: 90, minRotation: 45 } }
+            }
+        }
+    });
+
+    /* ---------- Duration Chart ---------- */
+    const durationData = log.activities.map(a => mapDuration(a.duration));
+    const durationColors = log.activities.map(a => getDurationColor(a.duration));
+
+    const durationCanvas = document.getElementById(`activityDurationChart-${log.id}`);
+    const durationLegendDiv = document.createElement('div');
+    durationLegendDiv.style.marginBottom = '0.5rem';
+     durationLegendDiv.innerHTML = `
+        <span style="display:inline-block;width:20px;height:20px;background:#01762c;margin-right:5px;border-radius:4px;"></span> Short (&lt;3 hrs)
+        <span style="display:inline-block;width:20px;height:20px;background:#d80303;margin-left:15px;margin-right:5px;border-radius:4px;"></span> Long (≥3 hrs)
+    `;
+    durationCanvas.parentNode.insertBefore(durationLegendDiv, durationCanvas);
+
+    const ctxDuration = durationCanvas.getContext('2d');
+    new Chart(ctxDuration, {
+        type: 'bar',
+        data: {
+            labels: activityLabels,
+            datasets: [{
+                label: `Duration - ${log.date}`,
+                data: durationData,
+                backgroundColor: durationColors,
+                borderColor: '#00000033',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false }, tooltip: { enabled: true } },
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Duration (hours)' } },
+                x: { title: { display: true, text: 'Activity Name' }, ticks: { autoSkip: false, maxRotation: 90, minRotation: 45 } }
+            }
+        }
+    });
+});
+</script>
+<script>
+
+const intensityBuckets = [
+  { label: 'Very Low', min: 1, max: 2 },
+  { label: 'Low', min: 3, max: 4 },
+  { label: 'Moderate', min: 5, max: 6 },
+  { label: 'High', min: 7, max: 8 },
+  { label: 'Very High', min: 9, max: 10 }
+];
+
+const durationBuckets = [
+  { label: '<1 hr', min: 0, max: 1 },
+  { label: '1-2 hrs', min: 1, max: 2 },
+  { label: '2-3 hrs', min: 2, max: 3 },
+  { label: '3-4 hrs', min: 3, max: 4 },
+  { label: '>4 hrs', min: 4, max: Infinity }
+];
+
+const sessionTypes = [
+  'Match','Match Simulation','Practice','Fielding','Strength','Conditioning',
+  'Fitness Testing','Screening / Assessments','Rest','Travelling'
+];
+
+function mapDuration(duration) {
+  switch(duration) {
+    case '<1': case '&lt;1': return 0.5;
+    case '1-2': return 1.5;
+    case '2-3': return 2.5;
+    case '3-4': return 3.5;
+    case '>4': case '&gt;4': return 4.5;
+    default: return 0; // fallback
+  }
+}
+
+function buildIntensityMatrix(log) {
+  const matrix = {};
+  intensityBuckets.forEach(bucket => {
+    matrix[bucket.label] = {};
+    sessionTypes.forEach(s => matrix[bucket.label][s] = '');
+  });
+  log.activities.forEach(act => {
+    const intensity = Number(act.intensity);
+    const bucket = intensityBuckets.find(b => intensity >= b.min && intensity <= b.max);
+    if(bucket) matrix[bucket.label][act.name] = intensity;
+  });
+  return matrix;
+}
+
+function buildDurationMatrixBucketed(log) {
+  const matrix = {};
+  durationBuckets.forEach(bucket => {
+    matrix[bucket.label] = {};
+    sessionTypes.forEach(s => matrix[bucket.label][s] = '');
+  });
+  log.activities.forEach(act => {
+    const durValue = mapDuration(act.duration);
+    const bucket = durationBuckets.find(b => durValue > b.min && durValue <= b.max);
+    if(bucket) matrix[bucket.label][act.name] = act.duration;
+  });
+  return matrix;
+}
+
+/* ---------- Render Tables ---------- */
+function renderIntensityTable(log, containerId) {
+  const matrix = buildIntensityMatrix(log);
+  let html = `<table class="intensity-table">
+    <thead><tr><th>Intensity</th>${sessionTypes.map(s=>`<th>${s}</th>`).join('')}</tr></thead><tbody>`;
+  intensityBuckets.forEach(bucket => {
+    html += `<tr><td>${bucket.label}</td>${sessionTypes.map(s=>`<td>${matrix[bucket.label][s]}</td>`).join('')}</tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById(containerId).innerHTML = html;
+}
+
+function renderDurationTable(log, containerId) {
+  const matrix = buildDurationMatrixBucketed(log);
+  let html = `<table class="intensity-table">
+    <thead><tr><th>Duration</th>${sessionTypes.map(s=>`<th>${s}</th>`).join('')}</tr></thead><tbody>`;
+  durationBuckets.forEach(bucket => {
+    html += `<tr><td>${bucket.label}</td>${sessionTypes.map(s=>`<td>${matrix[bucket.label][s]}</td>`).join('')}</tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById(containerId).innerHTML = html;
+}
+
+/* ---------- Render All Tables ---------- */
+reportData.forEach(log => {
+    renderIntensityTable(log, `intensityTableContainer-${log.id}`);
+    renderDurationTable(log, `durationTableContainer-${log.id}`);
+});
+
+</script>
+
+
+<script>
+const skillActivities = ['Match', 'Match Simulation', 'Practice', 'Fielding'];
+const dates = reportData.map(log => log.date); 
+const intensityData = [];
+const durationData = [];
+
+reportData.forEach(log => {
+    let totalIntensity = 0;
+    let totalDuration = 0;
+
+    skillActivities.forEach(actName => {
+        const act = log.activities.find(a => a.name === actName);
+        if(act) {
+            totalIntensity += Number(act.intensity || 0);
+            totalDuration += Number(mapDuration(act.duration));
+        }
+    });
+
+    intensityData.push(totalIntensity);
+    durationData.push(totalDuration);
+});
+
+const ctx = document.getElementById('skillBasedChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: dates,
+        datasets: [
+            {
+                type: 'bar',
+                label: 'Intensity',
+                data: intensityData,
+                backgroundColor: '#007CF0',
+                borderRadius: 4,
+                barPercentage: 0.6,
+                categoryPercentage: 0.6,
+                order: 1
+            },
+            {
+                type: 'line',
+                label: 'Duration',
+                data: durationData,
+                borderColor: '#FF69B4',  
+                backgroundColor: 'transparent',
+                fill: false,
+                tension: 0.2,
+                order: 2,              
+                borderWidth: 3,
+                pointBackgroundColor: '#FF69B4',
+                pointBorderColor: '#FF69B4',
+                pointRadius: 5
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Intensity / Duration' }
+            },
+            x: {
+                title: { display: true, text: 'Date' }
+            }
+        }
+    }
+});
+</script>
+
+<script>
+function renderSkillBasedTable(reportData) {
+    const skillActivities = ['Match', 'Match Simulation', 'Practice', 'Fielding'];
+
+    let html = `
+    <table class="intensity-table">
+        <thead>
+            <tr>
+                <th rowspan="2">Date</th>
+                ${skillActivities.map(a => `<th colspan="2">${a}</th>`).join('')}
+            </tr>
+            <tr>
+                ${skillActivities.map(() => `<th>Intensity</th><th>Duration</th>`).join('')}
+            </tr>
+        </thead>
+        <tbody>
+    `;
+
+    reportData.forEach(log => {
+        html += `<tr><td>${log.date}</td>`;
+
+        skillActivities.forEach(actName => {
+            const act = log.activities.find(a => a.name === actName);
+
+            if (act) {
+                html += `
+                    <td>${act.intensity >= 4 ? 'High' : act.intensity || ''}</td>
+                    <td>${act.duration || ''}</td>
+                `;
+            } else {
+                html += `<td></td><td></td>`;
+            }
+        });
+
+        html += `</tr>`;
+    });
+
+    html += `</tbody></table>`;
+
+    document.getElementById('skillBasedTableContainer').innerHTML = html;
+}
+
+renderSkillBasedTable(reportData);
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+const scActivities = [
+    'Strength',
+    'Conditioning',
+    'Fitness',
+    'Screening / Assessments',
+    'Testing'
+];
+
+const scDates = reportData.map(log => log.date);
+const scIntensityData = [];
+const scDurationData = [];
+
+reportData.forEach(log => {
+    let totalScIntensity = 0;
+    let totalScDuration = 0;
+
+    const activities = log.activities || [];
+
+    scActivities.forEach(activityName => {
+        const act = activities.find(a => a.name === activityName);
+        if (act) {
+            totalScIntensity += Number(act.intensity || 0);
+            totalScDuration += Number(mapDuration(act.duration) || 0);
+        }
+    });
+
+    scIntensityData.push(totalScIntensity);
+    scDurationData.push(totalScDuration);
+});
+const scCtx = document.getElementById('scBasedChart');
+if (!scCtx) {
+    console.error('S&C canvas not found');
+    return;
+}
+
+new Chart(scCtx, {
+    type: 'bar',
+    data: {
+        labels: scDates,
+        datasets: [
+            {
+                label: 'Intensity',
+                data: scIntensityData,
+                backgroundColor: '#007CF0',
+                order: 1
+            },
+            {
+                type: 'line',
+                label: 'Duration',
+                data: scDurationData,
+                borderColor: '#FF69B4',
+                borderWidth: 3,
+                pointRadius: 4,
+                order: 2
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+});
+</script>
+<script>
+function renderSCBasedTable(reportData) {
+    const scActivities = [
+        'Strength',
+        'Conditioning',
+        'Fitness',
+        'Screening / Assessments',
+        'Testing'
+    ];
+
+    let html = `
+    <table class="intensity-table">
+        <thead>
+            <tr>
+                <th rowspan="2">Date</th>
+                ${scActivities.map(a => `<th colspan="2">${a}</th>`).join('')}
+            </tr>
+            <tr>
+                ${scActivities.map(() => `<th>Intensity</th><th>Duration</th>`).join('')}
+            </tr>
+        </thead>
+        <tbody>
+    `;
+
+    reportData.forEach(log => {
+        html += `<tr><td>${log.date}</td>`;
+
+        scActivities.forEach(actName => {
+            const act = log.activities.find(a => a.name === actName);
+
+            if (act) {
+                html += `
+                    <td>${act.intensity >= 4 ? 'High' : act.intensity || ''}</td>
+                    <td>${act.duration || ''}</td>
+                `;
+            } else {
+                html += `<td></td><td></td>`;
+            }
+        });
+
+        html += `</tr>`;
+    });
+
+    html += `</tbody></table>`;
+
+    document.getElementById('scBasedTableContainer').innerHTML = html;
+}
+
+renderSCBasedTable(reportData);
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+const otherActivities = [
+    'Travelling',
+    'Rest'
+];
+
+const otherDates = reportData.map(log => log.date);
+const otherIntensityData = [];
+const otherDurationData = [];
+
+reportData.forEach(log => {
+    let totalOtherIntensity = 0;
+    let totalOtherDuration = 0;
+
+    const activities = log.activities || [];
+
+    otherActivities.forEach(activityName => {
+        const act = activities.find(a => a.name === activityName);
+        if (act) {
+            totalOtherIntensity += Number(act.intensity || 0);
+            totalOtherDuration += Number(mapDuration(act.duration) || 0);
+        }
+    });
+
+    otherIntensityData.push(totalOtherIntensity);
+    otherDurationData.push(totalOtherDuration);
+});
+
+
+const otherCtx = document.getElementById('otherBasedChart');
+if (!otherCtx) {
+    console.error('Other canvas not found');
+    return;
+}
+
+new Chart(otherCtx, {
+    type: 'bar',
+    data: {
+        labels: otherDates,
+        datasets: [
+            {
+                label: 'Intensity',
+                data: otherIntensityData,
+                backgroundColor: '#007CF0', 
+                order: 1
+            },
+            {
+                type: 'line',
+                label: 'Duration',
+                data: otherDurationData,
+                borderColor: '#FF69B4', 
+                borderWidth: 3,
+                pointRadius: 4,
+                order: 2
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+});
+</script>
+<script>
+function renderOtherSkillsTable(reportData) {
+    const otherActivities = [
+        'Travelling',
+        'Rest'
+    ];
+
+    let html = `
+    <table class="intensity-table">
+        <thead>
+            <tr>
+                <th rowspan="2">Date</th>
+                ${otherActivities.map(a => `<th colspan="2">${a}</th>`).join('')}
+            </tr>
+            <tr>
+                ${otherActivities.map(() => `<th>Intensity</th><th>Duration</th>`).join('')}
+            </tr>
+        </thead>
+        <tbody>
+    `;
+
+    reportData.forEach(log => {
+        html += `<tr><td>${log.date}</td>`;
+
+        otherActivities.forEach(actName => {
+            const act = log.activities.find(a => a.name === actName);
+
+            if (act) {
+                html += `
+                    <td>${act.intensity >= 4 ? 'High' : act.intensity || ''}</td>
+                    <td>${act.duration || ''}</td>
+                `;
+            } else {
+                html += `<td></td><td></td>`;
+            }
+        });
+
+        html += `</tr>`;
+    });
+
+    html += `</tbody></table>`;
+
+    document.getElementById('otherSkillsTableContainer').innerHTML = html;
+}
+renderOtherSkillsTable(reportData);
+</script>
 {% endblock %}
