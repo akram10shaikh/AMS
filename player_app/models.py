@@ -804,7 +804,7 @@ class DailySncLogCamps(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('team', 'date')
+        
         ordering = ['-date', '-created_at']
 
     def __str__(self):

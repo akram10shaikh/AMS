@@ -1514,22 +1514,17 @@ def daily_activity_coach_log(request, id):
             teams = CampTournament.objects.get(name=team)
             
             # Create/update main log entry
-            log, created = DailySncLogCamps.objects.update_or_create(
+            log = DailySncLogCamps.objects.create(
                 team=teams,
                 date=date,
                 end_date=end_date,
-                defaults={
-                    "user": request.user,
-                    "coach_name": coach_name,
-                    "concerns": concerns,
-                    "niggles": niggles,
-                    "recovery_sessions": recovery_sessions,
-                },
+                user=request.user,
+                coach_name=coach_name,
+                concerns=concerns,
+                niggles=niggles,
+                recovery_sessions=recovery_sessions,
             )
-            
-            # Clear previous activities
-            log.activities.all().delete()
-            
+                        
             # Save activities
             for activity_name in ACTIVITY_NAMES:
                 slug = _slugify_activity(activity_name)
