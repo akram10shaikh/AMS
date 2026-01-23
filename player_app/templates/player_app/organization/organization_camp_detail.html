@@ -475,7 +475,7 @@
         {% if camp.participants.exists %}
             <ul class="participants-list">
                 {% for participant in camp.participants.all %}
-                    <li>{{ forloop.counter }}. {{ participant.name }}</li>
+                    <li>{{ forloop.counter }}. <a style="text-decoration: none;color:white;" href="{% url 'organization_player_detail' participant.id %}">{{ participant.name }}</a></li>
                 {% endfor %}
             </ul>
         {% else %}

@@ -3583,7 +3583,7 @@ class DailyWellnessTest(models.Model):
     phase = models.ForeignKey(
         "CampTournament",
         on_delete=models.CASCADE,
-        related_name="daily_wellness_tests",
+        related_name="daily_wellness_tests",null=True,blank=True
     )
 
     date = models.DateField()
