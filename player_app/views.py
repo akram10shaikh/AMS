@@ -1727,52 +1727,47 @@ from dateutil import parser
 
 def wellness_dashboard(request):
     """
-    Daily Wellness Report Dashboard - Similar to S&C Camps Dashboard
+    Daily Wellness Report Dashboard - Single Date Filter Only
     """
     user_org = getattr(request.user, "organization", None)
-    logs = CampTournament.objects.filter(organization=user_org).order_by('name')
+    camps = CampTournament.objects.filter(organization=user_org).order_by('name')
     
     report_data = None
     selected_camp = None
     report_date = None
-    report_date_end = None
-    
-    # Get all camps/tournaments for dropdown (similar to S&C)
-  
     
     if request.method == 'POST':
         try:
             report_date = request.POST.get('report_date')
-            report_date_end = request.POST.get('report_date_end')
             camp_id = request.POST.get('camp')
-            print("Received POST data:", report_date, report_date_end, camp_id)
+            print("Received POST data:", report_date, camp_id)
             
-            if not all([report_date, report_date_end, camp_id]):
+            if not all([report_date, camp_id]):
                 return HttpResponseBadRequest("Missing required parameters")
             
-            # Parse dates
-            start_date = parser.parse(report_date).date()
-            end_date = parser.parse(report_date_end).date()
+            # Parse single date
+            selected_date = parser.parse(report_date).date()
             selected_camp = get_object_or_404(CampTournament, id=camp_id)
-            print(f"Parsed dates: start_date={start_date}, end_date={end_date}")
-            # Filter wellness logs for selected camp and date range
+            print(f"Parsed date: {selected_date}")
+            
+            # Filter wellness logs for selected CAMP and EXACT date - ALL PLAYERS
             report_data = DailyWellnessTest.objects.filter(
                 phase=selected_camp,
-                date__range=[report_date, report_date_end]
-            )
-            print(f"Fetched {report_data.count()} wellness logs for camp {selected_camp.name}")
-            # Calculate mood averages for each log
+                date=selected_date
+                # ✅ Shows ALL players who submitted wellness for this camp/date
+            ).select_related('player', 'phase').order_by('player__name')
+            
+            print(f"Fetched {report_data.count()} wellness logs for camp {selected_camp.name} on {selected_date}")
             
         except Exception as e:
             logger.error(f"Error processing report request: {e}")
             report_data = []
     
     context = {
-        'logs': logs,
+        'logs': camps,  # renamed from 'logs'
         'report_data': report_data,
         'selected_camp': selected_camp,
         'report_date': report_date,
-        'report_date_end': report_date_end,
     }
     
     return render(request, 'player_app/camps/daily_wellness_all.html', context)
@@ -1813,6 +1808,54 @@ def daily_wellness_camp_report(request, camp_id):
 
     
     return render(request, 'player_app/camps/wellness_report.html', context)
+
+
+def player_wellness_report(request):
+    """
+    Player Wellness Report - Single Player + Date (All Camps/Tournaments)
+    """
+    user_org = getattr(request.user, "organization", None)
+    players = Player.objects.filter(organization=user_org).order_by('name')
+    
+    report_data = None
+    selected_player = None
+    report_date = None
+    
+    if request.method == 'POST':
+        try:
+            report_date = request.POST.get('report_date')
+            player_id = request.POST.get('player_id')
+            print("Received POST data:", report_date, player_id)
+            
+            if not all([report_date, player_id]):
+                return HttpResponseBadRequest("Missing required parameters")
+            
+            # Parse single date
+            selected_date = parser.parse(report_date).date()
+            selected_player = get_object_or_404(Player, id=player_id)
+            print(f"Parsed date: {selected_date}, player: {selected_player}")
+            
+            # Filter wellness logs for selected PLAYER and EXACT date (ALL camps)
+            report_data = DailyWellnessTest.objects.filter(
+                player=selected_player,
+                date=selected_date
+                # ✅ No phase/camp filter - shows ALL camps/tournaments for player
+            ).select_related('player', 'phase')
+            
+            print(f"Fetched {report_data.count()} wellness logs for player {selected_player} on {selected_date}")
+            
+        except Exception as e:
+            logger.error(f"Error processing report request: {e}")
+            report_data = []
+    
+    context = {
+        'players': players,
+        'report_data': report_data,
+        'selected_player': selected_player,
+        'report_date': report_date,
+    }
+    
+    return render(request, 'player_app/camps/player-wellness-report.html', context)
 
 
 

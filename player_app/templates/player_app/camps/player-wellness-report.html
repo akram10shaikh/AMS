@@ -1,11 +1,12 @@
 {% extends "player_app/organization/base.html" %}
 {% load static %}
 
-{% block title %}Daily Wellness Report{% endblock %}
+{% block title %}Player Wellness Report{% endblock %}
 
 {% block extra_head %}
+<!-- [Keep all your existing CSS styles exactly as they are] -->
 <style>
-    .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
     .header { 
         background: #007CF0; 
         color: white; 
@@ -280,218 +281,193 @@
 <div class="container" style="margin-bottom: 100px;">
     {% if not report_data %}
         <div class="header">
-        <h1 style="color: white;">Daily Wellness Report</h1>
-    </div>
-        <!-- FORM -->
+            <h1 style="color: white;">Player Wellness Report</h1>
+        </div>
+        
+        <!-- UPDATED FORM: Player + Date ONLY -->
         <div class="form-box">
-            <h2>Generate Report</h2>
-            <form method="post" action="{% url 'wellness_dashboard' %}">
+            <h2>Generate Player Wellness Report</h2>
+            <form method="post">
                 {% csrf_token %}
                 <div class="form-row">
                     <div class="form-group">
                         <label>Select Date</label>
                         <input type="date" name="report_date" value="{{ report_date|default:'' }}" required>
                     </div>
-                   
+                    
+                    <!-- ✅ NEW: Player Dropdown -->
                     <div class="form-group">
-                        <label>Camp</label>
-                        <select name="camp" required>
-                            <option value="">Select Camp</option>
-                            {% for log in logs %}
-                                <option value="{{ log.id }}" {% if camp == log.id|stringformat:"s" %}selected{% endif %}>
-                                    {{ log.name }}
+                        <label>Select Player</label>
+                        <select name="player_id" required>
+                            <option value="">Choose Player</option>
+                            {% for player in players %}
+                                <option value="{{ player.id }}" {% if selected_player.id == player.id %}selected{% endif %}>
+                                    {{ player.name }} {% if player.position %}({{ player.position }}){% endif %}
                                 </option>
                             {% endfor %}
                         </select>
                     </div>
+                    
                     <div>
-                        <button type="submit">Generate</button>
+                        <button type="submit">Generate Report</button>
                     </div>
                 </div>
             </form>
         </div>
     {% endif %}
+
     {% if report_data %}
     <div style="background-color: #0b3a63; padding: 10px;">
-<div class="header-banner">
-    <div class="header-content">
-        <div class="title">
-            <h1>Kerala Cricket Association</h1>
-            <h2>Daily Wellness & Load Monitoring – {{ selected_camp.name }}</h2>
+        <div class="header-banner">
+            <div class="header-content">
+                <div class="title">
+                    <h1>Kerala Cricket Association</h1>
+                    <!-- ✅ UPDATED: Show Player Name instead of Camp -->
+                    <h2>Daily Wellness Report – {{ selected_player.name }}</h2>
+                </div>
+
+                <div class="info-table">
+                    <table>
+                        <tr>
+                            <th>Player</th>
+                            <td>{{ selected_player.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date</th>
+                            <!-- ✅ UPDATED: Single date only -->
+                            <td>{{ report_date }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <a href="{% url 'player_wellness_report' %}" class="back-btn">← New Report</a>
         </div>
 
-        <div class="info-table">
-            <table>
-                <tr>
-                    <th>Team</th>
-                    <td>{{ selected_camp.name }}</td>
-                </tr>
-                <tr>
-                    <th>Date</th>
-                    <td>{{ report_date }} to {{ report_date_end }}</td>
-                </tr>
-            </table>
+        <div class="report-grid">
+            <div class="report-section">
+                <div class="section-title">Psychological - Physiological Readiness</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Player</th>
+                            <th>Urine Color</th>
+                            <th>Soreness Level</th>
+                            <th>Fatigue Level</th>
+                            <th>Sleep Hours</th>
+                            <th>Motivation Levels</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in report_data %}
+                            <tr {% if log.fatigue_level > 7 %}class="high-fatigue"{% endif %}>
+                                <td><strong>{{ log.date|date:"M d, Y" }}</strong></td>
+                                <td><strong>{{ log.player.name }}</strong></td>
+                                <td {% if log.urine_color|title == "Pale Straw Yellow" %}
+                                    style="background-color: #faeb63;" 
+                                    {% elif log.urine_color|title == "Translucent Yellow" %}
+                                    style="background-color: #fbfb36;" 
+                                    {% endif %}>
+                                    {{ log.urine_color|title }}
+                                </td>
+                                <td class="{% if log.soreness_level <= 2 %}bg-good
+                                    {% elif log.soreness_level <= 5 %}bg-moderate
+                                    {% elif log.soreness_level <= 7 %}bg-high
+                                    {% else %}bg-extreme{% endif %}">
+                                    {{ log.soreness_level }}/10
+                                </td>
+                                <td class="{% if log.fatigue_level <= 2 %}bg-good
+                                    {% elif log.fatigue_level <= 5 %}bg-moderate
+                                    {% elif log.fatigue_level <= 7 %}bg-high
+                                    {% else %}bg-extreme{% endif %}">
+                                    {{ log.fatigue_level }}/10
+                                </td>
+                                <td class="{% if log.sleep_hours <= 4 %}bg-extreme
+                                    {% elif log.sleep_hours <= 6 %}bg-moderate
+                                    {% elif log.sleep_hours <= 8 %}bg-high
+                                    {% else %}bg-good{% endif %}">
+                                    {{ log.sleep_hours }}h
+                                </td>
+                                <td class="{% if log.motivation_level <= 2 %}bg-extreme
+                                    {% elif log.motivation_level <= 5 %}bg-moderate
+                                    {% elif log.motivation_level <= 7 %}bg-high
+                                    {% else %}bg-good{% endif %}">
+                                    {{ log.motivation_level }}/10
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="no-data">
+                                    <h3>No Wellness Data Found</h3>
+                                    <p>No records for {{ selected_player.name }} on {{ report_date }}</p>
+                                    <a href="{% url 'player_wellness_report' %}" style="color: #007CF0; font-weight: 600;">← Try Different Player/Date</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="report-section">
+                <div class="section-title">Load Monitoring</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Number of Balls Bowled</th>
+                            <th>Total Session RPE</th>
+                            <th>Training Session</th>
+                            <th>Aches/Pain/Niggles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in report_data %}
+                            <tr>
+                                <td>{{ log.balls_bowled|default:"—" }}</td>
+                                <td class="{% if log.total_rpe <= 2 %}bg-good
+                                    {% elif log.total_rpe <= 5 %}bg-moderate
+                                    {% elif log.total_rpe <= 7 %}bg-high
+                                    {% else %}bg-extreme{% endif %}">
+                                    {{ log.total_rpe }}/10
+                                </td>
+                                <td>
+                                    {% if log.training_session_types %}
+                                        {{ log.training_session_types|join:", " }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td class="{% if log.has_pain %}metric-pain-yes{% else %}metric-pain-no{% endif %}">
+                                    {% if log.has_pain %}Yes{% else %}No{% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="no-data">
+                                    <h3>No Load Data Found</h3>
+                                    <a href="{% url 'player_wellness_report' %}" style="color: #007CF0; font-weight: 600;">← New Search</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-    </div>
-     <a href="{% url 'organization_camps_tournaments'  %}" class="back-btn">← Back to Camps</a>
-</div>
-
-<div class="report-grid" >
- <div class="report-section">
-<div class="section-title">Psychological - Physiological Readiness</div>
-
-        <!-- TABLE RESULTS -->
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Player Name</th>
-                    <th>Urine Color</th>
-                    <th>Soreness Level</th>
-                    <th>Fatigue Level</th>
-                    <th>Sleep Hours</th>
-                    <th>Motivation Levels</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for log in report_data %}
-                    <tr {% if log.fatigue_level > 7 %}class="high-fatigue"{% endif %}>
-                        <td>
-                            <strong>{{ log.date|date:"M d, Y" }}</strong>
-                            <!-- {% if log.created_by %}
-                                <br><small>{{ log.created_by.get_full_name|default:log.created_by.username }}</small>
-                            {% endif %} -->
-                        </td>
-                        <td><strong>{{ log.player.name }}</strong></td>
-                       <td 
-    {% if log.urine_color|title == "Pale Straw Yellow" %}
-        style="background-color: #faeb63;"   
-    {% elif log.urine_color|title == "Translucent Yellow" %}
-        style="background-color: #fbfb36;"   
+        <!-- Charts remain exactly the same -->
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h3>RPE Over Time</h3>
+                <canvas id="rpeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Balls Bowled Over Time</h3>
+                <canvas id="ballsChart"></canvas>
+            </div>
+        </div>
     {% endif %}
->
-    {{ log.urine_color|title }}
-</td>
-                       <td class="{% if log.soreness_level <= 2 %}bg-good
-            {% elif log.soreness_level <= 5 %}bg-moderate
-            {% elif log.soreness_level <= 7 %}bg-high
-            {% else %}bg-extreme{% endif %}">
-    {{ log.soreness_level }}
-</td>
-       <td class="
-{% if log.fatigue_level <= 2 %}bg-good
-{% elif log.fatigue_level <= 5 %}bg-moderate
-{% elif log.fatigue_level <= 7 %}bg-high
-{% else %}bg-extreme
-{% endif %}
-">
-    {{ log.fatigue_level }}
-</td>
-
-
-                      <td class="
-{% if log.sleep_hours <= 4 %}bg-extreme
-{% elif log.sleep_hours <= 6 %}bg-moderate
-{% elif log.sleep_hours <= 8 %}bg-high
-{% else %}bg-good
-{% endif %}
-">
-    {{ log.sleep_hours }}h
-</td>
-<td class="
-{% if log.motivation_level <= 2 %}bg-extreme
-{% elif log.motivation_level <= 5 %}bg-moderate
-{% elif log.motivation_level <= 7 %}bg-high
-{% else %}bg-good
-{% endif %}
-">
-    {{ log.motivation_level }}/10
-</td>
-
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="11" class="no-data">
-                            <h3>No Data Found</h3>
-                            <a href="{% url 'wellness_dashboard' %}" style="color: #007CF0; font-weight: 600;">Try Different Selection</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
- </div>
-
-<div class="report-section">
-
-         <div class="section-title">Load Monitoring</div>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Number of Balls Bowled</th>
-                    <th>Total Session RPE</th>
-                    <th>Training session Completed</th>
-                    <th>Aches/Pain/Niggles</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for log in report_data %}
-                    <tr {% if log.fatigue_level > 7 %}class="high-fatigue"{% endif %}>
-                        <td>{{ log.balls_bowled }}</td>
-                      <td class="
-{% if log.total_rpe <= 2 %}bg-good
-{% elif log.total_rpe <= 5 %}bg-moderate
-{% elif log.total_rpe <= 7 %}bg-high
-{% else %}bg-extreme
-{% endif %}
-">
-    {{ log.total_rpe }}/10
-</td>
-
-                        <td>
-                            {% for type in log.training_session_types %}
-                            {{ type }}
-                            {% empty %}
-                                —
-                            {% endfor %}
-                        </td>
-                        <td>
-                            {% if log.has_pain == True %}
-                                Yes
-                             
-                            {% else %}
-                                 No
-                               
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="11" class="no-data">
-                            <h3>No Data Found</h3>
-                            <a href="{% url 'wellness_dashboard' %}" style="color: #007CF0; font-weight: 600;">Try Different Selection</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
 </div>
-</div>
-<div class="charts-grid">
-    <div class="chart-container">
-        <h3>RPE Over Time</h3>
-        <canvas id="rpeChart"></canvas>
-    </div>
 
-    <div class="chart-container">
-        <h3>Balls Bowled Over Time</h3>
-        <canvas id="ballsChart"></canvas>
-    </div>
-
-</div>
-    {% endif %}
-  </div>
-</div>
+<!-- Keep your existing Chart.js script exactly as is -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
