@@ -135,7 +135,6 @@
     font-weight: bold;
 }
 
-
 /* Section title */
 .section-title {
     background: #9b0000;
@@ -182,7 +181,6 @@
     padding: 8px 10px;
     text-align: left;
     border: 2px solid #e0e0e0;
-    
 }
 
 .data-table th {
@@ -227,8 +225,6 @@
     font-weight: 600;
 }
 
-
-
 .data-table td, .data-table th {
     min-width: 60px; 
 }
@@ -252,7 +248,7 @@
 }
 
 .chart-container {
-     background-color: #312f2f;
+    background-color: #312f2f;
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -274,7 +270,116 @@
 .bg-moderate { background-color: #facc15; color: black; }
 .bg-high { background-color: #f97316; color: white; }
 .bg-extreme { background-color: #b80404; color: white; }
-</style>    
+
+/* NEW: Player Profile Section Styles */
+.player-profile-section {
+    background: linear-gradient(135deg, #0b3a63 0%, #1e5021 100%);
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    overflow: hidden;
+}
+
+.player-profile-header {
+    background: rgba(255,255,255,0.1);
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.player-profile-title {
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 1rem 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.player-info-card {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.player-photo {
+    width: 200px;
+    height: 200px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 4px solid rgba(255,255,255,0.2);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.player-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.player-photo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.1);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.player-info-table {
+    background: rgba(255,255,255,0.08);
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+}
+
+.player-info-table th {
+    background: rgba(255,255,255,0.15);
+    color: #ffffff;
+    font-weight: 700;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.player-info-table td {
+    color: #e0e0e0;
+    padding: 12px 16px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.player-info-table tr:hover td {
+    background: rgba(255,255,255,0.05);
+}
+
+.stats-row td {
+    padding: 8px 16px;
+}
+
+.stats-row th:nth-child(1),
+.stats-row th:nth-child(3) {
+    width: 180px;
+}
+
+@media (max-width: 768px) {
+    .player-info-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    .player-photo {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+    }
+}
+</style>        
 {% endblock %}
 
 {% block content %}
@@ -284,7 +389,7 @@
             <h1 style="color: white;">Player Wellness Report</h1>
         </div>
         
-        <!-- UPDATED FORM: Player + Date ONLY -->
+    
         <div class="form-box">
             <h2>Generate Player Wellness Report</h2>
             <form method="post">
@@ -295,7 +400,7 @@
                         <input type="date" name="report_date" value="{{ report_date|default:'' }}" required>
                     </div>
                     
-                    <!-- ✅ NEW: Player Dropdown -->
+                   
                     <div class="form-group">
                         <label>Select Player</label>
                         <select name="player_id" required>
@@ -317,12 +422,44 @@
     {% endif %}
 
     {% if report_data %}
+
+    <div class="player-profile-section">
+        <div class="player-profile-header">
+            <h2 class="player-profile-title">
+                Daily Wellness & Load Monitoring Report - {{ selected_player.name }}
+            </h2>
+        </div>
+        <div class="player-info-card">
+            
+            <div class="player-photo">
+                {% if selected_player.image %}
+                    <img src="{{ selected_player.image.url }}" alt="{{ selected_player.name }}">
+                {% else %}
+                    <div class="player-photo-placeholder">No Image Available</div>
+                {% endif %}
+            </div>
+            <table class="player-info-table">
+                <tr><th>Name</th><td>{{ selected_player.name }}</td></tr>
+                <tr><th>Age</th><td>{{ selected_player.age }}</td></tr>
+                <tr><th>Gender</th><td>{{ selected_player.gender }}</td></tr>
+                <tr><th>Role</th><td>{{ selected_player.role }}</td></tr>
+                <tr><th>Date of Birth</th><td>{{ selected_player.date_of_birth|date:"M d, Y" }}</td></tr>
+                <tr><th>Handedness</th><td>{{ selected_player.handedness }}</td></tr>
+                <tr><th>Category</th><td>{{ selected_player.age_category }}</td></tr>
+                <tr><th>Batting Style</th><td>{{ selected_player.batting_style }}</td></tr>
+                <tr><th>Bowling Style</th><td>{{ selected_player.bowling_style }}</td></tr>
+                <tr><th>Player Status</th><td>{{ selected_player.player_status }}</td></tr>
+              
+            </table>
+        </div>
+    </div>
+
     <div style="background-color: #0b3a63; padding: 10px;">
         <div class="header-banner">
             <div class="header-content">
                 <div class="title">
                     <h1>Kerala Cricket Association</h1>
-                    <!-- ✅ UPDATED: Show Player Name instead of Camp -->
+                   
                     <h2>Daily Wellness Report – {{ selected_player.name }}</h2>
                 </div>
 
@@ -334,7 +471,7 @@
                         </tr>
                         <tr>
                             <th>Date</th>
-                            <!-- ✅ UPDATED: Single date only -->
+                            
                             <td>{{ report_date }}</td>
                         </tr>
                     </table>
@@ -342,6 +479,7 @@
             </div>
             <a href="{% url 'player_wellness_report' %}" class="back-btn">← New Report</a>
         </div>
+
 
         <div class="report-grid">
             <div class="report-section">
@@ -453,7 +591,7 @@
             </div>
         </div>
 
-        <!-- Charts remain exactly the same -->
+
         <div class="charts-grid">
             <div class="chart-container">
                 <h3>RPE Over Time</h3>
@@ -467,12 +605,12 @@
     {% endif %}
 </div>
 
-<!-- Keep your existing Chart.js script exactly as is -->
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-    // 1. Load Monitoring Table
+
     const loadTable = document.querySelector(".report-section:nth-of-type(2) .data-table");
     if (!loadTable) return;
 
