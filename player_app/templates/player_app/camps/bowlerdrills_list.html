@@ -1,0 +1,55 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Bowler Drills{% endblock %}
+
+{% block content %}
+<div class="report-page">
+  <div class="page-header">
+    <h1 class="page-title">🎳 Bowler Drills</h1>
+  </div>
+
+  <form method="get" class="filter-form">
+    <input type="date" name="date" value="{{ request.GET.date }}">
+    <select name="camp">
+      <option value="">All Camps</option>
+      {% for camp in camps %}
+      <option value="{{ camp.id }}" {% if request.GET.camp == camp.id|stringformat:"s" %}selected{% endif %}>{{ camp.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Filter</button>
+  </form>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Player</th>
+        <th>Camp</th>
+        <th>Date</th>
+        <th>Balls Bowled</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for drill in drills %}
+      <tr>
+        <td class="player-name">{{ drill.player.name }}</td>
+        <td>{{ drill.camp.name }}</td>
+        <td>{{ drill.date }}</td>
+        <td class="metric">{{ drill.ball_bowlerd }}</td>
+        <td>{{ drill.created_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No drills. Add via admin or create form.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<style>
+.filter-form { display: flex; gap: 10px; margin-bottom: 20px; }
+.data-table th { background: #f1f5f9; }
+.player-name { font-weight: 600; color: #000000 !important; }
+.metric { font-size: 1.2em; font-weight: bold; color: #3b82f6; }
+</style>
+{% endblock %}s

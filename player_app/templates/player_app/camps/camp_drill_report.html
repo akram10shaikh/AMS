@@ -1,0 +1,306 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Camp Drill Report{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    .report-page { 
+        max-width: 1200px; 
+        margin: 0 auto; 
+        padding: 1rem 0;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #0088f8, #5b48ec);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .page-subtitle {
+        color: #94a3b8;
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .card-report { 
+        background: linear-gradient(145deg, #0f172a, #1e293b); 
+        border-radius: 1rem; 
+        padding: 2rem; 
+        border: 1px solid #334155; 
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .filters-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 1.5rem;
+        align-items: end;
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-control {
+        background: #1e293b;
+        border: 2px solid #334155;
+        border-radius: 0.75rem;
+        padding: 0.75rem 1rem;
+        color: #f1f5f9 !important;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        background: #1e293b;
+    }
+
+    .required { color: #f87171; }
+    .help-text { 
+        color: #64748b; 
+        font-size: 0.85rem; 
+        margin-top: 0.5rem; 
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white !important;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Table Styles */
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .pill-blue {
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        color: white;
+        padding: 0.4rem 1rem;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .table-wrapper {
+        border-radius: 1rem;
+        border: 1px solid #475569;
+        overflow: hidden;
+        background: rgba(30, 41, 59, 0.6);
+    }
+
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .report-table th {
+        background: linear-gradient(135deg, #1e293b, #334155);
+        color: #94a3b8;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 1rem 1.25rem;
+    }
+
+    .report-table td {
+        padding: 1.25rem;
+        border-bottom: 1px solid #334155;
+        color: #f1f5f9 !important;
+    }
+
+    .drill-type-badge {
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: white !important;
+        background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    }
+
+    /* Stats */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .stat-card {
+        background: linear-gradient(145deg, #1e293b, #334155);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        text-align: center;
+        border: 1px solid #475569;
+    }
+
+    .stat-number { 
+        font-size: 2.5rem; 
+        font-weight: 700; 
+        background: linear-gradient(135deg, #8b5cf6, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stat-label { 
+        color: #94a3b8; 
+        font-size: 0.95rem; 
+        margin-top: 0.5rem; 
+        font-weight: 500;
+    }
+
+    .empty-state {
+        text-align: center;
+        color: #94a3b8;
+        font-style: italic;
+        padding: 3rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .filters-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .report-table th,
+        .report-table td {
+            padding: 0.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-page">
+    <div class="page-header">
+        <h3 class="page-title">Bowler Report for {{ camps.name }} </h3>
+        <p class="page-subtitle">Track bowler performance across camps & tournaments</p>
+    </div>
+
+    <div class="card-report">
+        <form method="get" id="reportForm" class="filter-form">
+            <div class="filters-row">
+                <div class="form-group">
+                    <label for="drill_date" style="color:white;">Select Date <span class="required">*</span></label>
+                    <input type="date" id="drill_date" name="date" 
+                           class="form-control" value="{% if selected_date %}{{ selected_date }}{% endif %}">
+                    <small class="help-text">Shows drills from all camps on selected date</small>
+                </div>
+                <div class="form-group">
+                    <label for="camp" style="color:white;">Camp/Tournament</label>
+                    <select name="camp" id="camp" class="form-control">
+                        <option value="">-- All Camps --</option>
+                        {% for camp in camps %}
+                            <option value="{{ camp.id }}" {% if selected_camp == camp.id|stringformat:"s" %}selected{% endif %}>
+                                {{ camp.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <small class="help-text">Filter by specific camp/tournament</small>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        Check Drills
+                    </button>
+                    {% if selected_date or selected_camp %}
+                    <a href="{% url 'camp_drill_report' %}" class="btn btn-secondary mt-2" style="background: #475569; color: white; border: none;">
+                        Clear Filters
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+
+        {% if drills %}
+        <div class="report-results">
+            <div class="results-header">
+                <h3 style="color:white;">
+                    {% if selected_date %}{{ selected_date|date:"D, M j, Y" }}{% endif %}
+                    {% if selected_camp %}• {{ selected_camp.name }}{% endif %}
+                    Bowler Report
+                </h3>
+                <span class="pill pill-blue">{{ drills|length }} bowler found</span>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Player</th>
+                            <th>Camp</th>
+                            <th>No of Balls</th>
+                        
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for drill in drills %}
+                        <tr>
+                            <td>{{ drill.date|date:"M j, Y" }}</td>
+                            <td>
+                                <span class="player-name">{{ drill.player.name }}</span>
+                            </td>
+                            <td>{{ drill.camp.name }}</td>
+                            <td>
+                               {{ drill.no_balls }}
+                            </td>
+                            
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="empty-state">
+                                No drills found for selected filters
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-number">{{ drills|length }}</div>
+                    <div class="stat-label">Total Bowlers</div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state" style="margin-top: 2rem;">
+            <i class="fas fa-dumbbell" style="font-size: 3rem; color: #94a3b8; margin-bottom: 1rem;"></i>
+            <h4 style="color: #f1f5f9;">No drills available</h4>
+            <p>Select date and optionally camp/tournament to view drill reports</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.getElementById('drill_date').addEventListener('change', function() {
+    document.getElementById('reportForm').submit();
+});
+document.getElementById('camp').addEventListener('change', function() {
+    document.getElementById('reportForm').submit();
+});
+</script>
+{% endblock %}

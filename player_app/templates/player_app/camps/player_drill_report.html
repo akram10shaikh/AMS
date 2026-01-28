@@ -1,0 +1,566 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Player Drill Report{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<style>
+    .report-page { 
+        max-width: 1400px; 
+        margin: 0 auto; 
+        padding: 1rem 0;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #8b5cf6, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .page-subtitle {
+        color: #94a3b8;
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .card-report { 
+        background: linear-gradient(145deg, #0f172a, #1e293b); 
+        border-radius: 1rem; 
+        padding: 2.5rem; 
+        border: 1px solid #334155; 
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .filters-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr auto;
+        gap: 1.5rem;
+        align-items: end;
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-control, .form-select {
+        background: #1e293b;
+        border: 2px solid #334155;
+        border-radius: 0.75rem;
+        padding: 0.75rem 1rem;
+        color: #f1f5f9 !important;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        background: #1e293b;
+    }
+
+    .required { color: #f87171; }
+    .help-text { 
+        color: #64748b; 
+        font-size: 0.85rem; 
+        margin-top: 0.5rem; 
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white !important;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+    }
+
+    .btn-secondary {
+        background: #475569;
+        color: white !important;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+    }
+
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .pill-blue {
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        color: white;
+        padding: 0.4rem 1rem;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .table-wrapper {
+        border-radius: 1rem;
+        border: 1px solid #475569;
+        overflow: hidden;
+        background: rgba(30, 41, 59, 0.6);
+        margin-bottom: 2rem;
+    }
+
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .report-table th {
+        background: linear-gradient(135deg, #1e293b, #334155);
+        color: #94a3b8;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 1rem 1.25rem;
+    }
+
+    .report-table td {
+        padding: 1.25rem;
+        border-bottom: 1px solid #334155;
+        color: #f1f5f9 !important;
+    }
+
+    .drill-type-badge {
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: white !important;
+        background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    }
+
+    .score-highlight {
+        color: #10b981;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        color: #94a3b8;
+        font-style: italic;
+        padding: 4rem 2rem;
+    }
+
+    .player-header {
+        background: linear-gradient(145deg, #1e293b, #334155);
+        padding: 1.5rem 2rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+        border: 1px solid #475569;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .stat-card {
+        background: linear-gradient(145deg, #1e293b, #334155);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        text-align: center;
+        border: 1px solid #475569;
+    }
+
+    .stat-number { 
+        font-size: 2.5rem; 
+        font-weight: 700; 
+        background: linear-gradient(135deg, #8b5cf6, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    @media (max-width: 768px) {
+        .filters-row {
+            grid-template-columns: 1fr;
+        }
+        .report-table th,
+        .report-table td {
+            padding: 0.75rem;
+        }
+    }
+    .player-profile-card {
+        background: linear-gradient(145deg, #1e293b, #334155);
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid #475569;
+        display: flex;
+        gap: 1.5rem;
+        align-items: flex-start;
+    }
+
+    .player-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #8b5cf6, #ec4899);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .player-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+    .player-avatar::before {
+        content: attr(data-initials);
+        position: absolute;
+    }
+
+    .player-avatar.has-image::before {
+        display: none;
+    }
+
+    .player-info-main h3 {
+        color: white;
+        margin: 0 0 0.5rem 0;
+        font-size: 1.5rem;
+    }
+
+    .player-details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .player-detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .detail-label {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+
+    .detail-value {
+        color: #f1f5f9;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .age-badge {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .hand-badge {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+
+    }
+
+    /* PLAYER INFO SECTION - Dark Green Theme */
+.player-info-section {
+    margin-top: var(--space-xl, 2rem);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg, 1.5rem);
+    background-color: #114224; /* dark-green */
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    padding: var(--space-md, 1rem);
+    margin-bottom: 2rem;
+}
+
+.player-info-title {
+    color: var(--color-text-light, #f1f5f9);
+    text-align: center;
+    font-style: italic;
+    font-weight: 700;
+    margin: 0;
+    padding-bottom: var(--space-sm, 0.75rem);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 1.5rem;
+}
+
+.player-info-card {
+    border-top: 15px solid var(--color-orange, #f59e0b);
+    border-bottom: 15px solid var(--color-orange, #f59e0b);
+    color: var(--color-text-light, #f1f5f9);
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: var(--space-md, 1rem);
+    flex-wrap: wrap;
+    background: linear-gradient(145deg, #1e293b, #334155);
+}
+
+.player-photo {
+    background-color: #114224;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    min-height: 176px;
+    width: 170px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.player-photo img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.player-info-table {
+    flex-grow: 1;
+    border-collapse: collapse;
+    font-size: 14px;
+    color: var(--color-text-light, #f1f5f9);
+    margin-left: 1rem;
+}
+
+.player-info-table th,
+.player-info-table td {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.5rem;
+    text-align: left;
+}
+
+.player-info-table th {
+    font-weight: normal;
+    background-color: #114224;
+    text-align: center;
+    width: 40%;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-page">
+    <div class="page-header">
+        <h1 class="page-title">Individual Player Drill Report</h1>
+        <p class="page-subtitle">Detailed performance analysis for individual players</p>
+    </div>
+
+    <div class="card-report">
+        <!-- Filters Form [Keep your existing form unchanged] -->
+        <form method="get" id="reportForm">
+            <div class="filters-row">
+                <div class="form-group">
+                    <label for="player" style="color:white;">Select Player <span class="required">*</span></label>
+                    <select name="player" id="player" class="form-select">
+                        <option value="">-- Select Player --</option>
+                        {% for player in players %}
+                            <option value="{{ player.id }}" {% if selected_player_id == player.id|stringformat:"s" %}selected{% endif %}>
+                                {{ player.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    
+                </div>
+                <!-- [Keep other filters same as before] -->
+                <div class="form-group">
+                    <label for="start_date" style="color:white;">Start Date</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="end_date" style="color:white;">End Date</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date }}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="camp" style="color:white;">Camp/Tournament</label>
+                    <select name="camp" id="camp" class="form-select">
+                        <option value="">-- All Camps --</option>
+                        {% for camp in camps %}
+                            <option value="{{ camp.id }}" {% if selected_camp == camp.id|stringformat:"s" %}selected{% endif %}>
+                                {{ camp.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary mb-2 w-100">
+                        <i class="fas fa-chart-line me-2"></i>Generate Report
+                    </button>
+                    {% if selected_player_id or start_date or end_date or selected_camp %}
+                    <a href="{% url 'player_drill_report' %}" class="btn btn-secondary w-100">
+                        <i class="fas fa-redo me-2"></i>Clear All Filters
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+
+       {% if drills and selected_player %}
+<div id="playerInfoSection" class="player-info-section">
+    <h3 class="player-info-title">
+        <i class="fas fa-user-circle me-2" style="color: #f59e0b;"></i>
+        Individual Report - {{ selected_player.name }}
+    </h3>
+    
+    <div class="player-info-card" id="playerInfoCard">
+        <!-- Player Photo -->
+        <div class="player-photo">
+            {% if selected_player.image %}
+                <img src="{{ selected_player.image.url }}" 
+                     alt="{{ selected_player.name }}"
+                     onerror="this.outerHTML='<div style=\'color: white; font-size: 2rem; font-weight: 700;\'>{{ selected_player.name|first|upper }}</div>'">
+            {% else %}
+                <div style="color: white; font-size: 2rem; font-weight: 700;">
+                    {{ selected_player.name|first|upper }}
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Player Info Table -->
+        <table class="player-info-table">
+            <tr>
+                <th>Name</th>
+                <td style="font-weight: 600; font-size: 1.1rem;">{{ selected_player.name }}</td>
+            </tr>
+            <tr>
+                <th>Age</th>
+                <td>
+                    <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                        {{ selected_player.age|default:"—" }}
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <th>Gender</th>
+                <td>{{ selected_player.gender|default:"—" }}</td>
+            </tr>
+            <tr>
+                <th>Role</th>
+                <td>{{ selected_player.role|default:"—" }}</td>
+            </tr>
+            <tr>
+                <th>Handness</th>
+                <td>
+                    <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                        {{ selected_player.handedness|default:"—" }}
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <th>Category</th>
+                <td>{{ selected_player.age_category.name|default:selected_player.age_category|default:"—" }}</td>
+            </tr>
+            <tr>
+                <th>Batting Style</th>
+                <td>{{ selected_player.batting_style|default:"—" }}</td>
+            </tr>
+            <tr>
+                <th>Bowling Style</th>
+                <td>{{ selected_player.bowling_style|default:"—" }}</td>
+            </tr>
+            <tr>
+                <th>Player Status</th>
+                <td>{{ selected_player.player_status|default:"Active" }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+
+        {% if drills %}
+        <!-- Report Results [Keep your existing table and stats] -->
+        <div class="report-results">
+            <div class="results-header">
+                <h3 style="color:white;">Performance Summary</h3>
+                <span class="pill pill-blue">{{ drills|length }} drills found</span>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Camp</th>
+                            <th>Balls Bowled</th>
+                           
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for drill in drills %}
+                        <tr>
+                            <td>{{ drill.date|date:"M j, Y" }}</td>
+                            <td>{{ drill.camp.name }}</td>
+                            <td>{{ drill.no_balls }}</td>
+                           
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-number">{{ drills|length }}</div>
+                    <div class="stat-label">Total Balls Recorded</div>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-user-times" style="font-size:3rem; color:#94a3b8; margin-bottom:1rem;"></i>
+            <h4 style="color:#f1f5f9;">No result found</h4>
+            <p>Select a player and optional date/camp filters to generate the report</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.getElementById('player').addEventListener('change', function() {
+    document.getElementById('reportForm').submit();
+});
+</script>
+{% endblock %}

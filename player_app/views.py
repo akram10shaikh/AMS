@@ -8390,3 +8390,160 @@ def attendance_report_view(request):
         'report_data': report_data,
     }
     return render(request, 'player_app/camps/attendance_report.html', context)
+
+
+@login_required
+def bowlerdrills_create(request, camp_id=None):
+    user_org = getattr(request.user, "organization", None)
+    if not user_org:
+        return redirect('dashboard')
+    
+    # Get specific camp if provided in URL
+    camp = None
+    if camp_id:
+        camp = get_object_or_404(
+            CampTournament, 
+            id=camp_id, 
+            organization=user_org, 
+            is_deleted=False
+        )
+    
+    players = camp.participants.filter(organization=user_org)
+    
+    camps = CampTournament.objects.filter(
+        organization=user_org, 
+        is_deleted=False
+    )
+    
+    
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                drill = BowlerDrill.objects.create(
+                    player_id=request.POST['player'],
+                    camp_id=request.POST['camp'],
+                    date=request.POST['date'],
+                    no_balls=request.POST['ball_bowlerd']
+                )
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'id': drill.id})
+            print("Hellowwwww")
+            return redirect('organization_camp_details', camp_id=camp_id)
+        except Exception as e:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+    context = {
+        'players': players,
+        'camps': camps,
+        'camp': camp,  # Prefill if coming from camp page
+        'selected_camp_id': camp_id,
+    }
+    return render(request, 'player_app/camps/bowlerdrills_create.html', context)
+
+
+
+@login_required
+def bowlerdrills_list(request):
+    user_org = getattr(request.user, "organization", None)
+    date_str = request.GET.get('date')
+    camp_id = request.GET.get('camp')
+    
+    drills = BowlerDrill.objects.filter(
+        camp__organization__in=Player.objects.filter(
+            organization=user_org
+        ).values_list('organization', flat=True) if user_org else []
+    ).select_related('player', 'camp')
+    
+    if date_str:
+        drills = drills.filter(date=date_str)
+    if camp_id:
+        drills = drills.filter(camp_id=camp_id)
+    
+    # Get unique camps via players belonging to user's organization
+    camps = CampTournament.objects.filter(
+        participants__organization=user_org
+    ).distinct() if user_org else []
+    
+    context = {
+        'drills': drills,
+        'camps': camps,
+    }
+    return render(request, 'player_app/camps/bowlerdrills_list.html', context)
+
+
+@login_required
+def camp_drill_report(request):
+    user_org = getattr(request.user, "organization", None)
+    camp_id = request.GET.get('camp')
+    selected_date = request.GET.get('date')  # New date filter
+    
+    # Get camps via player relationship
+    camps = CampTournament.objects.filter(
+        bowler_drills__player__organization=user_org
+    ).distinct().order_by('name')
+    
+    drills = BowlerDrill.objects.none()
+    if camp_id and user_org:
+        drill_filter = {
+            'camp_id': camp_id,
+            'player__organization': user_org
+        }
+        if selected_date:  # Filter by date if provided
+            drill_filter['date'] = selected_date
+            
+        drills = BowlerDrill.objects.filter(
+            **drill_filter
+        ).select_related('player', 'camp').order_by('-date', 'player__name')
+    
+    context = {
+        'camps': camps,
+        'drills': drills,
+        'selected_camp': camp_id,
+        'selected_date': selected_date,  # Pass selected date to template
+    }
+    return render(request, 'player_app/camps/camp_drill_report.html', context)
+
+
+@login_required
+def player_drill_report(request):
+    user_org = getattr(request.user, "organization", None)
+    player_id = request.GET.get('player')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    camp_id = request.GET.get('camp')
+    
+    # Get players and camps for dropdowns
+    players = Player.objects.filter(organization=user_org).order_by('name')
+    
+    # FIXED: Use bowler_drills (plural) - matches your model field name
+    camps = CampTournament.objects.filter(
+        bowler_drills__player__organization=user_org  # Changed bowlerdrill → bowler_drills
+    ).distinct().order_by('name')
+    
+    drills = BowlerDrill.objects.none()
+    if player_id and user_org:
+        drill_filter = {'player_id': player_id}
+        
+        if start_date:
+            drill_filter['date__gte'] = start_date
+        if end_date:
+            drill_filter['date__lte'] = end_date
+        if camp_id:
+            drill_filter['camp_id'] = camp_id
+            
+        drills = BowlerDrill.objects.filter(
+            **drill_filter
+        ).select_related('player', 'camp').order_by('-date')
+    
+    selected_player = Player.objects.filter(id=player_id).first() if player_id else None
+    context = {
+        'players': players,
+        'camps': camps,
+        'drills': drills,
+        'selected_player': selected_player,
+        'selected_camp': camp_id,
+        'start_date': start_date,
+        'end_date': end_date,
+    }
+    return render(request, 'player_app/camps/player_drill_report.html', context)

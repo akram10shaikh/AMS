@@ -3847,3 +3847,18 @@ class PlayerAttendance(models.Model):
 
     def __str__(self):
         return f"{self.player.name} - {self.camp.name} - {self.attendance_date} - {self.get_status_display()}"
+    
+
+
+class BowlerDrill(models.Model):
+    player = models.ForeignKey('Player', on_delete=models.CASCADE, related_name='bowler_drills')
+    camp = models.ForeignKey('CampTournament', on_delete=models.CASCADE, related_name='bowler_drills')
+    date = models.DateField()
+    no_balls = models.IntegerField()  # Number of balls bowled
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date']
+        unique_together = ['player', 'camp', 'date'] 
+
+

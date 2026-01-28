@@ -400,6 +400,22 @@
             class="btn btn-log btn-pill btn-sm">
                 Attendance Report
             </a>
+            <a href="{% url 'bowlerdrills_create' camp.id %}"
+            class="btn btn-log btn-pill btn-sm">
+                Add Bowler Drill
+            </a>
+            {% comment %} <a href="{% url 'bowlerdrills_list' %}"
+            class="btn btn-log btn-pill btn-sm">
+                View Bowler Drills
+            </a> {% endcomment %}
+            <a href="{% url 'camp_drill_report' %}"
+            class="btn btn-log btn-pill btn-sm">
+                Camp Drill Report
+            </a>
+            <a href="{% url 'player_drill_report' %}"
+            class="btn btn-log btn-pill btn-sm">    
+                Player Drill Report
+            </a>
 
             <a href="{% url 'daily_activity_coach_log' camp.id %}"
             class="btn btn-log btn-pill btn-sm">
