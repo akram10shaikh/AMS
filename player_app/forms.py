@@ -547,3 +547,20 @@ class TestSummaryFilterForm(forms.Form):
     )
 
 
+from django.forms import modelformset_factory
+
+class PlayerAttendanceForm(forms.ModelForm):
+    class Meta:
+        model = PlayerAttendance
+        fields = ['status']
+        widgets = {
+            'status': forms.Select(choices=PlayerAttendance.STATUS_CHOICES, attrs={'class': 'form-control'}),
+        }
+
+AttendanceFormSet = modelformset_factory(
+    PlayerAttendance,
+    form=PlayerAttendanceForm,
+    extra=0,
+    fields=['status'],
+    can_delete=False
+)

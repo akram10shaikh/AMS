@@ -3825,3 +3825,25 @@ class RunA3x6Test(models.Model):
                 camp_agg.max = camp_vals['max_val']
                 camp_agg.average = camp_vals['avg_val']
                 camp_agg.save(update_fields=['min', 'max', 'average'])
+
+
+
+class PlayerAttendance(models.Model):
+    STATUS_CHOICES = [
+        ('ST/RH', 'Strength / Rehab Session'),
+        ('CD', 'Conditioning Session'),
+        ('A-INJ', 'Absent due to Injury'),
+        ('A-PR', 'Absent Due to Personal Reason'),
+        ('R', 'Rest'),
+    ]
+    player = models.ForeignKey('Player', on_delete=models.CASCADE, related_name='attendances')
+    camp = models.ForeignKey('CampTournament', on_delete=models.CASCADE, related_name='attendances')
+    attendance_date = models.DateField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['player', 'camp', 'attendance_date']
+
+    def __str__(self):
+        return f"{self.player.name} - {self.camp.name} - {self.attendance_date} - {self.get_status_display()}"

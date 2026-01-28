@@ -1,0 +1,350 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Attendance Report{% endblock %}
+
+
+{% block extra_head %}
+<style>
+
+    .report-page { 
+    max-width: 1200px; 
+    margin: 0 auto; 
+    padding: 1rem 0;
+    }
+
+    .page-header {
+    margin-bottom: 2rem;
+    }
+
+    .page-title {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    }
+
+    .page-subtitle {
+    color: #94a3b8;
+    font-size: 1rem;
+    margin-top: 0.5rem;
+    }
+
+    .card-report { 
+    background: linear-gradient(145deg, #0f172a, #1e293b); 
+    border-radius: 1rem; 
+    padding: 2rem; 
+    border: 1px solid #334155; 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .filters-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.5rem;
+    align-items: end;
+    margin-bottom: 2rem;
+    }
+
+    .form-group {
+    display: flex;
+    flex-direction: column;
+    }
+
+    .form-control {
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: #f1f5f9 !important;
+    font-size: 0.95rem;
+    }
+
+    .form-control:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    background: #1e293b;
+    }
+
+    .required { color: #f87171; }
+    .help-text { 
+    color: #64748b; 
+    font-size: 0.85rem; 
+    margin-top: 0.5rem; 
+    }
+
+    .btn-primary {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white !important;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    }
+
+    /* Table Styles */
+    .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    }
+
+    .pill-blue {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: white;
+    padding: 0.4rem 1rem;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    }
+
+    .table-wrapper {
+    border-radius: 1rem;
+    border: 1px solid #475569;
+    overflow: hidden;
+    background: rgba(30, 41, 59, 0.6);
+    }
+
+    .report-table {
+    width: 100%;
+    border-collapse: collapse;
+    }
+
+    .report-table th {
+    background: linear-gradient(135deg, #1e293b, #334155);
+    color: #94a3b8;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 1rem 1.25rem;
+    }
+
+    .report-table td {
+    padding: 1.25rem;
+    border-bottom: 1px solid #334155;
+    color: #f1f5f9 !important;
+    }
+
+    /* FIXED: Player names now visible with proper contrast */
+    .player-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    }
+
+    .player-name {
+    color: #f1f5f9 !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    }
+
+    .player-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    color: white !important;
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
+
+    /* Status Badges - FIXED contrast */
+    .status-badge {
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white !important;
+    }
+
+    .status-st-rh { 
+    background: linear-gradient(135deg, #8b5cf6, #ec4899); 
+    color: white !important; 
+    }
+
+    .status-cd { 
+    background: linear-gradient(135deg, #10b981, #059669); 
+    color: white !important; 
+    }
+
+    .status-a-inj { 
+    background: linear-gradient(135deg, #ef4444, #dc2626); 
+    color: white !important; 
+    }
+
+    .status-a-pr { 
+    background: linear-gradient(135deg, #f59e0b, #d97706); 
+    color: white !important; 
+    }
+
+    .status-r { 
+    background: linear-gradient(135deg, #6b7280, #4b5563); 
+    color: white !important; 
+    }
+
+    /* Camp Badge */
+    .camp-badge {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: white !important;
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
+    }
+
+    /* Stats */
+    .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+    }
+
+    .stat-card {
+    background: linear-gradient(145deg, #1e293b, #334155);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    text-align: center;
+    border: 1px solid #475569;
+    }
+
+    .stat-number { 
+    font-size: 2.5rem; 
+    font-weight: 700; 
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    }
+
+    .stat-label { 
+    color: #94a3b8; 
+    font-size: 0.95rem; 
+    margin-top: 0.5rem; 
+    font-weight: 500;
+    }
+
+    .empty-state {
+    text-align: center;
+    color: #94a3b8;
+    font-style: italic;
+    padding: 3rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+    .filters-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .report-table th,
+    .report-table td {
+        padding: 0.75rem;
+    }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="report-page">
+  <div class="page-header">
+    <h1 class="page-title"> Attendance Report</h1>
+    <p class="page-subtitle">View attendance data across all camps & tournaments</p>
+  </div>
+
+  <div class="card-report">
+ 
+    <form method="get" id="reportForm" class="filter-form">
+      <div class="filters-row">
+        <div class="form-group">
+          <label for="report_date" style="color:white;">Select Date <span class="required">*</span></label>
+          <input type="date" id="report_date" name="report_date"  
+                 class="form-control" value="{% if report_date %}{{ report_date|date:'Y-m-d' }}{% endif %}">
+          <small class="help-text" style=>Shows attendance from all camps/tournaments on selected date</small>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+             Check Attendance
+          </button>
+        </div>
+      </div>
+    </form>
+
+    {% if report_date %}
+    
+    <div class="report-results">
+      <div class="results-header">
+        <h3 style="color:white;">{{ report_date|date:"D, M j, Y" }} Attendance</h3>
+        <span class="pill pill-blue">{{ report_data.count }} records found</span>
+      </div>
+
+      {% if report_data %}
+      <div class="table-wrapper">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Camp/Tournament</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for attendance in report_data %}
+            <tr>
+              <td>
+                <div class="player-info">
+                  
+                  <span class="player-name">{{ attendance.player.name }}</span>
+                </div>
+              </td>
+              <td>
+                <div >{{ attendance.camp.name }}</div>
+              </td>
+           
+              <td>
+                <span class="status-badge status-{{ attendance.status|lower }}">
+                  {{ attendance.get_status_display }}
+                </span>
+              </td>
+              <td>{{ attendance.attendance_date|date:"M j, Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="empty-state">
+                No attendance recorded for {{ report_date|date:"M j, Y" }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      
+      <div class="stats-row" style="margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-number">{{ report_data|length }}</div>
+          <div class="stat-label">Total Records</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+
+<script>
+document.getElementById('report_date').addEventListener('change', function() {
+  document.getElementById('reportForm').submit();
+});
+</script>
+{% endblock %}

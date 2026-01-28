@@ -8278,3 +8278,115 @@ def multitest(request):
         }
 
     return render(request,'player_app/record/multi_test_report.html',context)
+
+
+
+@login_required
+def camp_attendance_view(request, camp_id):
+    """
+    Camp/Tournament Attendance Marking Page
+    """
+    user_org = getattr(request.user, "organization", None)
+    camp = get_object_or_404(CampTournament, id=camp_id, organization=user_org)
+    
+    if request.method == 'POST':
+        try:
+            attendance_date_str = request.POST.get('attendance_date')
+            if not attendance_date_str:
+                return JsonResponse({'success': False, 'message': 'Date required'}, status=400)
+            
+            from datetime import datetime
+            attendance_date = datetime.strptime(attendance_date_str, '%Y-%m-%d').date()
+            
+            saved_count = 0
+            for key, value in request.POST.items():
+                if key.startswith('status_') and value:
+                    player_id = key.split('_')[1]
+                    player = get_object_or_404(Player, id=player_id, organization=user_org)
+                    
+                    attendance, created = PlayerAttendance.objects.update_or_create(
+                        player=player,
+                        camp=camp,
+                        attendance_date=attendance_date,
+                        defaults={'status': value}
+                    )
+                    saved_count += 1
+                    
+            
+            # ✅ ALWAYS RETURN JSON - NO REDIRECT!
+            return JsonResponse({
+                'success': True, 
+                'message': f'Attendance saved for {saved_count} players!',
+                'saved_count': saved_count
+            })
+            
+        except Exception as e:
+            
+            return JsonResponse({
+                'success': False, 
+                'message': f'Save failed: {str(e)}'
+            }, status=500)
+    
+    # GET request
+    players = camp.participants.filter(organization=user_org).order_by('name')
+    
+    context = {
+        'camp': camp,
+        'players': players,
+    }
+    return render(request, 'player_app/camps/camp_attendance.html', context)
+
+@csrf_exempt
+@login_required
+@require_http_methods(["POST"])
+def filter_players_attendance(request):
+    """AJAX - Filter players by camp (for dynamic load)"""
+    camp_id = request.POST.get('camp_id')
+    date_str = request.POST.get('date')
+    
+    user_org = getattr(request.user, "organization", None)
+    players = Player.objects.filter(
+        camps__id=camp_id,
+        organization=user_org,
+        is_active=True
+    ).distinct().order_by('name')
+    
+    return JsonResponse({
+        'players': [{'id': p.id, 'name': p.name} for p in players]
+    })
+
+
+@login_required
+def attendance_report_view(request):
+    """
+    Attendance Report - Filter by Date (All Camps/Tournaments)
+    """
+    user_org = getattr(request.user, "organization", None)
+    
+    # Get all camps/tournaments for dropdown
+    camps = CampTournament.objects.filter(
+        organization=user_org, 
+        is_deleted=False
+    ).order_by('name')
+    
+    report_date = None
+    report_data = []
+    
+    if request.method == 'GET':
+        date_str = request.GET.get('report_date')
+        if date_str:
+            from datetime import datetime
+            report_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            
+            # Fetch ALL attendance for selected date across ALL camps
+            report_data = PlayerAttendance.objects.filter(
+                attendance_date=report_date,
+                player__organization=user_org
+            ).select_related('player', 'camp').order_by('camp__name', 'player__name')
+    
+    context = {
+        'camps': camps,
+        'report_date': report_date,
+        'report_data': report_data,
+    }
+    return render(request, 'player_app/camps/attendance_report.html', context)

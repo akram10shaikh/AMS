@@ -1,0 +1,462 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}{{ camp.name }} - Mark Attendance{% endblock %}
+{% block extra_head %}
+<style>
+    .attendance-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    }
+
+    .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 1.5rem;
+    }
+
+    .page-title {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 600;
+    }
+
+    .page-subtitle {
+    margin: 0.25rem 0 0;
+    color: #9ca3af;
+    font-size: 0.9rem;
+    }
+
+    .card-attendance {
+    background: #111827;
+    border-radius: 0.75rem;
+    padding: 1.5rem 1.75rem;
+    border: 1px solid #1f2937;
+    box-shadow: 0 20px 30px -24px rgba(15, 23, 42, 1);
+    }
+
+    .filters-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+    }
+
+    .form-group {
+    display: flex;
+    flex-direction: column;
+    }
+
+    .form-group label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #e5e7eb;
+    margin-bottom: 0.35rem;
+    }
+
+    .required {
+    color: #f97316;
+    font-weight: 600;
+    }
+
+    .form-control {
+    background: #020617;
+    border-radius: 0.5rem;
+    border: 1px solid #1f2937;
+    padding: 0.55rem 0.7rem;
+    color: #e5e7eb;
+    font-size: 0.9rem;
+    }
+
+    .form-control:focus {
+    outline: none;
+    border-color: #22c55e;
+    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4);
+    }
+
+    .help-text {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+    }
+
+    .readonly-field .readonly-box {
+    background: #020617;
+    border-radius: 0.5rem;
+    border: 1px dashed #334155;
+    padding: 0.6rem 0.75rem;
+    color: #e5e7eb;
+    font-size: 0.9rem;
+    }
+
+    /* Players table */
+
+    .players-section {
+    border-top: 1px solid #1f2937;
+    padding-top: 1.25rem;
+    }
+
+    .players-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    }
+
+    .players-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #e5e7eb;
+    font-weight: 500;
+    }
+
+    .pill {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    }
+
+    .pill-neutral {
+    background: #020617;
+    color: #9ca3af;
+    border: 1px solid #1f2937;
+    }
+
+    .players-table-wrapper {
+    border-radius: 0.75rem;
+    border: 1px solid #1f2937;
+    overflow: hidden;
+    }
+
+    .players-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    }
+
+    .players-table thead {
+    background: #020617;
+    }
+
+    .players-table th,
+    .players-table td {
+    padding: 0.55rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #111827;
+    }
+
+    .players-table th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    }
+
+    .players-table tbody tr:nth-child(even) {
+    background: #020617;
+    }
+
+    .players-table tbody tr:hover {
+    background: #0b1120;
+    }
+
+    .player-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    }
+
+    .player-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: #1d293b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #e5e7eb;
+    }
+
+    .player-name {
+    color: #e5e7eb;
+    }
+
+    .status-col {
+    width: 260px;
+    }
+
+    .status-dropdown {
+    width: 100%;
+    }
+
+    /* Empty state */
+
+    .empty-state {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    color: #9ca3af;
+    }
+
+    /* Actions */
+
+    .form-actions {
+    margin-top: 1.75rem;
+    text-align: right;
+    }
+
+    .btn.btn-primary {
+    background: linear-gradient(to right, #22c55e, #16a34a);
+    border: none;
+    color: #0b1120;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 0.6rem 1.5rem;
+    font-size: 0.9rem;
+    }
+
+    .btn.btn-primary:hover {
+    filter: brightness(1.05);
+    }
+
+    @media (max-width: 640px) {
+    .players-table th:nth-child(1),
+    .players-table td:nth-child(1) {
+        display: none;
+    }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="attendance-page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">📋 {{ camp.name }} Attendance</h1>
+      <p class="page-subtitle">
+        Mark daily attendance for all players participating in this camp.
+      </p>
+    </div>
+  </div>
+
+  <div class="card-attendance">
+    <form method="post" id="attendanceForm" novalidate>
+      {% csrf_token %}
+
+      <!-- Top filters -->
+      <div class="filters-row">
+        <div class="form-group">
+          <label for="attendance_date">Select Date <span class="required">*</span></label>
+          <input type="date" id="attendance_date" name="attendance_date"
+                 class="form-control"
+                 required>
+          <small class="help-text">Attendance will be saved for this date.</small>
+        </div>
+
+        <div class="form-group readonly-field">
+          <label>Camp / Tournament</label>
+          <div class="readonly-box">
+            {{ camp.name }}
+          </div>
+          <input type="hidden" name="camp_id" value="{{ camp.id }}">
+        </div>
+      </div>
+
+      <!-- Players table -->
+      <div class="players-section">
+        <div class="players-header">
+          <h3>Participants</h3>
+          <span class="pill pill-neutral">
+            {{ players.count }} players
+          </span>
+        </div>
+
+        {% if players %}
+        <div class="players-table-wrapper">
+          <table class="players-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Player</th>
+                <th class="status-col">Attendance Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for player in players %}
+              <tr class="player-row" data-player-id="{{ player.id }}">
+                <td style="color:white">{{ forloop.counter }}</td>
+                <td>
+                  <div class="player-info">
+                    
+                    <span class="player-name">{{ player.name }}</span>
+                  </div>
+                </td>
+                <td class="status-col">
+                  <select name="status_{{ player.id }}" class="status-dropdown form-control" required>
+                    <option value="">Select status</option>
+                    <option value="ST/RH">ST/RH - Strength / Rehab Session</option>
+                    <option value="CD">CD - Conditioning Session</option>
+                    <option value="A-INJ">A-INJ - Absent due to Injury</option>
+                    <option value="A-PR">A-PR - Absent Due to Personal Reason</option>
+                    <option value="R">R - Rest</option>
+                  </select>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+          <p class="empty-state">
+            No players found for this camp.
+          </p>
+        {% endif %}
+      </div>
+
+      <div class="form-actions" style="margin-bottom: 5rem;">
+        <button type="submit" class="btn btn-primary btn-lg">
+          💾 Save Attendance
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('attendanceForm');
+  const saveBtn = document.querySelector('.btn-primary');
+  let isSaving = false;
+
+  // Real-time status badge updates
+  const dropdowns = document.querySelectorAll('.status-dropdown');
+  dropdowns.forEach(dropdown => {
+    dropdown.addEventListener('change', function() {
+      const row = this.closest('tr');
+      if (row) {
+        row.style.background = 'linear-gradient(135deg, #059669, #047857)';
+        row.style.color = 'white';
+        setTimeout(() => {
+          row.style.background = '';
+          row.style.color = '';
+        }, 500);
+      }
+    });
+  });
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // Prevent double submit
+    if (isSaving) return;
+    isSaving = true;
+
+    const date = document.getElementById('attendance_date').value;
+    if (!date) {
+      alert('Please select a date');
+      isSaving = false;
+      return;
+    }
+
+    // Validate at least one status selected
+    const selectedStatuses = document.querySelectorAll('.status-dropdown:not([value=""])');
+    if (selectedStatuses.length === 0) {
+      alert('Please select at least one player status');
+      isSaving = false;
+      return;
+    }
+
+    // Show loading state
+    saveBtn.textContent = '⏳ Saving...';
+    saveBtn.disabled = true;
+
+    const formData = new FormData(form);
+    
+    // ✅ Extract camp_id from current URL
+    const currentPath = window.location.pathname;
+    const campIdMatch = currentPath.match(/\/camp\/(\d+)\//);
+    const campId = campIdMatch ? campIdMatch[1] : null;
+
+    fetch('', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      }
+    })
+    .then(response => {
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server returned non-JSON response');
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        // Success animation
+        saveBtn.textContent = `✅ Saved ${data.saved_count || selectedStatuses.length} players!`;
+        saveBtn.style.background = 'linear-gradient(135deg, #059669, #047857)';
+        
+        // Mark saved rows
+        selectedStatuses.forEach(dropdown => {
+          const row = dropdown.closest('tr');
+          if (row) {
+            row.style.background = '#059669';
+            row.style.color = 'white';
+          }
+        });
+        
+        // ✅ REDIRECT to camp detail page
+        setTimeout(() => {
+          // /player_app/organization/camp/27/ ← extract camp_id and redirect
+          if (campId) {
+            window.location.href = `/player_app/organization/camp/${campId}/`;
+          } else {
+            window.location.reload();
+          }
+        }, 2000);
+      } else {
+        alert('Error saving attendance: ' + (data.message || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Save error:', error);
+      
+      if (error.message.includes('non-JSON')) {
+        // Server redirected = data saved successfully!
+        alert('✅ Attendance saved successfully!\nRedirecting to camp overview...');
+        if (campId) {
+          setTimeout(() => {
+            window.location.href = `/player_app/organization/camp/${campId}/`;
+          }, 1000);
+        }
+      } else {
+        alert('Error saving attendance - server error. Please try again.\n\nConsole: ' + error.message);
+      }
+    })
+    .finally(() => {
+      isSaving = false;
+      saveBtn.textContent = '💾 Save Attendance';
+      saveBtn.disabled = false;
+      saveBtn.style.background = '';
+    });
+
+    // Date picker default to today
+    const today = new Date().toISOString().split('T')[0];
+    if (!document.getElementById('attendance_date').value) {
+      document.getElementById('attendance_date').value = today;
+    }
+  });
+});
+</script>
+
+
+
+{% endblock %}

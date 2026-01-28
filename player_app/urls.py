@@ -82,6 +82,10 @@ urlpatterns = [
                   path('organization/camp/create/', views.organization_create_camp, name='organization_create_camp'),
                   path('organization/camp/<int:camp_id>/delete/', views.organization_delete_camp, name='organization_delete_camp'),
 
+                  path('organization/camp/<int:camp_id>/attendance/', views.camp_attendance_view, name='camp_attendance'),
+                  path('ajax/filter-players-attendance/', views.filter_players_attendance, name='filter_players_attendance'),
+                  path('organization/attendance-report/', views.attendance_report_view, name='attendance_report'),
+
                   path('organization/phase/<int:id>/', views.phase_tests_view, name='phase_tests_view'), 
                   path('organization/phase-test/<int:id>/',views.phase_test, name='phase_test'),
                   path('wellness-report/<int:camp_id>/', views.daily_wellness_camp_report, name='daily_wellness_camp_report'),

@@ -392,6 +392,15 @@
 
         <div class="section-actions" style="margin-top:30px;">
             <!-- Existing buttons -->
+            <a href="{% url 'camp_attendance' camp.id %}"
+            class="btn btn-log btn-pill btn-sm">
+                Mark Attendance
+            </a>
+            <a href="{% url 'attendance_report' %}"
+            class="btn btn-log btn-pill btn-sm">
+                Attendance Report
+            </a>
+
             <a href="{% url 'daily_activity_coach_log' camp.id %}"
             class="btn btn-log btn-pill btn-sm">
                 Daily S&amp;C Coach's Log
