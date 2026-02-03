@@ -25,14 +25,14 @@ User = get_user_model()  # Use the CustomUser model if defined
 # Player model
 class Player(models.Model):
     Age_category_choices = [
-        ('boys under 16', 'Boys under 16'),
-        ('boys under 19', 'Boys under 19'),
-        ('men under 23', 'Men Under 23'),
-        ('men senior', 'Men Senior'),
-        ('girls under 15','Girls under 15'),
-        ('girls under 19','Girls under 19'),
-        ('women under 23','Women Under 23'),
-        ('women senior','Women Senior'),
+        ('boys_under_16', 'Boys under 16'),
+        ('boys_under_19', 'Boys under 19'),
+        ('men_under_23', 'Men Under 23'),
+        ('men_senior', 'Men Senior'),
+        ('girls_under_15','Girls under 15'),
+        ('girls_under_19','Girls under 19'),
+        ('women_under_23','Women Under 23'),
+        ('women_senior','Women Senior'),
 
     ]
     ROLE_CHOICES = [
@@ -187,15 +187,15 @@ class Player(models.Model):
         
         age = self.current_age
         if self.gender.lower() == 'male':
-            if age < 16: return 'boys under 16'
-            elif age <= 19: return 'boys under 19'
-            elif age < 23: return 'men under 23'
-            else: return 'men senior'
+            if age < 16: return 'boys_under_16'
+            elif age <= 19: return 'boys_under_19'
+            elif age < 23: return 'men_under_23'
+            else: return 'men_senior'
         else:  # female
-            if age < 15: return 'girls under 15'
-            elif age <= 19: return 'girls under 19'
-            elif age < 23: return 'women under 23'
-            else: return 'women senior'
+            if age < 15: return 'girls_under_15'
+            elif age <= 19: return 'girls_under_19'
+            elif age < 23: return 'women_under_23'
+            else: return 'women_senior'
 
     def __str__(self):
         return self.name

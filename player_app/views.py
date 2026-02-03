@@ -1864,97 +1864,7 @@ def player_wellness_report(request):
 from django.db.models import Avg
 from django.db.models import Min, Max
 from collections import defaultdict
-# @login_required
-# def test_dashboard(request):
-#     # Get user's organization (adjust as per your user model)
-#     user_organization = getattr(request.user, 'organization', None)
-#     if not user_organization:
-#         return render(request, 'player_app/organization/test_dashboard.html', {
-#             'error_message': "Your account is not linked to any organization.",
-#         })
 
-#     # Get players in user's organization
-#     players_in_org = Player.objects.filter(organization=user_organization)
-
-#     # Handle new test result form (restrict player queryset to org players)
-#     if request.method == 'POST':
-#         add_form = TestAndResultForm(request.POST)
-#         add_form.fields['player'].queryset = players_in_org
-#         if add_form.is_valid():
-#             add_form.save()
-#             return redirect('test_dashboard')
-#     else:
-#         add_form = TestAndResultForm()
-#         add_form.fields['player'].queryset = players_in_org
-
-#     # Handle filter form (restrict player queryset to org players)
-#     filter_form = TestSummaryFilterForm(request.GET or None)
-#     filter_form.fields['player'].queryset = players_in_org
-
-#     # Base queryset filtered by org players only
-#     qs = TestAndResult.objects.select_related('player').filter(player__in=players_in_org).order_by('player__name', 'test', 'date', 'id')
-
-#     # Apply filters if valid form submitted
-#     if filter_form.is_valid():
-#         if filter_form.cleaned_data.get('player'):
-#             qs = qs.filter(player=filter_form.cleaned_data['player'])
-#         if filter_form.cleaned_data.get('test'):
-#             qs = qs.filter(test=filter_form.cleaned_data['test'])
-
-#     # Group trials by (player_id, test)
-#     player_test_trials = defaultdict(list)
-#     for trial in qs:
-#         key = (trial.player.id, trial.test)
-#         player_test_trials[key].append(trial)
-
-#     # Build summary rows without serial yet
-#     summary_rows = []
-#     for (player_id, test), trials in player_test_trials.items():
-#         if not trials:
-#             continue
-
-#         # Last two trials chronologically
-#         last_two_trials = trials[-2:] if len(trials) >= 2 else trials[-1:]
-
-#         trial_1 = last_two_trials[0].trial if len(last_two_trials) == 2 else None
-#         trial_2 = last_two_trials[-1].trial
-
-#         best_trial = min(t.trial for t in trials)
-
-#         last_trial_obj = last_two_trials[-1]
-#         # Individual Average: mean of all trials for this player and test
-        
-#         indv_average = sum(t.trial for t in trials) / len(trials) if trials else None
-#         group_average = TestAndResult.objects.filter(test=test).aggregate(Avg('trial'))['trial__avg']
-        
-#         summary_rows.append({
-#             'player_name': last_trial_obj.player.name,
-#             'test': test,
-#             'last_date': last_trial_obj.date,
-#             'last_phase': last_trial_obj.phase,
-#             'trial_1': trial_1,
-#             'trial_2': trial_2,
-#             'best_trial': best_trial,
-#             'indv_average': indv_average,
-#             'group_average': group_average,
-#         })
-
-#     # Group rows by test
-#     summary_by_test = defaultdict(list)
-#     for row in summary_rows:
-#         summary_by_test[row['test']].append(row)
-
-#     # Assign serial numbers per test table starting at 1
-#     for test_name, rows in summary_by_test.items():
-#         for idx, row in enumerate(rows, start=1):
-#             row['serial'] = idx
-
-#     context = {
-#         'add_form': add_form,
-#         'form': filter_form,
-#         'summary_by_test': dict(summary_by_test),
-#     }
-#     return render(request, 'player_app/organization/test_dashboard.html', context)
 
 @login_required
 def add_test_result(request):
@@ -2008,40 +1918,44 @@ def organization_dashboard_org(request):
     all_players = Player.objects.filter(organization=organization)
     all_injuries = Injury.objects.filter(player__organization=organization)
 
-    # ✅ NEW: Build category_players for tooltips
-    category_players = defaultdict(list)
-    for player in all_players:
-        category_players[player.age_category].append(player.name)
-    category_players = dict(category_players)
-
+   
     # Cards definitions - FIXED keys match age_category values
     CATEGORY_CARDS = OrderedDict([
-        ("boys_under-15", {'gender': 'M', 'label': "B - U14"}),
-        ("boys_under-16", {'gender': 'M', 'label': "B - U16"}),
-        ("boys_under-19", {'gender': 'M', 'label': "B - U19"}),
-        ("men_under-23",  {'gender': 'M', 'label': "B - U23"}),
-        ("men_senior",    {'gender': 'M', 'label': "M - SENIOR"}),
-        ("girls_under-15", {'gender': 'F', 'label': "G - U15"}),
-        ("girls_under-19", {'gender': 'F', 'label': "G - U19"}),
-        ("women_under-23", {'gender': 'F', 'label': "W - U23"}),
-        ("women_senior",  {'gender': 'F', 'label': "W - SENIOR"}),
+        ("boys_under_15", {'gender': 'Male', 'label': "B - U14"}),
+        ("boys_under_16", {'gender': 'Male', 'label': "B - U16"}),
+        ("boys_under_19", {'gender': 'Male', 'label': "B - U19"}),
+        ("men_under_23",  {'gender': 'Male', 'label': "B - U23"}),
+        ("men_senior",    {'gender': 'Male', 'label': "M - SENIOR"}),
+        ("girls_under_15", {'gender': 'Female', 'label': "G - U15"}),
+        ("girls_under_19", {'gender': 'Female', 'label': "G - U19"}),
+        ("women_under_23", {'gender': 'Female', 'label': "W - U23"}),
+        ("women_senior",  {'gender': 'Female', 'label': "W - SENIOR"}),
     ])
 
+
     category_cards = []
+    
     for age_category, card_cat in CATEGORY_CARDS.items():
         players_qs = all_players.filter(
-            gender=card_cat['gender'],
+            gender__iexact=card_cat['gender'],  # Add __iexact
             age_category=age_category
         ).distinct()
+        full = players_qs.filter(player_status__iexact="full participation")
+        limited = players_qs.filter(player_status__iexact="limited participation")
+        none = players_qs.filter(player_status__iexact="no participation")
 
         category_cards.append({
             'label': card_cat['label'],
             'age_category': age_category,  # ✅ CRITICAL for data-age-category
             'total': players_qs.count(),
-            'full': players_qs.filter(player_status__iexact="full participation").count(),
-            'limited': players_qs.filter(player_status__iexact="limited participation").count(),
-            'none': players_qs.filter(player_status__iexact="no participation").count(),
+            'full': full.count(),
+            'limited': limited.count(),
+            'none': none.count(),
             'active_injury': all_injuries.filter(player__in=players_qs, status='open').values('player_id').distinct().count(),
+
+            'full_names': ", ".join(full.values_list('name', flat=True)) or "No players",
+            'limited_names': ", ".join(limited.values_list('name', flat=True)) or "No players",
+            'none_names': ", ".join(none.values_list('name', flat=True)) or "No players",
         })
 
     # Filtered data for tables
@@ -2126,6 +2040,7 @@ def organization_dashboard_org(request):
         
 
 
+
     context = {
         'selected_category': selected_category,
         'selected_gender': selected_gender,
@@ -2137,7 +2052,7 @@ def organization_dashboard_org(request):
         'participation_counts': participation_counts,
         'activity_logs': combined_logs,
         'category_cards': category_cards,
-        'category_players': category_players, 
+      
         'camps_by_year': camps_by_year_range,
     }
     return render(request, 'player_app/organization/organization_dashboard.html', context)
@@ -2195,14 +2110,14 @@ def players_by_category(request):
 
     # Category labels for display
     category_labels = {
-        'boys_under-15': 'Boys U14',
-        'boys_under-16': 'Boys U16', 
-        'boys_under-19': 'Boys U19',
-        'men_under-23': 'Men U23',
+        'boys_under_15': 'Boys U14',
+        'boys_under_16': 'Boys U16', 
+        'boys_under_19': 'Boys U19',
+        'men_under_23': 'Men U23',
         'men_senior': 'Men Senior',
-        'girls_under-15': 'Girls U15',
-        'girls_under-19': 'Girls U19',
-        'women_under-23': 'Women U23',
+        'girls_under_15': 'Girls U15',
+        'girls_under_19': 'Girls U19',
+        'women_under_23': 'Women U23',
         'women_senior': 'Women Senior',
     }
     
@@ -8515,35 +8430,45 @@ def player_drill_report(request):
     
     # Get players and camps for dropdowns
     players = Player.objects.filter(organization=user_org).order_by('name')
-    
-    # FIXED: Use bowler_drills (plural) - matches your model field name
     camps = CampTournament.objects.filter(
-        bowler_drills__player__organization=user_org  # Changed bowlerdrill → bowler_drills
+        bowler_drills__player__organization=user_org
     ).distinct().order_by('name')
     
     drills = BowlerDrill.objects.none()
-    if player_id and user_org:
-        drill_filter = {'player_id': player_id}
-        
-        if start_date:
-            drill_filter['date__gte'] = start_date
-        if end_date:
-            drill_filter['date__lte'] = end_date
-        if camp_id:
-            drill_filter['camp_id'] = camp_id
-            
-        drills = BowlerDrill.objects.filter(
-            **drill_filter
-        ).select_related('player', 'camp').order_by('-date')
+    selected_player = None
     
-    selected_player = Player.objects.filter(id=player_id).first() if player_id else None
+    # FIXED: Check if player_id exists AND belongs to user's organization
+    if player_id:
+        selected_player = Player.objects.filter(
+            id=player_id, 
+            organization=user_org
+        ).first()
+        
+        if selected_player:  # Only filter drills if valid player
+            drill_filter = {'player_id': player_id}
+            
+            if start_date:
+                drill_filter['date__gte'] = start_date
+            if end_date:
+                drill_filter['date__lte'] = end_date
+            if camp_id:
+                drill_filter['camp_id'] = camp_id
+                
+            drills = BowlerDrill.objects.filter(
+                **drill_filter
+            ).select_related('player', 'camp').order_by('-date')
+    
+    print(f"DEBUG: player_id={player_id}, selected_player={selected_player}, drills.count()={drills.count()}")
+    
     context = {
         'players': players,
         'camps': camps,
         'drills': drills,
         'selected_player': selected_player,
+        'selected_player_id': player_id, 
         'selected_camp': camp_id,
         'start_date': start_date,
         'end_date': end_date,
     }
     return render(request, 'player_app/camps/player_drill_report.html', context)
+

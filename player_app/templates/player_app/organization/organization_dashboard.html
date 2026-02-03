@@ -438,6 +438,7 @@
     {% for cat in category_cards %}
       <div class="category-card"
            data-age-category="{{ cat.age_category }}"
+           data-url="{% url 'players_by_category' %}?age_category={{ cat.age_category }}"
            style="background:#36a9e1;border-radius:7px;width:170px;display:inline-block;padding:17px 10px 9px 10px;margin:0 7px;cursor:pointer;">
         <p align="center">
           <img src="{% static 'KCA.png' %}" width="50px" height="50px" alt="AMS logo">
@@ -449,19 +450,19 @@
           {{ cat.total }}
         </div>
         <div style="display:flex;justify-content:center;gap:7px;margin-bottom:8px;">
-          <div class="status-pill"
-               data-status="full"
-               style="background:#36e156;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">
+          <div class="status-pill tooltip-trigger"
+              data-tooltip="{{ cat.full_names }}"
+              style="background:#36e156;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">
             {{ cat.full }}
           </div>
-          <div class="status-pill"
-               data-status="limited"
-               style="background:#ffe346;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">
+          <div class="status-pill tooltip-trigger"
+              data-tooltip="{{ cat.limited_names }}"
+              style="background:#ffe346;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">
             {{ cat.limited }}
           </div>
-          <div class="status-pill"
-               data-status="none"
-               style="background:#ff3939;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">
+           <div class="status-pill tooltip-trigger"
+              data-tooltip="{{ cat.none_names }}"
+              style="background:#ff3939;color:#fff;font-weight:700;border-radius:5px;padding:6px 12px;font-size:17px;">
             {{ cat.none }}
           </div>
         </div>
@@ -481,31 +482,23 @@
   <label for="filterCategory">Category:</label>
   <select id="filterCategory" name="category" aria-describedby="filterCategoryHelp">
     <option value="all">All Categories</option>
-    <option value="boys_under-15">Boys under 15</option>
-    <option value="boys_under-19">Boys under 19</option>
-    <option value="men_under-23">Men Under 23</option>
+    <option value="boys_under_15">Boys under 15</option>
+    <option value="boys_under_19">Boys under 19</option>
+    <option value="men_under_23">Men Under 23</option>
     <option value="men_senior">Men Senior</option>
+    <option value="girls_under_15">Girls under 15</option>
+    <option value="girls_under_19">Girls under 19</option>
+    <option value="women_under_23">Women under 23</option>
+    <option value="women_senior">Women Senior</option>
   </select>
-
-  {% comment %} <label for="filterGender">Gender:</label>
-  <select id="filterGender" name="gender" aria-describedby="filterGenderHelp">
-    <option value="all">All Genders</option>
-    <option value="M">Male</option>
-    <option value="F">Female</option>
-    <option value="O">Other</option>
-  </select> {% endcomment %}
-
-  {% comment %} <label for="searchInput">Search:</label>
-  <input type="search" id="searchInput" placeholder="Player or Injury name..." aria-label="Search player or injury names" /> {% endcomment %}
-
   <button type="button" id="resetFilters" aria-label="Reset filters">Reset</button>
 </form>
 
-<!-- Cards -->
+<!-- ✅ FIXED: Cards with proper IDs -->
 <div class="cards" role="region" aria-label="Summary statistics">
   <div class="card total-injuries-card" aria-live="polite" aria-atomic="true">
     <h3>Total Injuries</h3>
-    <p >{{ total_injuries_count }}</p>
+    <p id="totalInjuriesCount">{{ total_injuries_count }}</p>
   </div>
   <div class="card active-injuries-card" aria-live="polite" aria-atomic="true">
     <h3>Active Injuries</h3>
@@ -513,9 +506,10 @@
   </div>
   <div class="card recovered-injuries-card" aria-live="polite" aria-atomic="true">
     <h3>Recovered Injuries</h3>
-    <p >{{ recovered_injuries_count }}</p>
+    <p id="recoveredInjuriesCount">{{ recovered_injuries_count }}</p>
   </div>
 </div>
+
 
 <!-- Participation Types -->
 <section aria-labelledby="campSectionTitle" class="camp-section">
@@ -596,7 +590,7 @@
     </div>
 
     <!-- Season Dropdown -->
-    <div style="display: flex; flex-direction: column; gap: 5px; min-width: 160px;">
+    {% comment %} <div style="display: flex; flex-direction: column; gap: 5px; min-width: 160px;">
       <label for="seasonSelect" style="font-weight: 600; color: #333; font-size: 14px;">Season:</label>
       <select id="seasonSelect" style="padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 14px; display: none;">
         <option value="">Select season</option>
@@ -605,7 +599,7 @@
         <option value="2024-2025">2024–2025</option>
         <option value="2025-2026">2025–2026</option>
       </select>
-    </div>
+    </div> {% endcomment %}
 
     <!-- Custom Date Range -->
     <div id="customRange" style="display: none; gap: 10px; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 8px;">
@@ -645,6 +639,7 @@
         <th scope="col">Player</th>
         <th scope="col">Title</th>
         <th scope="col">Severity Rating</th>
+        <th scope="col">Category</th>
         <th scope="col">Status</th>
         <th scope="col">Injury Date</th>
       </tr>
@@ -662,6 +657,7 @@
           </a>
         </td>
         <td>{{ injury.severity_rating|default:"-" }}</td>
+        <td>{{ injury.player.age_category|default:"-" }}</td>
         <td>
           <span class="status-badge {% if injury.status == 'open' %}status-open{% elif injury.status == 'closed' %}status-closed{% endif %}">
             {{ injury.get_status_display|default:"-" }}
@@ -681,59 +677,6 @@
 </section>
 
 
-
-
-<!-- Player Details Table -->
-{% comment %} <section aria-labelledby="playerDetailsTitle">
-  <h3 id="playerDetailsTitle">Player Details</h3>
-  <table id="playerDetailsTable" role="grid" aria-describedby="playerDetailsDesc">
-    <caption id="playerDetailsDesc" class="sr-only">List of players with participation types and injury notes</caption>
-    <thead>
-      <tr>
-        <th scope="col">No</th>
-        <th scope="col">Name</th>
-        <th scope="col">Category</th>
-        <th scope="col">Role</th>
-        <th scope="col">Participation Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for player in players %}
-      <tr data-category="{{ player.age_category|default:'none' }}" data-gender="{{ player.gender|default:'none' }}">
-        <td class="player-name">{{ forloop.counter }}</td>
-        <td class="player-name">{{ player.name }}</td>
-        <td class="player-name">{{ player.age_category }}</td>
-        <td class="player-name">{{ player.role }}</td>
-        <td class="player-name">{{ player.player_status}}</td>
-        <!-- <td> {% for camp in player.camps.all %}
-                {{ camp.name }}{% if not forloop.last %}, {% endif %}
-              {% empty %}
-                No camps
-              {% endfor %}
-        </td>
-        <td>
-          {% if player.injuries.all %}
-            <ul style="padding-left: 16px; margin: 0;">
-              {% for injury in player.injuries.all %}
-                {% if injury.notes %}
-                <li class="note">
-                  <strong>Injury:</strong> {{ injury.name|default:"N/A" }}<br />
-                  {{ injury.notes|linebreaksbr }}
-                </li>
-                {% else %}
-                <li class="note"><em>No notes for injury '{{ injury.name|default:"N/A" }}'</em></li>
-                {% endif %}
-              {% endfor %}
-            </ul>
-          {% else %}
-            <em>No injuries/notes</em>
-          {% endif %}
-        </td> -->
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section> {% endcomment %}
 
 <section aria-labelledby="playerFiltersTitle" style="margin-bottom: 25px;">
   <h3 id="playerFiltersTitle" class="sr-only">Player Filters</h3>
@@ -761,7 +704,7 @@
       </div>
 
       <!-- Year Range Filter -->
-      <div style="display: flex; flex-direction: column; gap: 8px;">
+      {% comment %} <div style="display: flex; flex-direction: column; gap: 8px;">
         <label style="font-weight: 600; color: #333; font-size: 14px;">Created Year:</label>
         <div class="year-filters" style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button class="filter-btn-year active" data-year="all" style="background: #6c757d; color: white; padding: 8px 12px; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.3s;">
@@ -769,7 +712,7 @@
           </button>
           <!-- Dynamic year buttons will be added by JavaScript -->
         </div>
-      </div>
+      </div> {% endcomment %}
 
       <!-- Results Counter -->
       <div id="resultsCounter" style="font-weight: 600; color: #36a9e1; font-size: 16px; min-width: 150px;">
@@ -923,7 +866,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   // ========================================
-  // 1. TABLE FILTERING (players + injuries)
+  // 1. TABLE FILTERING (players + injuries) ✅ FIXED CARD COUNTS
   // ========================================
   const filterCategory = document.getElementById('filterCategory');
   const filterGender = document.getElementById('filterGender');
@@ -936,67 +879,82 @@ document.addEventListener('DOMContentLoaded', () => {
   ).filter(r => r.querySelector('.player-name'));
   const totalInjuriesCountEl = document.getElementById('totalInjuriesCount');
   const activeInjuriesCountEl = document.getElementById('activeInjuriesCount');
+  const recoveredInjuriesCountEl = document.getElementById('recoveredInjuriesCount');
   const participationListItems = Array.from(document.querySelectorAll('#participationList li'));
 
   function normalize(text) {
     return (text || '').toString().toLowerCase().trim();
   }
 
-  function filterTables() {
-    const selectedCategory = normalize(filterCategory?.value || 'all');
-    const selectedGender = normalize(filterGender?.value || 'all');
-    const searchTerm = normalize(searchInput?.value || '');
+function filterTables() {
+  const selectedCategory = normalize(filterCategory?.value || 'all');
+  const selectedGender = normalize(filterGender?.value || 'all');
+  const searchTerm = normalize(searchInput?.value || '');
 
-    // Filter player rows
-    let visiblePlayers = 0;
-    playerRows.forEach(row => {
-      const cat = normalize(row.getAttribute('data-category'));
-      const gender = normalize(row.getAttribute('data-gender'));
-      const playerName = normalize(row.querySelector('.player-name')?.textContent || '');
-      const notesCell = row.querySelector('td:nth-child(3)');
-      const notesText = normalize(notesCell ? notesCell.textContent : '');
+  // Filter player rows (unchanged)
+  let visiblePlayers = 0;
+  playerRows.forEach(row => {
+    const cat = normalize(row.getAttribute('data-category'));
+    const gender = normalize(row.getAttribute('data-gender'));
+    const playerName = normalize(row.querySelector('.player-name')?.textContent || '');
+    const notesCell = row.querySelector('td:nth-child(3)');
+    const notesText = normalize(notesCell ? notesCell.textContent : '');
 
-      const categoryMatch = (selectedCategory === 'all' || cat === selectedCategory);
-      const genderMatch = (selectedGender === 'all' || gender === selectedGender);
-      const searchMatch = !searchTerm || playerName.includes(searchTerm) || notesText.includes(searchTerm);
+    const categoryMatch = (selectedCategory === 'all' || cat === selectedCategory);
+    const genderMatch = (selectedGender === 'all' || gender === selectedGender);
+    const searchMatch = !searchTerm || playerName.includes(searchTerm) || notesText.includes(searchTerm);
 
-      if (categoryMatch && genderMatch && searchMatch) {
-        row.style.display = '';
-        visiblePlayers++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-
-    // Filter injury rows
-    let visibleInjuries = 0;
-    injuryRows.forEach(row => {
-      const cat = normalize(row.getAttribute('data-category'));
-      const gender = normalize(row.getAttribute('data-gender'));
-      const playerName = normalize(row.querySelector('.player-name')?.textContent || '');
-      const injuryName = normalize(row.querySelector('.injury-name')?.textContent || '');
-
-      const categoryMatch = (selectedCategory === 'all' || cat === selectedCategory);
-      const genderMatch = (selectedGender === 'all' || gender === selectedGender);
-      const searchMatch = !searchTerm || playerName.includes(searchTerm) || injuryName.includes(searchTerm);
-
-      if (categoryMatch && genderMatch && searchMatch) {
-        row.style.display = '';
-        visibleInjuries++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-
-    // Update counts (cards have <p> inside)
-    if (totalInjuriesCountEl) {
-      const p = totalInjuriesCountEl.querySelector('p');
-      if (p) p.textContent = visibleInjuries;
+    if (categoryMatch && genderMatch && searchMatch) {
+      row.style.display = '';
+      visiblePlayers++;
+    } else {
+      row.style.display = 'none';
     }
-    if (activeInjuriesCountEl) {
-      const p = activeInjuriesCountEl.querySelector('p');
-      if (p) p.textContent = visibleInjuries;
+  });
+
+  // ✅ FIXED: Filter injuries + count by status using table data
+  let totalVisibleInjuries = 0;
+  let activeVisibleInjuries = 0;
+  
+  injuryRows.forEach(row => {
+    const cat = normalize(row.getAttribute('data-category') || row.querySelector('td:nth-child(5)')?.textContent || '');
+    const playerName = normalize(row.querySelector('.player-name')?.textContent || '');
+    const injuryName = normalize(row.querySelector('.injury-name')?.textContent || '');
+    
+    // Use data-status attribute OR status badge text
+    const statusAttr = row.getAttribute('data-status');
+    const statusBadge = row.querySelector('.status-badge')?.textContent || '';
+    const statusText = normalize(statusAttr || statusBadge);
+
+    const categoryMatch = (selectedCategory === 'all' || cat === selectedCategory);
+    const searchMatch = !searchTerm || playerName.includes(searchTerm) || injuryName.includes(searchTerm);
+
+    if (categoryMatch && searchMatch) {
+      row.style.display = '';
+      totalVisibleInjuries++;
+
+      // ✅ Count active injuries (status = 'open')
+      if (statusAttr === 'open' || statusText.includes('open') || statusText.includes('active')) {
+        activeVisibleInjuries++;
+      }
+    } else {
+      row.style.display = 'none';
     }
+  });
+
+  // ✅ UPDATE INJURY CARDS with correct counts
+  if (totalInjuriesCountEl) {
+    totalInjuriesCountEl.textContent = totalVisibleInjuries;
+  }
+  if (activeInjuriesCountEl) {
+    activeInjuriesCountEl.textContent = activeVisibleInjuries;
+  }
+
+  // Update injuries counter text
+  const injuriesCounter = document.getElementById('injuriesCounter');
+  if (injuriesCounter) {
+    injuriesCounter.innerHTML = `Showing <span id="totalInjuriesCount">${activeVisibleInjuries}</span> active injuries`;
+  }
 
     // Update participation counts
     participationListItems.forEach(li => {
@@ -1029,65 +987,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ========================================
-  // 2. CATEGORY CARDS (top blue cards)
+  // 2. CATEGORY CARDS (top blue cards) ✅ FIXED TOOLTIPS
   // ========================================
-  const CATEGORY_PLAYERS = {{ category_players|safe }};
-
-  // Tooltip for category cards
-  let catTooltip = document.createElement('div');
+  const catTooltip = document.createElement('div');
   catTooltip.className = 'custom-tooltip';
   document.body.appendChild(catTooltip);
 
   function showCatTooltip(target, text) {
-    if (!text || text === 'No players') return;
-    catTooltip.textContent = text;
+    catTooltip.textContent = text || 'No players';
     const rect = target.getBoundingClientRect();
-    catTooltip.style.left = (window.scrollX + rect.left) + 'px';
-    catTooltip.style.top  = (window.scrollY + rect.bottom + 5) + 'px';
+    catTooltip.style.left = window.scrollX + rect.left + 'px';
+    catTooltip.style.top  = window.scrollY + rect.bottom + 5 + 'px';
     catTooltip.style.display = 'block';
   }
-
-  function hideCatTooltip() {
-    catTooltip.style.display = 'none';
-  }
+  function hideCatTooltip() { catTooltip.style.display = 'none'; }
 
   document.querySelectorAll('.status-pill').forEach(pill => {
-    pill.style.cursor = 'help';
-    pill.title = 'Hover for player list';
-
     pill.addEventListener('mouseenter', e => {
       const card = e.target.closest('.category-card');
       if (!card) return;
-      const ageCat = card.getAttribute('data-age-category');
-      const players = CATEGORY_PLAYERS[ageCat] || [];
-      const text = players.length ? players.slice(0, 8).join('\n') : 'No players';
-      showCatTooltip(e.target, text);
+      const ageCat = card.dataset.ageCategory;
+      const status = e.target.dataset.status;
+      const players = CATEGORY_PLAYERS?.[ageCat]?.[status] || [];
+      showCatTooltip(e.target, players.slice(0,8).join(', ') || 'No players');
     });
-
     pill.addEventListener('mouseleave', hideCatTooltip);
   });
-
-  document.querySelectorAll('.category-card').forEach(card => {
-    card.style.transition = 'transform 0.2s ease';
-    card.style.cursor = 'pointer';
-
-    card.addEventListener('mouseenter', () => {
-      card.style.transform = 'scale(1.02)';
-    });
-
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = 'scale(1)';
-    });
-
-    card.addEventListener('click', e => {
-      e.stopPropagation();
-      const ageCat = card.getAttribute('data-age-category');
-      if (!ageCat) return;
-      const url = "{% url 'players_by_category' %}?age_category=" + encodeURIComponent(ageCat);
-      window.open(url, '_blank');
-    });
-  });
-
   // ========================================
   // 3. CAMP / TOURNAMENT YEAR TABS + TOOLTIP
   // ========================================
@@ -1109,7 +1034,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Shared tooltip for camp counts (athletes / staff)
   const tooltip = document.createElement('div');
   tooltip.className = 'tooltip-box';
   document.body.appendChild(tooltip);
@@ -1134,12 +1058,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ========================================
-  // 4. INITIAL RUN + DEBUG
+  // 4. INITIAL RUN
   // ========================================
   filterTables();
   console.log('✅ Dashboard JS initialized');
 });
 </script>
+
+
 
 
 <script>
@@ -1484,6 +1410,20 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const cards = document.querySelectorAll(".category-card");
+
+    cards.forEach(card => {
+        card.addEventListener("click", function () {
+            const url = this.dataset.url;
+            if (url) {
+                window.location.href = url;
+            }
+        });
+    });
+});
+</script>
 
 
 

@@ -15,7 +15,7 @@ class CustomUser(AbstractUser):
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='SuperAdmin')
     is_super_admin = models.BooleanField(default=False)
-
+    image = models.ImageField(upload_to='user_images/', blank=True, null=True)
     def save(self, *args, **kwargs):
         # Automatically set is_super_admin to True if role is SuperAdmin, otherwise False
         if self.role == 'SuperAdmin':
