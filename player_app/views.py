@@ -1986,10 +1986,11 @@ def organization_dashboard_org(request):
     players = players.prefetch_related('injuries__reported_by', 'camps')
 
     # Activity logs
-    medical_logs = MedicalActivityLog.objects.filter(player__in=players).select_related('player', 'user', 'document')
-    injury_logs = InjuryActivityLog.objects.filter(injury__in=injuries).select_related('injury', 'actor')
-    player_logs = PlayerActivityLog.objects.filter(player__in=players).select_related('player', 'actor')
-    
+    medical_logs = MedicalActivityLog.objects.filter(player__in=players).select_related('player', 'user', 'document').order_by('-timestamp')
+    injury_logs = InjuryActivityLog.objects.filter(injury__in=injuries).select_related('injury', 'actor').order_by('-created_at')
+    player_logs = PlayerActivityLog.objects.filter(player__in=players).select_related('player', 'actor').order_by('-created_at')
+
+    # Assign log_type first (iterate querysets only)
     for log in chain(medical_logs, injury_logs, player_logs):
         if hasattr(log, 'log_type'):
             continue
@@ -2000,11 +2001,17 @@ def organization_dashboard_org(request):
         else:
             log.log_type = 'player'
 
-    combined_logs = sorted(
+    # Now chain, sort, convert to list, and paginate
+    all_logs = sorted(
         chain(medical_logs, injury_logs, player_logs),
-        key=lambda log: getattr(log, 'timestamp', getattr(log, 'created_at', None)) or datetime.min,
+        key=lambda log: getattr(log, 'timestamp', getattr(log, 'created_at', datetime.min)),
         reverse=True
     )
+
+    paginator = Paginator(all_logs, 20)  # 20 logs per page; adjust as needed
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
 
     camps_qs = (
         CampTournament.objects.filter(participants__in=players)
@@ -2050,8 +2057,10 @@ def organization_dashboard_org(request):
         'active_injuries_count': active_injuries_count,
         'active_injuries': active_injuries,
         'participation_counts': participation_counts,
-        'activity_logs': combined_logs,
+        'activity_logs': page_obj,
         'category_cards': category_cards,
+        'total_logs':paginator.count,
+        
       
         'camps_by_year': camps_by_year_range,
     }

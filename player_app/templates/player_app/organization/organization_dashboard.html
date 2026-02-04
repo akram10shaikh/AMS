@@ -776,7 +776,7 @@
 
 
 <h3>Recent Activity Logs</h3>
-<table>
+<table class="table table-striped">
   <thead>
     <tr>
       <th>Timestamp</th>
@@ -860,6 +860,46 @@
       <tr><td colspan="6" style="text-align:center;">No activity logs found.</td></tr>
     {% endfor %}
   </tbody>
+  {% if activity_logs.has_other_pages %}
+<nav aria-label="Activity logs pagination">
+  <ul class="pagination justify-content-center">
+    {% if activity_logs.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page=1" aria-label="First">&laquo;&laquo;</a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ activity_logs.previous_page_number }}" aria-label="Previous">&laquo;</a>
+      </li>
+    {% endif %}
+
+    {% for num in activity_logs.paginator.page_range %}
+      {% if activity_logs.number == num %}
+        <li class="page-item active">
+          <span class="page-link">{{ num }}</span>
+        </li>
+      {% elif num > activity_logs.number|add:'-3' and num < activity_logs.number|add:'3' %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+        </li>
+      {% endif %}
+    {% endfor %}
+
+    {% if activity_logs.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ activity_logs.next_page_number }}" aria-label="Next">&raquo;</a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ activity_logs.paginator.num_pages }}" aria-label="Last">&raquo;&raquo;</a>
+      </li>
+    {% endif %}
+  </ul>
+  <div class="text-center mt-2">
+    Page {{ activity_logs.number }} of {{ activity_logs.paginator.num_pages }} 
+    ({{ activity_logs.paginator.count }} total logs)
+  </div>
+</nav>
+{% endif %}
+
 </table>
 
 <!-- JavaScript for filtering -->
