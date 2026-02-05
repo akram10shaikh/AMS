@@ -3,296 +3,274 @@
 
 {% block title %}Attendance Report{% endblock %}
 
-
 {% block extra_head %}
 <style>
-
     .report-page { 
-    max-width: 1200px; 
-    margin: 0 auto; 
-    padding: 1rem 0;
+        max-width: 1000px; 
+        margin: 0 auto; 
+        padding: 1rem;
     }
 
     .page-header {
-    margin-bottom: 2rem;
+        margin-bottom: 2rem;
     }
 
     .page-title {
-    margin: 0;
-    font-size: 1.8rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #8b5cf6, #ec4899);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+        margin: 0 0 0.5rem 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #f1f5f9;
     }
 
     .page-subtitle {
-    color: #94a3b8;
-    font-size: 1rem;
-    margin-top: 0.5rem;
+        color: #94a3b8;
+        font-size: 0.95rem;
+        margin: 0;
     }
 
     .card-report { 
-    background: linear-gradient(145deg, #0f172a, #1e293b); 
-    border-radius: 1rem; 
-    padding: 2rem; 
-    border: 1px solid #334155; 
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        background: #1e293b; 
+        border-radius: 0.5rem; 
+        padding: 1.5rem; 
+        border: 1px solid #334155;
     }
 
     .filters-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 1.5rem;
-    align-items: end;
-    margin-bottom: 2rem;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
     }
 
     .form-group {
-    display: flex;
-    flex-direction: column;
+        display: flex;
+        flex-direction: column;
     }
 
     .form-control {
-    background: #1e293b;
-    border: 2px solid #334155;
-    border-radius: 0.75rem;
-    padding: 0.75rem 1rem;
-    color: #f1f5f9 !important;
-    font-size: 0.95rem;
+        background: #1e293b;
+        border: 1px solid #475569;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        color: #f1f5f9;
+        font-size: 0.95rem;
     }
 
     .form-control:focus {
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-    background: #1e293b;
+        border-color: #8b5cf6;
+        outline: none;
+        background: #1e293b;
     }
 
     .required { color: #f87171; }
     .help-text { 
-    color: #64748b; 
-    font-size: 0.85rem; 
-    margin-top: 0.5rem; 
+        color: #64748b; 
+        font-size: 0.85rem; 
+        margin-top: 0.25rem;
     }
 
     .btn-primary {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white !important;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.75rem;
-    font-weight: 600;
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
     }
 
-    /* Table Styles */
     .results-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
     }
 
     .pill-blue {
-    background: linear-gradient(135deg, #0ea5e9, #0284c7);
-    color: white;
-    padding: 0.4rem 1rem;
-    border-radius: 25px;
-    font-size: 0.85rem;
-    font-weight: 600;
+        background: #0ea5e9;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
     }
 
     .table-wrapper {
-    border-radius: 1rem;
-    border: 1px solid #475569;
-    overflow: hidden;
-    background: rgba(30, 41, 59, 0.6);
+        border-radius: 0.5rem;
+        border: 1px solid #475569;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
     }
 
-    .report-table {
-    width: 100%;
-    border-collapse: collapse;
+    .report-table, .summary-table {
+        width: 100%;
+        border-collapse: collapse;
     }
 
-    .report-table th {
-    background: linear-gradient(135deg, #1e293b, #334155);
-    color: #94a3b8;
-    font-weight: 600;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 1rem 1.25rem;
+    .report-table th, .summary-table th {
+        background: #334155;
+        color: #94a3b8;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        padding: 0.75rem 1rem;
     }
 
-    .report-table td {
-    padding: 1.25rem;
-    border-bottom: 1px solid #334155;
-    color: #f1f5f9 !important;
+    .report-table td, .summary-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #334155;
+        color: #f1f5f9;
     }
 
-    /* FIXED: Player names now visible with proper contrast */
     .player-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .player-name {
-    color: #f1f5f9 !important;
-    font-weight: 500;
-    font-size: 0.95rem;
+        color: #f1f5f9;
+        font-weight: 500;
     }
 
     .player-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #8b5cf6, #ec4899);
-    color: white !important;
-    font-weight: 700;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #8b5cf6;
+        color: white;
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    /* Status Badges - FIXED contrast */
     .status-badge {
-    padding: 0.35rem 0.85rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: white !important;
+        padding: 0.25rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: white;
     }
 
-    .status-st-rh { 
-    background: linear-gradient(135deg, #8b5cf6, #ec4899); 
-    color: white !important; 
+    .status-st-rh { background: #8b5cf6; }
+    .status-cd { background: #10b981; }
+    .status-a-inj { background: #ef4444; }
+    .status-a-pr { background: #f59e0b; }
+    .status-r { background: #6b7280; }
+
+    .summary-section {
+        margin-top: 2rem;
     }
 
-    .status-cd { 
-    background: linear-gradient(135deg, #10b981, #059669); 
-    color: white !important; 
+    .summary-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
     }
 
-    .status-a-inj { 
-    background: linear-gradient(135deg, #ef4444, #dc2626); 
-    color: white !important; 
+    .summary-table th {
+        background: #8b5cf6 !important;
+        color: white !important;
     }
 
-    .status-a-pr { 
-    background: linear-gradient(135deg, #f59e0b, #d97706); 
-    color: white !important; 
+    .summary-table td:first-child {
+        font-weight: 500;
+        background: #1e293b;
     }
 
-    .status-r { 
-    background: linear-gradient(135deg, #6b7280, #4b5563); 
-    color: white !important; 
-    }
-
-    /* Camp Badge */
-    .camp-badge {
-    background: linear-gradient(135deg, #0ea5e9, #0284c7);
-    color: white !important;
-    padding: 0.35rem 0.85rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: inline-block;
-    }
-
-    /* Stats */
     .stats-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-top: 2rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
     }
 
     .stat-card {
-    background: linear-gradient(145deg, #1e293b, #334155);
-    padding: 1.5rem;
-    border-radius: 1rem;
-    text-align: center;
-    border: 1px solid #475569;
+        background: #334155;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        text-align: center;
+        border: 1px solid #475569;
     }
 
     .stat-number { 
-    font-size: 2.5rem; 
-    font-weight: 700; 
-    background: linear-gradient(135deg, #8b5cf6, #ec4899);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+        font-size: 1.75rem; 
+        font-weight: 700; 
+        color: #8b5cf6;
+        margin-bottom: 0.25rem;
     }
 
     .stat-label { 
-    color: #94a3b8; 
-    font-size: 0.95rem; 
-    margin-top: 0.5rem; 
-    font-weight: 500;
+        color: #94a3b8; 
+        font-size: 0.9rem;
     }
 
-    .empty-state {
-    text-align: center;
-    color: #94a3b8;
-    font-style: italic;
-    padding: 3rem;
-    }
-
-    /* Responsive */
     @media (max-width: 768px) {
-    .filters-row {
-        grid-template-columns: 1fr;
+        .filters-row {
+            grid-template-columns: 1fr;
+        }
+        .report-table th,
+        .report-table td,
+        .summary-table th,
+        .summary-table td {
+            padding: 0.5rem;
+        }
     }
-    
-    .report-table th,
-    .report-table td {
-        padding: 0.75rem;
+
+    .form-control[type="month"]::-webkit-calendar-picker-indicator {
+        filter: invert(1); /* Makes black icon white */
+        cursor: pointer;
     }
+
+    .form-control[type="month"]::-webkit-inner-spin-button,
+    .form-control[type="month"]::-webkit-clear-button {
+        display: none;
+        -webkit-appearance: none;
     }
 </style>
 {% endblock %}
+
 {% block content %}
 <div class="report-page">
   <div class="page-header">
-    <h1 class="page-title"> Attendance Report</h1>
-    <p class="page-subtitle">View attendance data across all camps & tournaments</p>
+    <h1 class="page-title">Attendance Report</h1>
+    <p class="page-subtitle">Monthly attendance data across all camps & tournaments</p>
   </div>
 
   <div class="card-report">
- 
-    <form method="get" id="reportForm" class="filter-form">
+    <form method="get" id="reportForm">
       <div class="filters-row">
         <div class="form-group">
-          <label for="report_date" style="color:white;">Select Date <span class="required">*</span></label>
-          <input type="date" id="report_date" name="report_date"  
-                 class="form-control" value="{% if report_date %}{{ report_date|date:'Y-m-d' }}{% endif %}">
-          <small class="help-text" style=>Shows attendance from all camps/tournaments on selected date</small>
+          <label for="report_month" style="color:white;">Select Month/Year <span class="required">*</span></label>
+          <input type="month" id="report_month" name="report_month"  
+                class="form-control" value="{% if report_month %}{{ report_month }}{% endif %}">
+          <small class="help-text">Shows all attendance data for selected month</small>
         </div>
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary">
-             Check Attendance
-          </button>
+          <button type="submit" class="btn-primary">Generate Report</button>
         </div>
       </div>
     </form>
 
-    {% if report_date %}
-    
+    {% if report_month %}
     <div class="report-results">
       <div class="results-header">
-        <h3 style="color:white;">{{ report_date|date:"D, M j, Y" }} Attendance</h3>
-        <span class="pill pill-blue">{{ report_data.count }} records found</span>
+        <h3 style="color:#f1f5f9; margin:0;">
+          {{ report_month }} ({{ total_days }} days)
+        </h3>
+        <span class="pill-blue">{{ report_data|length }} records</span>
       </div>
 
       {% if report_data %}
+      <!-- Detailed Table -->
       <div class="table-wrapper">
         <table class="report-table">
           <thead>
             <tr>
               <th>Player</th>
-              <th>Camp/Tournament</th>
+              <th>Camp</th>
               <th>Status</th>
               <th>Date</th>
             </tr>
@@ -302,25 +280,22 @@
             <tr>
               <td>
                 <div class="player-info">
-                  
+                  <span class="player-avatar">{{ attendance.player.name|first|upper }}</span>
                   <span class="player-name">{{ attendance.player.name }}</span>
                 </div>
               </td>
-              <td>
-                <div >{{ attendance.camp.name }}</div>
-              </td>
-           
+              <td>{{ attendance.camp.name }}</td>
               <td>
                 <span class="status-badge status-{{ attendance.status|lower }}">
                   {{ attendance.get_status_display }}
                 </span>
               </td>
-              <td>{{ attendance.attendance_date|date:"M j, Y" }}</td>
+              <td>{{ attendance.attendance_date|date:"M j" }}</td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="4" class="empty-state">
-                No attendance recorded for {{ report_date|date:"M j, Y" }}
+              <td colspan="4" style="text-align:center; color:#94a3b8; padding:2rem;">
+                No attendance recorded for {{ report_month }}
               </td>
             </tr>
             {% endfor %}
@@ -328,23 +303,72 @@
         </table>
       </div>
 
-      
-      <div class="stats-row" style="margin-bottom:20px;">
+      <!-- Stats -->
+      <div class="stats-row">
         <div class="stat-card">
           <div class="stat-number">{{ report_data|length }}</div>
           <div class="stat-label">Total Records</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ summary_stats.total_players }}</div>
+          <div class="stat-label">Unique Players</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ summary_stats.total_present }}</div>
+          <div class="stat-label">Total Present</div>
+        </div>
       </div>
+
+      <!-- Player Summary -->
+      {% if player_summaries %}
+      <div class="summary-section">
+        <div class="summary-header">
+          <h4 style="color:#f1f5f9; margin:0;">Player Status Summary</h4>
+          <span class="pill-blue">{{ player_summaries|length }} players</span>
+        </div>
+        <div class="table-wrapper">
+          <table class="report-table summary-table">
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>ST/RH</th>
+                <th>CD</th>
+                <th>A-INJ</th>
+                <th>A-PR</th>
+                <th>R</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for player_summary in player_summaries %}
+              <tr>
+                <td>{{ player_summary.player_name }}</td>
+                <td>{{ player_summary.st_rh_count }}</td>
+                <td>{{ player_summary.cd_count }}</td>
+                <td>{{ player_summary.a_inj_count }}</td>
+                <td>{{ player_summary.a_pr_count }}</td>
+                <td>{{ player_summary.r_count }}</td>
+                <td><strong>{{ player_summary.total_count }}</strong></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+      {% else %}
+      <div style="text-align:center; padding:2rem; color:#94a3b8;">
+        No attendance data for {{ report_month }}
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
     {% endif %}
   </div>
 </div>
 
-
 <script>
-document.getElementById('report_date').addEventListener('change', function() {
-  document.getElementById('reportForm').submit();
+document.getElementById('report_month').addEventListener('change', function() {
+    document.getElementById('reportForm').submit();
 });
 </script>
 {% endblock %}

@@ -8279,39 +8279,89 @@ def filter_players_attendance(request):
         'players': [{'id': p.id, 'name': p.name} for p in players]
     })
 
-
 @login_required
 def attendance_report_view(request):
     """
-    Attendance Report - Filter by Date (All Camps/Tournaments)
+    Monthly Attendance Report with detailed data + player-wise status summary
     """
     user_org = getattr(request.user, "organization", None)
     
-    # Get all camps/tournaments for dropdown
-    camps = CampTournament.objects.filter(
-        organization=user_org, 
-        is_deleted=False
-    ).order_by('name')
-    
-    report_date = None
+    report_month = None
     report_data = []
+    player_summaries = []
+    summary_stats = {}
+    total_days = 0
     
     if request.method == 'GET':
-        date_str = request.GET.get('report_date')
-        if date_str:
-            from datetime import datetime
-            report_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        month_str = request.GET.get('report_month')
+        if month_str:
+            # Parse YYYY-MM format
+            year, month = map(int, month_str.split('-'))
+            start_date = datetime(year, month, 1).date()  # FIXED: No extra .date()
+            # Calculate end_date (last day of month)
+            if month == 12:
+                end_date = datetime(year + 1, 1, 1).date() + relativedelta(days=-1)
+            else:
+                end_date = datetime(year, month + 1, 1).date() + relativedelta(days=-1)
             
-            # Fetch ALL attendance for selected date across ALL camps
+            report_month = month_str
+            total_days = (end_date - start_date).days + 1
+            
+            # 1. Fetch ALL attendance data for the month
             report_data = PlayerAttendance.objects.filter(
-                attendance_date=report_date,
+                attendance_date__range=[start_date, end_date],
                 player__organization=user_org
-            ).select_related('player', 'camp').order_by('camp__name', 'player__name')
+            ).select_related('player', 'camp').order_by(
+                'player__name', 'camp__name', 'attendance_date'
+            )
+            
+            # 2. Player-wise status summary
+            player_stats = PlayerAttendance.objects.filter(
+                attendance_date__range=[start_date, end_date],
+                player__organization=user_org
+            ).values('player__id', 'player__name').annotate(
+                st_rh_count=Count('id', filter=Q(status='ST/RH')),
+                cd_count=Count('id', filter=Q(status='CD')),
+                a_inj_count=Count('id', filter=Q(status='A-INJ')),
+                a_pr_count=Count('id', filter=Q(status='A-PR')),
+                r_count=Count('id', filter=Q(status='R')),
+                total_count=Count('id')
+            ).order_by('-total_count')
+            
+            player_summaries = [
+                {
+                    'player_id': item['player__id'],
+                    'player_name': item['player__name'],
+                    'st_rh_count': item['st_rh_count'],
+                    'cd_count': item['cd_count'],
+                    'a_inj_count': item['a_inj_count'],
+                    'a_pr_count': item['a_pr_count'],
+                    'r_count': item['r_count'],
+                    'total_count': item['total_count']
+                }
+                for item in player_stats
+            ]
+            
+            # 3. Overall summary stats
+            all_attendance = PlayerAttendance.objects.filter(
+                attendance_date__range=[start_date, end_date],
+                player__organization=user_org
+            )
+            
+            summary_stats = {
+                'total_records': report_data.count(),
+                'total_players': all_attendance.values('player').distinct().count(),
+                'total_present': all_attendance.filter(
+                    Q(status__in=['ST/RH', 'CD'])
+                ).count()
+            }
     
     context = {
-        'camps': camps,
-        'report_date': report_date,
+        'report_month': report_month,
         'report_data': report_data,
+        'player_summaries': player_summaries,
+        'summary_stats': summary_stats,
+        'total_days': total_days,
     }
     return render(request, 'player_app/camps/attendance_report.html', context)
 
@@ -8322,46 +8372,74 @@ def bowlerdrills_create(request, camp_id=None):
     if not user_org:
         return redirect('dashboard')
     
-    # Get specific camp if provided in URL
-    camp = None
+    # Get camps for dropdown
+    camps = CampTournament.objects.filter(
+        organization=user_org, 
+        
+    ).order_by('name')
+    
+    # Get players based on selected camp (if any)
+    players = Player.objects.none()
+    selected_camp_id = camp_id
+    
+    selected_camp =  camp = get_object_or_404(
+            CampTournament, 
+            id=camp_id, 
+            organization=user_org, 
+            
+        )
     if camp_id:
         camp = get_object_or_404(
             CampTournament, 
             id=camp_id, 
             organization=user_org, 
-            is_deleted=False
+            
         )
-    
-    players = camp.participants.filter(organization=user_org)
-    
-    camps = CampTournament.objects.filter(
-        organization=user_org, 
-        is_deleted=False
-    )
-    
+        players = camp.participants.filter(organization=user_org).order_by('name')
+        selected_camp_id = camp_id
     
     if request.method == 'POST':
         try:
             with transaction.atomic():
-                drill = BowlerDrill.objects.create(
-                    player_id=request.POST['player'],
-                    camp_id=request.POST['camp'],
-                    date=request.POST['date'],
-                    no_balls=request.POST['ball_bowlerd']
-                )
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'success': True, 'id': drill.id})
-            print("Hellowwwww")
-            return redirect('organization_camp_details', camp_id=camp_id)
+                camp_id = request.POST.get('camp')
+                date = request.POST.get('date')
+                
+                if not camp_id or not date:
+                    return JsonResponse({'success': False, 'error': 'Camp and date are required'}, status=400)
+                
+                created_drills = []
+                # Process all players' data
+                for player in players:
+                    balls_key = f'balls_{player.id}'
+                    balls_bowled = request.POST.get(balls_key)
+                    
+                    if balls_bowled and int(balls_bowled) > 0:
+                        BowlerDrill.objects.create(
+                            player_id=player.id,
+                            camp_id=camp_id,
+                            date=date,
+                            no_balls=int(balls_bowled)
+                        )
+                        created_drills.append(player.name)
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True, 
+                        'count': len(created_drills),
+                        'players': created_drills
+                    })
+            
+            return redirect('bowlerdrills_list')
+            
         except Exception as e:
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
     context = {
-        'players': players,
+        'selected_camp':selected_camp,
         'camps': camps,
-        'camp': camp,  # Prefill if coming from camp page
-        'selected_camp_id': camp_id,
+        'players': players,
+        'selected_camp_id': selected_camp_id,
     }
     return render(request, 'player_app/camps/bowlerdrills_create.html', context)
 
@@ -8375,7 +8453,7 @@ def bowlerdrills_list(request):
     
     drills = BowlerDrill.objects.filter(
         camp__organization__in=Player.objects.filter(
-            organization=user_org
+            organization=user_org,
         ).values_list('organization', flat=True) if user_org else []
     ).select_related('player', 'camp')
     
