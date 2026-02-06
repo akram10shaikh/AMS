@@ -1,0 +1,267 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Player Load Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">
+                Player Load Report
+            </h2>
+            
+            <form method="post" id="reportForm" class="row g-3 g-md-4 align-items-end" action="{% url 'bowler_report_generated' %}">
+                {% csrf_token %}
+                
+                <!-- Player -->
+                <div class="col-12 col-md-3">
+                    <label class="form-label fw-bold">Player <span class="text-danger">*</span></label>
+                    <select name="player" id="player" class="form-select" required>
+                        <option value="">-- Select Player --</option>
+                        {% for player in players %}
+                            <option value="{{ player.id }}" {% if selected_player_id == player.id|stringformat:"s" %}selected{% endif %}>
+                                {{ player.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Reference Date -->
+                <div class="col-12 col-md-2">
+                    <label class="form-label fw-bold">Reference Date</label>
+                    <input type="date" name="selected_date" class="form-control" value="{{ selected_date }}" required>
+                </div>
+
+                <!-- Camp -->
+                <div class="col-12 col-md-3">
+                    <label class="form-label fw-bold">Camp</label>
+                    <input type="hidden" name="camp" value="{{ camp_select.id|default:'' }}">
+                    <input type="text" 
+                           value="{% if camp_select %}{{ camp_select.name }}{% else %}All Camps{% endif %}" 
+                           class="form-control" 
+                           disabled 
+                           style="background-color: #f8f9fa; cursor: not-allowed; min-height: 38px;">
+                </div>
+
+                <!-- Generate Button -->
+                <div class="col-12 col-md-4">
+                    <label class="form-label invisible">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100 h-100" style="min-height: 38px;">
+                        <i class="fas fa-search me-1"></i>Generate Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 👇 NEW PLAYER SUMMARY CARD 👇 -->
+{% if selected_player_id and load_drills_7d %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-lg border-0 h-100">
+            <div class="card-header bg-gradient-primary text-white p-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-user-shield me-2"></i>{{ selected_player_name|default:"Player" }} - Load Summary
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="row h-100 g-3 align-items-stretch">
+                    <!-- Player Info - Full height -->
+                    <div class="col-md-2 d-flex align-items-center justify-content-center">
+                        <div class="text-center w-100">
+                            <div class="h4 mb-1 fw-bold text-primary">{{ selected_player_name|default:"Player" }}</div>
+                            <small class="text-muted">Ref: {{ selected_date }}</small>
+                        </div>
+                    </div>
+                    
+                    <!-- 5 Equal Stat Cards -->
+                    <div class="col-md-10">
+                        <div class="row h-100 g-2">
+                            <!-- Stat 1: Active Days -->
+                            <div class="col-md-2 col-6 h-100">
+                                <div class="stat-card h-100 d-flex flex-column justify-content-center p-3">
+                                    <div class="h5 fw-bold text-success mb-1">{{ active_sessions_7d|default:0 }}</div>
+                                    <small class="text-muted">Active Days</small>
+                                    <small >{{ active_sessions_7d|default:0 }}/7</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Stat 2: Avg Balls -->
+                            <div class="col-md-2 col-6 h-100">
+                                <div class="stat-card h-100 d-flex flex-column justify-content-center p-3">
+                                    <div class="h5 fw-bold text-info mb-1">{{ avg_balls_7d|floatformat:0|default:0 }}</div>
+                                    <small class="text-muted">Avg Balls/Day</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Stat 3: Last A:C -->
+                            <div class="col-md-2 col-6 h-100">
+                                <div class="stat-card h-100 d-flex flex-column justify-content-center p-3">
+                                    <div class="h5 fw-bold {% if last_day_ac > 1.5 %}text-danger{% elif last_day_ac > 1.0 %}text-warning{% else %}text-success{% endif %} mb-1">
+                                        {{ last_day_ac|floatformat:2|default:0 }}
+                                    </div>
+                                    <small class="text-muted">Last A:C</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Stat 4: Acute Load -->
+                            <div class="col-md-2 col-6 h-100">
+                                <div class="stat-card h-100 d-flex flex-column justify-content-center p-3">
+                                    <div class="h5 fw-bold text-primary mb-1">{{ last_day_acute|floatformat:1|default:0 }}</div>
+                                    <small class="text-muted">Acute Load</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Stat 5: Chronic Load -->
+                            <div class="col-md-2 col-6 h-100">
+                                <div class="stat-card h-100 d-flex flex-column justify-content-center p-3">
+                                    <div class="h5 fw-bold text-info mb-1">{{ last_day_chronic|floatformat:1|default:0 }}</div>
+                                    <small class="text-muted">Chronic Load</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+    <!-- Tables -->
+    {% if load_drills_7d or load_drills_28d %}
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Acute Load - Last 7 Days 
+                        <span class="badge bg-light text-dark ms-2">{{ load_drills_7d|length }}/7</span>
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Balls</th>
+                                    <th>Acute (λ=0.25)</th>
+                                    <th>A:C</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for drill in load_drills_7d %}
+                                <tr>
+                                    <td>{{ drill.date|date:"d/m" }}</td>
+                                    <td>{{ drill.no_balls }}</td>
+                                    <td class="fw-bold">{{ drill.acute_load }}</td>
+                                    <td class="{% if drill.ac_ratio > 1.5 %}text-danger{% elif drill.ac_ratio > 1.0 %}text-warning{% else %}text-success{% endif %} fw-bold">
+                                        {{ drill.ac_ratio }}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center text-muted py-3">No data</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>Chronic Load - Last 28 Days 
+                        <span class="badge bg-light text-dark ms-2">{{ load_drills_28d|length }}/28</span>
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Balls</th>
+                                    <th>Acute</th>
+                                    <th>Chronic (λ=0.069)</th>
+                                    <th>A:C</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for drill in load_drills_28d %}
+                                <tr>
+                                    <td>{{ drill.date|date:"d/m" }}</td>
+                                    <td>{{ drill.no_balls }}</td>
+                                    <td class="fw-bold">{{ drill.acute_load }}</td>
+                                    <td class="fw-bold">{{ drill.chronic_load }}</td>
+                                    <td class="{% if drill.ac_ratio > 1.5 %}text-danger{% elif drill.ac_ratio > 1.0 %}text-warning{% else %}text-success{% endif %} fw-bold">
+                                        {{ drill.ac_ratio }}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="text-center text-muted py-3">No data</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Info Alert -->
+    {% comment %} <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <small>
+                    <strong>Reference Date:</strong> {{ selected_date }} | 
+                    <strong>λ Acute:</strong> 0.25 (7-day) | 
+                    <strong>λ Chronic:</strong> 0.069 (28-day) | 
+                    <strong>A:C >1.5:</strong> High risk | 
+                    <strong>A:C >1.0:</strong> Moderate risk
+                </small>
+            </div>
+        </div>
+    </div> {% endcomment %}
+    
+    {% else %}
+    <div class="row">
+        <div class="col-12 text-center py-5">
+           
+            <h4 class="text-muted">Click Generate Report</h4>
+            <p class="text-muted">Select player, reference date and camp to view 7/28 day load tables.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+.stat-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+</style>
+
+<script>
+document.getElementById('player').addEventListener('change', function() {
+    if (!this.value) {
+        document.getElementById('reportForm').reset();
+    }
+});
+</script>
+{% endblock %}

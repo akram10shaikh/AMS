@@ -8429,7 +8429,7 @@ def bowlerdrills_create(request, camp_id=None):
                         'players': created_drills
                     })
             
-            return redirect('bowlerdrills_list')
+            return redirect('bowlerdrills_create',camp_id=camp_id)
             
         except Exception as e:
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -8545,7 +8545,7 @@ def player_drill_report(request):
                 **drill_filter
             ).select_related('player', 'camp').order_by('-date')
     
-    print(f"DEBUG: player_id={player_id}, selected_player={selected_player}, drills.count()={drills.count()}")
+   
     
     context = {
         'players': players,
@@ -8559,3 +8559,187 @@ def player_drill_report(request):
     }
     return render(request, 'player_app/camps/player_drill_report.html', context)
 
+from django.utils import timezone
+from datetime import timedelta
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def bowler_report_check(request, camp_id=None):
+    user_org = getattr(request.user, "organization", None)
+
+    players = Player.objects.filter(organization=user_org).order_by('name')
+    # if final_camp_id:
+    #     players = Player.objects.filter(
+    #         bowler_drills__camp_id=final_camp_id,
+    #         organization=user_org
+    #     ).distinct().order_by('name')
+    # else:
+    #     players = Player.objects.filter(organization=user_org).order_by('name')
+
+    camps = CampTournament.objects.filter(
+        bowler_drills__player__organization=user_org
+    ).distinct().order_by('name')
+    camp_select =  camp = get_object_or_404(
+            CampTournament, 
+            id=camp_id, 
+            organization=user_org, 
+            
+        )
+    
+    context = {
+        'players': players,
+        'camps': camps,
+        'camp_select':camp_select,
+    }
+    return render(request, 'player_app/tests/player_load_report.html', context)
+
+
+from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
+from datetime import timedelta
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def bowler_report_generated(request):
+    user_org = getattr(request.user, "organization", None)
+    player_id = request.POST.get('player')
+    selected_date = request.POST.get('selected_date')
+    form_camp_id = request.POST.get('camp')
+
+    # Use form camp OR None
+    final_camp_id = form_camp_id
+    camp_select = None
+    
+    # Safe camp lookup
+    if final_camp_id:
+        try:
+            camp_select = CampTournament.objects.get(
+                id=final_camp_id,
+               
+            )
+        except CampTournament.DoesNotExist:
+            camp_select = None
+            final_camp_id = None
+
+    # Filter players by camp + bowler/all-rounder role
+    if final_camp_id:
+        players = Player.objects.filter(
+            bowler_drills__camp_id=final_camp_id,
+            organization=user_org,
+            role__in=['Bowler', 'All-rounder']  # 👈 Only Bowlers + All-rounders
+        ).distinct().order_by('name')
+    else:
+        players = Player.objects.filter(
+            organization=user_org,
+            role__in=['Bowler', 'All-rounder']  # 👈 Only Bowlers + All-rounders
+        ).order_by('name')
+
+    camps = CampTournament.objects.filter(
+        bowler_drills__player__organization=user_org
+    ).distinct().order_by('name')
+
+    # Default to today if no date selected
+    if not selected_date:
+        selected_date = timezone.now().date().strftime('%Y-%m-%d')
+
+    drills = BowlerDrill.objects.none()
+    load_drills_7d = []
+    load_drills_28d = []
+    
+    if player_id:
+        selected_player = Player.objects.filter(
+            id=player_id, 
+            organization=user_org
+        ).first()
+        if selected_player:
+            drill_filter = {'player_id': player_id}
+            if final_camp_id:
+                drill_filter['camp_id'] = final_camp_id
+            
+            # Filter drills around selected date
+            selected_date_obj = timezone.datetime.strptime(selected_date, '%Y-%m-%d').date()
+            start_filter = selected_date_obj - timedelta(days=35)
+            end_filter = selected_date_obj + timedelta(days=7)
+            
+            drill_filter['date__gte'] = start_filter
+            drill_filter['date__lte'] = end_filter
+            
+            drills = BowlerDrill.objects.filter(
+                **drill_filter
+            ).select_related('player', 'camp').order_by('date')
+
+            # Calculate EWMA
+            if drills.exists():
+                drill_list = list(drills)
+                lambda_acute = 0.25
+                lambda_chronic = 0.069
+                
+                acute_prev = 0
+                chronic_prev = 0
+                all_load_drills = []
+                
+                for drill in drill_list:
+                    balls = drill.no_balls
+                    acute_load = lambda_acute * balls + (1 - lambda_acute) * acute_prev
+                    chronic_load = lambda_chronic * balls + (1 - lambda_chronic) * chronic_prev
+                    
+                    ac_ratio = acute_load / chronic_load if chronic_load > 0 else 0
+                    
+                    all_load_drills.append({
+                        'date': drill.date,
+                        'no_balls': balls,
+                        'acute_load': round(acute_load, 2),
+                        'chronic_load': round(chronic_load, 2),
+                        'ac_ratio': round(ac_ratio, 2),
+                        'days_from_selected': (drill.date - selected_date_obj).days
+                    })
+                    
+                    acute_prev = acute_load
+                    chronic_prev = chronic_load
+                
+                # Filter for tables
+                past_drills = [d for d in all_load_drills if d['days_from_selected'] <= 0]
+                load_drills_7d = sorted(past_drills[-7:], key=lambda x: x['date'], reverse=True)
+                load_drills_28d = sorted(past_drills[-28:], key=lambda x: x['date'], reverse=True)
+
+    # 👈 ADD SUMMARY STATS
+
+    active_sessions_7d = 0
+    avg_balls_7d = 0
+    last_day_ac = 0
+    last_day_acute = 0
+    last_day_chronic = 0
+
+    if player_id and load_drills_7d:
+        selected_player = Player.objects.filter(id=player_id, organization=user_org).first()
+        selected_player_name = selected_player.name if selected_player else ""
+        
+        active_sessions_7d = len(load_drills_7d)
+        total_balls_7d = sum(drill['no_balls'] for drill in load_drills_7d)
+        avg_balls_7d = round(total_balls_7d / active_sessions_7d, 1) if active_sessions_7d > 0 else 0
+        
+        if load_drills_7d:
+            last_drill = load_drills_7d[0]
+            last_day_ac = last_drill['ac_ratio']
+            last_day_acute = last_drill['acute_load']
+            last_day_chronic = last_drill['chronic_load']
+
+    context = {
+        'players': players,
+        'camps': camps,
+        'drills': drills,
+        'load_drills_7d': load_drills_7d,
+        'load_drills_28d': load_drills_28d,
+        'selected_player_id': player_id,
+        'selected_camp': final_camp_id,
+        'selected_date': selected_date,
+        'camp_select': camp_select,
+        # 👈 SUMMARY STATS
+        'selected_player_name': selected_player_name,
+        'active_sessions_7d': active_sessions_7d,
+        'avg_balls_7d': avg_balls_7d,
+        'last_day_ac': last_day_ac,
+        'last_day_acute': last_day_acute,
+        'last_day_chronic': last_day_chronic,
+    }
+    return render(request, 'player_app/tests/player_load_report.html', context)

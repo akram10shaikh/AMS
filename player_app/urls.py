@@ -88,6 +88,8 @@ urlpatterns = [
                   path('bowlerdrills/create/', views.bowlerdrills_create, name='bowlerdrills_create'),
                   path('bowlerdrills/create/<int:camp_id>/', views.bowlerdrills_create, name='bowlerdrills_create'),
                   path('bowlerdrills/', views.bowlerdrills_list, name='bowlerdrills_list'),
+                  path('bowler_report_check/<int:camp_id>/', views.bowler_report_check, name='bowler_report_check'),
+                  path('bowler_report_generated/',views.bowler_report_generated,name='bowler_report_generated'),
 
                   path('reports/camp-drills/', views.camp_drill_report, name='camp_drill_report'),
                   path('reports/player-drills/', views.player_drill_report, name='player_drill_report'),
