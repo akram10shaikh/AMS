@@ -8568,13 +8568,13 @@ def bowler_report_check(request, camp_id=None):
     user_org = getattr(request.user, "organization", None)
 
     players = Player.objects.filter(organization=user_org).order_by('name')
-    # if final_camp_id:
-    #     players = Player.objects.filter(
-    #         bowler_drills__camp_id=final_camp_id,
-    #         organization=user_org
-    #     ).distinct().order_by('name')
-    # else:
-    #     players = Player.objects.filter(organization=user_org).order_by('name')
+    if camp_id:
+        players = Player.objects.filter(
+            bowler_drills__camp_id=camp_id,
+            organization=user_org
+        ).distinct().order_by('name')
+    else:
+        players = Player.objects.filter(organization=user_org).order_by('name')
 
     camps = CampTournament.objects.filter(
         bowler_drills__player__organization=user_org
