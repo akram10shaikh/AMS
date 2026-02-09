@@ -1,0 +1,247 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Attendance Report{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Your existing styles - all kept */
+    .report-page { max-width: 1000px; margin: 0 auto; padding: 1rem; }
+    .page-header { margin-bottom: 2rem; }
+    .page-title { margin: 0 0 0.5rem 0; font-size: 1.5rem; font-weight: 600; color: #f1f5f9; }
+    .page-subtitle { color: #94a3b8; font-size: 0.95rem; margin: 0; }
+    .card-report { background: #1e293b; border-radius: 0.5rem; padding: 1.5rem; border: 1px solid #334155; }
+    .filters-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-control { background: #1e293b; border: 1px solid #475569; border-radius: 0.5rem; padding: 0.75rem; color: #f1f5f9; font-size: 0.95rem; }
+    .form-control:focus { border-color: #8b5cf6; outline: none; background: #1e293b; }
+    .form-control option { background: #1e293b; color: #f1f5f9; }
+    .required { color: #f87171; }
+    .help-text { color: #64748b; font-size: 0.85rem; margin-top: 0.25rem; }
+    .btn-primary { background: #10b981; color: white; border: none; padding: 0.75rem 1.25rem; border-radius: 0.5rem; font-weight: 500; grid-column: 1 / -1; }
+    
+    /* Results & Tables */
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .pill-blue { background: #0ea5e9; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.8rem; font-weight: 500; }
+    .table-wrapper { border-radius: 0.5rem; border: 1px solid #475569; overflow: hidden; margin-bottom: 1.5rem; }
+    .report-table, .summary-table { width: 100%; border-collapse: collapse; }
+    .report-table th, .summary-table th { background: #334155; color: #94a3b8; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; padding: 0.75rem 1rem; }
+    .report-table td, .summary-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #334155; color: #f1f5f9; }
+    
+    /* Day headers & Player info */
+    .day-header { background: #8b5cf6 !important; color: white !important; font-weight: 700; font-size: 1rem; }
+    .player-info { display: flex; align-items: center; gap: 0.5rem; }
+    .player-name { color: #f1f5f9; font-weight: 500; }
+    .player-avatar { width: 32px; height: 32px; border-radius: 50%; background: #8b5cf6; color: white; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; }
+    
+    /* Status badges */
+    .status-badge { padding: 0.25rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500; color: white; }
+    .status-st-rh { background: #8b5cf6; }
+    .status-cd { background: #10b981; }
+    .status-a-inj { background: #ef4444; }
+    .status-a-pr { background: #f59e0b; }
+    .status-r { background: #6b7280; }
+    .status-no-data { background: #64748b; font-style: italic; font-size: 0.7rem; }
+    
+    /* Summary & Stats */
+    .summary-section { margin-top: 2rem; }
+    .summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .summary-table th { background: #8b5cf6 !important; color: white !important; }
+    .summary-table td:first-child { font-weight: 500; background: #1e293b; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .stat-card { background: #334155; padding: 1rem; border-radius: 0.5rem; text-align: center; border: 1px solid #475569; }
+    .stat-number { font-size: 1.75rem; font-weight: 700; color: #8b5cf6; margin-bottom: 0.25rem; }
+    .stat-label { color: #94a3b8; font-size: 0.9rem; }
+    
+    /* NEW: Present/Absent colors */
+    .present-high { color: #10b981 !important; }
+    .present-medium { color: #f59e0b !important; }
+    .present-low { color: #ef4444 !important; }
+    
+    @media (max-width: 768px) {
+        .filters-row { grid-template-columns: 1fr; }
+        .report-table th, .report-table td, .summary-table th, .summary-table td { padding: 0.5rem; }
+    }
+    
+    .form-control[type="month"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const maxDate = year + '-' + month;
+    
+    const dateInput = document.querySelector('input[name="report_month"]');
+    if (dateInput) {
+        dateInput.max = maxDate;
+    }
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="report-page">
+ <div class="page-header">
+    <h1 class="page-title">Attendance Report</h1>
+    <p class="page-subtitle">Monthly attendance data by day and player status summary</p>
+ </div>
+
+ <div class="card-report">
+    <!-- Form -->
+    <form method="post" action="{% url 'attendance_group_report' %}">
+        {% csrf_token %}
+     <div class="filters-row">
+        <div class="form-group">
+         <label for="report_month" style="color:white;">Select Month/Year <span class="required">*</span></label>
+         <input type="month" id="report_month" name="report_month" class="form-control" value="{% if report_month %}{{ report_month }}{% endif %}">
+         <small class="help-text">Max: current month ({{ today|date:"F Y" }})</small>
+        </div>
+        <div class="form-group">
+         <label for="camp" style="color:white;">Select Camp</label>
+         <select id="camp" name="camp" class="form-control">
+           <option value="">All Camps</option>
+           {% for camp in camps %}
+           <option value="{{ camp.id }}" {% if selected_camp == camp.id|stringformat:"s" %}selected{% endif %}>{{ camp.name }}</option>
+           {% endfor %}
+         </select>
+         <small class="help-text">Filter by specific camp (optional)</small>
+        </div>
+        <div class="form-actions">
+         <button type="submit" class="btn-primary">Generate Report</button>
+        </div>
+     </div>
+    </form>
+
+    {% if report_month %}
+    <div class="report-results">
+      <!-- Results Header -->
+      <div class="results-header">
+        <h3 style="color:#f1f5f9; margin:0;">
+            {% if selected_camp %} {{ selected_camp_name }}{% endif %}
+            -{{ report_month }} ({{ total_days }} days)
+         
+        </h3>
+        <span class="pill-blue">{{ daily_data|length }} days processed</span>
+      </div>
+
+      {% if daily_data %}
+      <!-- FIXED Daily Attendance Table -->
+      <div class="table-wrapper">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Player</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for day_data in daily_data %}
+            <tr class="day-header">
+              <td colspan="3">{{ day_data.day|date:"F d, l" }}</td>
+            </tr>
+            {% for player_attendance in day_data.players %}
+            <tr>
+              <td></td>
+              <td>
+                <div class="player-info">
+                 
+                  <span class="player-name">{{ player_attendance.player.name }}</span>
+                </div>
+              </td>
+              <td>
+                {% if player_attendance.status %}
+                  
+                    {{ player_attendance.get_status_display }}
+                  
+                {% else %}
+                  <span class="status-badge status-no-data">No Data</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" style="text-align:center; color:#94a3b8; padding:1rem;">No players recorded</td></tr>
+            {% endfor %}
+            {% empty %}
+            <tr><td colspan="3" style="text-align:center; color:#94a3b8; padding:2rem;">No data available</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ENHANCED Stats with Present/Absent -->
+      <div class="stats-row">
+        <div class="stat-card">
+         <div class="stat-number">{{ total_player_days }}</div>
+         <div class="stat-label">Total Player-Days</div>
+        </div>
+        <div class="stat-card">
+         <div class="stat-number present-high">{{ total_present }}</div>
+         <div class="stat-label">Present</div>
+        </div>
+        <div class="stat-card">
+         <div class="stat-number present-low">{{ total_absent }}</div>
+         <div class="stat-label">Absent</div>
+        </div>
+        <div class="stat-card">
+         <div class="stat-number">{{ unique_players }}</div>
+         <div class="stat-label">Unique Players</div>
+        </div>
+      </div>
+
+      <!-- ENHANCED Player Summary Table -->
+      {% if player_summaries %}
+      <div class="summary-section">
+        <div class="summary-header">
+         <h4 style="color:#f1f5f9; margin:0;">Player Status Summary</h4>
+         <span class="pill-blue">{{ player_summaries|length }} players</span>
+        </div>
+        <div class="table-wrapper">
+         <table class="summary-table">
+           <thead>
+             <tr>
+               <th>Player</th>
+               <th>ST/RH</th>
+               <th>CD</th>
+               <th>A-INJ</th>
+               <th>A-PR</th>
+               <th>R</th>
+               <th>Total Counts</th>
+               <th>Absent</th>
+               <th>Present</th>
+             </tr>
+           </thead>
+           <tbody>
+             {% for summary in player_summaries %}
+             <tr>
+               <td>{{ summary.player_name }}</td>
+               <td>{{ summary.st_rh_count }}</td>
+               <td>{{ summary.cd_count }}</td>
+               <td>{{ summary.a_inj_count }}</td>
+               <td>{{ summary.a_pr_count }}</td>
+               <td>{{ summary.r_count }}</td>
+               <td><strong>{{ summary.total_count }}</strong></td>
+               <td>{{ summary.absent_days }}</td>
+               <td><strong>{{ summary.present_days }}</strong></td>
+               
+
+             </tr>
+             {% endfor %}
+           </tbody>
+         </table>
+        </div>
+      </div>
+      {% endif %}
+      {% else %}
+      <div style="text-align:center; padding:2rem; color:#94a3b8;">
+        No attendance data found for {{ report_month }}
+        {% if selected_camp %}for {{ selected_camp_name }}{% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+ </div>
+</div>
+{% endblock %}

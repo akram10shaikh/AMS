@@ -8282,7 +8282,7 @@ def filter_players_attendance(request):
 @login_required
 def attendance_report_view(request):
     """
-    Monthly Attendance Report with detailed data + player-wise status summary
+    Monthly Attendance Report with Daily Log Grid + Player Summary
     """
     user_org = getattr(request.user, "organization", None)
     
@@ -8291,31 +8291,50 @@ def attendance_report_view(request):
     player_summaries = []
     summary_stats = {}
     total_days = 0
-    
+
+    days_in_month = []
+    players = []
+    attendance_map = {}
+
     if request.method == 'GET':
         month_str = request.GET.get('report_month')
         if month_str:
-            # Parse YYYY-MM format
             year, month = map(int, month_str.split('-'))
-            start_date = datetime(year, month, 1).date()  # FIXED: No extra .date()
-            # Calculate end_date (last day of month)
+            start_date = datetime(year, month, 1).date()
+
+            # Last day of month
             if month == 12:
                 end_date = datetime(year + 1, 1, 1).date() + relativedelta(days=-1)
             else:
                 end_date = datetime(year, month + 1, 1).date() + relativedelta(days=-1)
-            
+
             report_month = month_str
             total_days = (end_date - start_date).days + 1
-            
-            # 1. Fetch ALL attendance data for the month
+
+            # Build list of all days in the month
+            current = start_date
+            while current <= end_date:
+                days_in_month.append(current)
+                current += timedelta(days=1)
+            days_in_month.reverse()
+            # Fetch all attendance for month
             report_data = PlayerAttendance.objects.filter(
                 attendance_date__range=[start_date, end_date],
                 player__organization=user_org
-            ).select_related('player', 'camp').order_by(
-                'player__name', 'camp__name', 'attendance_date'
-            )
-            
-            # 2. Player-wise status summary
+            ).select_related('player', 'camp').order_by('player__name', 'attendance_date')
+
+            # Unique players
+            players = Player.objects.filter(
+                organization=user_org,
+                id__in=report_data.values_list('player_id', flat=True).distinct()
+            ).order_by('name')
+
+            # Build attendance map: {player_id: {date: status}}
+            attendance_map = defaultdict(dict)
+            for att in report_data:
+                attendance_map[att.player.id][att.attendance_date] = att.status
+
+            # Player summary (your existing logic)
             player_stats = PlayerAttendance.objects.filter(
                 attendance_date__range=[start_date, end_date],
                 player__organization=user_org
@@ -8327,7 +8346,7 @@ def attendance_report_view(request):
                 r_count=Count('id', filter=Q(status='R')),
                 total_count=Count('id')
             ).order_by('-total_count')
-            
+
             player_summaries = [
                 {
                     'player_id': item['player__id'],
@@ -8337,32 +8356,38 @@ def attendance_report_view(request):
                     'a_inj_count': item['a_inj_count'],
                     'a_pr_count': item['a_pr_count'],
                     'r_count': item['r_count'],
-                    'total_count': item['total_count']
+                    'total_count': item['total_count'],
+                    'present_days': item['st_rh_count'] + item['cd_count'],
+                    'absent_days': item['a_inj_count'] + item['a_pr_count'] + item['r_count'],
                 }
                 for item in player_stats
             ]
-            
-            # 3. Overall summary stats
+
+            # Summary stats
             all_attendance = PlayerAttendance.objects.filter(
                 attendance_date__range=[start_date, end_date],
                 player__organization=user_org
             )
-            
+
             summary_stats = {
                 'total_records': report_data.count(),
                 'total_players': all_attendance.values('player').distinct().count(),
-                'total_present': all_attendance.filter(
-                    Q(status__in=['ST/RH', 'CD'])
-                ).count()
+                'total_present': all_attendance.filter(Q(status__in=['ST/RH', 'CD'])).count()
             }
-    
+
     context = {
         'report_month': report_month,
         'report_data': report_data,
         'player_summaries': player_summaries,
         'summary_stats': summary_stats,
         'total_days': total_days,
+
+        # NEW for Daily Log
+        'days_in_month': days_in_month,
+        'players': players,
+        'attendance_map': dict(attendance_map),
     }
+
     return render(request, 'player_app/camps/attendance_report.html', context)
 
 
@@ -8626,12 +8651,12 @@ def bowler_report_generated(request):
         players = Player.objects.filter(
             bowler_drills__camp_id=final_camp_id,
             organization=user_org,
-            role__in=['Bowler', 'All-rounder']  # 👈 Only Bowlers + All-rounders
+            role__in=['Bowler', 'All-rounder']  #  Only Bowlers + All-rounders
         ).distinct().order_by('name')
     else:
         players = Player.objects.filter(
             organization=user_org,
-            role__in=['Bowler', 'All-rounder']  # 👈 Only Bowlers + All-rounders
+            role__in=['Bowler', 'All-rounder']  #  Only Bowlers + All-rounders
         ).order_by('name')
 
     camps = CampTournament.objects.filter(
@@ -8702,7 +8727,7 @@ def bowler_report_generated(request):
                 load_drills_7d = sorted(past_drills[-7:], key=lambda x: x['date'], reverse=True)
                 load_drills_28d = sorted(past_drills[-28:], key=lambda x: x['date'], reverse=True)
 
-    # 👈 ADD SUMMARY STATS
+    #  ADD SUMMARY STATS
 
     active_sessions_7d = 0
     avg_balls_7d = 0
@@ -8734,7 +8759,7 @@ def bowler_report_generated(request):
         'selected_camp': final_camp_id,
         'selected_date': selected_date,
         'camp_select': camp_select,
-        # 👈 SUMMARY STATS
+        # SUMMARY STATS
         'selected_player_name': selected_player_name,
         'active_sessions_7d': active_sessions_7d,
         'avg_balls_7d': avg_balls_7d,
@@ -8743,3 +8768,177 @@ def bowler_report_generated(request):
         'last_day_chronic': last_day_chronic,
     }
     return render(request, 'player_app/tests/player_load_report.html', context)
+
+def attendance_group_view(request):
+    user_org = getattr(request.user, "organization", None)
+    camps = CampTournament.objects.filter(organization=user_org)
+
+    context ={
+        "camps":camps
+    }
+    return render(request,'player_app/camps/attendance_group_report.html',context)
+from django.shortcuts import render
+from datetime import date  # Add this import
+from dateutil.relativedelta import relativedelta
+import calendar
+
+def attendance_group_report(request):
+
+    context = {
+        'camps': CampTournament.objects.all().order_by('name'),
+        'daily_data': [],
+        'player_summaries': [],
+        'total_player_days': 0,
+        'unique_players': 0,
+        'total_present': 0,
+        'total_absent': 0,  # NEW: Total absent count
+        'total_days': 0,
+        'report_month': None,
+        'selected_camp': None,
+        'selected_camp_name': None,
+        'overall_present_pct': 0,  # NEW: Overall present percentage
+        'overall_absent_pct': 0,   # NEW: Overall absent percentage
+    }
+    
+    if request.method == 'POST':
+        report_month = request.POST.get('report_month')
+        camp_id = request.POST.get('camp')
+        
+        if report_month:
+            context['report_month'] = report_month
+            
+            # Parse month/year
+            year, month = map(int, report_month.split('-'))
+            
+            # Get all days in month
+            _, total_days = calendar.monthrange(year, month)
+            context['total_days'] = total_days
+            
+            # Date range
+            start_date = date(year, month, 1)
+            end_date = date(year, month, total_days)
+            
+            # Base attendance queryset
+            attendance_qs = PlayerAttendance.objects.filter(
+                attendance_date__range=[start_date, end_date]
+            ).select_related('player', 'camp')
+            
+            # Apply camp filter
+            if camp_id:
+                try:
+                    camps = CampTournament.objects.get(id=camp_id)
+                    context['selected_camp'] = camp_id
+                    context['selected_camp_name'] = camps.name
+                    attendance_qs = attendance_qs.filter(camp=camps)
+                except CampTournament.DoesNotExist:
+                    pass
+            
+            # Get unique players
+            player_ids = attendance_qs.values_list('player_id', flat=True).distinct()
+            all_players = Player.objects.filter(id__in=player_ids).order_by('name')
+            context['unique_players'] = all_players.count()
+            
+            # Group attendance by date and player
+            attendance_dict = {}
+            for attendance in attendance_qs:
+                date_key = attendance.attendance_date.strftime('%Y-%m-%d')
+                player_key = attendance.player_id
+                if date_key not in attendance_dict:
+                    attendance_dict[date_key] = {}
+                attendance_dict[date_key][player_key] = attendance
+            
+            # Build daily data (all days x all players)
+            daily_data = []
+            total_player_days = 0
+            
+            current_date = start_date
+            while current_date <= end_date:
+                date_key = current_date.strftime('%Y-%m-%d')
+                day_players = []
+                
+                for player in all_players:
+                    attendance = attendance_dict.get(date_key, {}).get(player.id)
+                    day_players.append({
+                        'player': player,
+                        'status': attendance.status if attendance else None,
+                        'get_status_display': attendance.get_status_display() if attendance else None
+                    })
+                
+                daily_data.append({
+                    'day': current_date,
+                    'players': day_players
+                })
+                
+                total_player_days += len(day_players)
+                current_date += relativedelta(days=1)
+            
+            context['daily_data'] = daily_data
+            context['total_player_days'] = total_player_days
+            
+            # Calculate total present and absent
+            total_present = 0
+            total_absent = 0
+            for day_data in daily_data:
+                for player_data in day_data['players']:
+                    if player_data['status'] is not None:  # Has record = Present
+                        total_present += 1
+                    else:  # No record = Absent
+                        total_absent += 1
+            
+            context['total_present'] = total_present
+            context['total_absent'] = total_absent
+            
+            # Overall percentages
+            if total_player_days > 0:
+                context['overall_present_pct'] = round((total_present / total_player_days) * 100, 1)
+                context['overall_absent_pct'] = round((total_absent / total_player_days) * 100, 1)
+            
+            # Player summaries with Present/Absent counts
+            player_stats = {}
+            for day_data in daily_data:
+                for player_data in day_data['players']:
+                    player_id = player_data['player'].id
+                    if player_id not in player_stats:
+                        player_stats[player_id] = {
+                            'player': player_data['player'],
+                            'counts': {},
+                            'total_days': 0,
+                            'present_days': 0,
+                            'absent_days': 0
+                        }
+                    
+                    player_stats[player_id]['total_days'] += 1
+                    
+                    if player_data['status']:
+                        # Present with specific status
+                        status = player_data['status']
+                        player_stats[player_id]['counts'][status] = player_stats[player_id]['counts'].get(status, 0) + 1
+                        player_stats[player_id]['present_days'] += 1
+                    else:
+                        # Absent (no record)
+                        player_stats[player_id]['absent_days'] += 1
+            
+            player_summaries = []
+            for player_id, stats in player_stats.items():
+                counts = stats['counts']
+                summary = {
+                    'player_name': stats['player'].name,
+                    'st_rh_count': counts.get('ST/RH', 0),
+                    'cd_count': counts.get('CD', 0),
+                    'a_inj_count': counts.get('A-INJ', 0),
+                    'a_pr_count': counts.get('A-PR', 0),
+                    'r_count': counts.get('R', 0),
+                    'total_count': sum(counts.values()),
+                    'present_days': stats['present_days'],  # NEW
+                    'absent_days': stats['absent_days'],    # NEW
+                    'total_days': stats['total_days'],  
+                    
+                    'present_pct': round((stats['present_days'] / stats['total_days']) * 100, 1) if stats['total_days'] > 0 else 0,  # NEW
+                }
+
+                player_summaries.append(summary)
+            
+            player_summaries.sort(key=lambda x: x['present_pct'], reverse=True)
+            context['player_summaries'] = player_summaries
+
+    return render(request, 'player_app/camps/attendance_group_report.html', context)

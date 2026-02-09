@@ -1,14 +1,238 @@
 {% extends "player_app/organization/base.html" %}
 {% load static %}
-
+{% load custom_tags %}
 {% block title %}Attendance Report{% endblock %}
 
 {% block extra_head %}
 <style>
+  /* ===== EXACT EXCEL MONTHLY SUMMARY ===== */
+
+.excel-top-bar {
+  height: 22px;
+  background: #2f5e1a;
+  margin-bottom: 6px;
+}
+
+.excel-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  font-family: Arial, sans-serif;
+}
+
+/* ALL GRID LINES */
+.excel-summary-table th,
+.excel-summary-table td {
+  border: 1px solid #9ca3af;
+  padding: 3px 6px;
+  text-align: center;
+  background: #ffffff;
+}
+
+/* TITLE */
+.excel-title {
+  background: #2f5e1a;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  font-size: 12px;
+  padding: 6px;
+}
+
+/* DATE ROWS */
+.meta-label {
+  background: #e5e7eb;
+  font-weight: bold;
+  text-align: left;
+}
+
+.meta-value {
+  background: #ffffff;
+  text-align: left;
+}
+
+/* HEADER ROW */
+.excel-header th {
+  background: #dbeafe;
+  font-weight: bold;
+}
+
+/* NAME COLUMN */
+.excel-summary-table .name-cell {
+  text-align: left;
+  min-width: 160px;
+  font-weight: normal;
+}
+
+/* COMPACT HEIGHT */
+.excel-summary-table tr {
+  height: 22px;
+}
+
+  .daily-log-table {
+   border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.daily-log-table th{ height: 110px;        /* enough for full vertical date */
+  vertical-align: bottom;
+  padding: 4px 2px;}
+  
+.daily-log-table td {
+  border: 1px solid #555;
+    width: 32px;              /* small grid */
+  height: 26px;             /* Excel-like row height */
+  padding: 1px;             /* VERY IMPORTANT */
+  font-size: 10px;
+  text-align: center;
+  vertical-align: middle;
+
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* .name-col {
+  background: #eee;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+} */
+
+.name-cell {
+  width: 130px;
+  padding: 3px 6px;
+  font-size: 12px;
+  background: #f1f5f9;
+}
+
+.cell-present { background: #8ef0a6; }
+.cell-cd { background: #9fd0ff; }
+.cell-inj { background: #ff9b9b; }
+.cell-pr { background: #ffb3b3; }
+.cell-rest { background: #d3d3d3; }
+
+  .kca-container {
+  background: #f8fafc;
+  padding: 10px;
+  font-family: Arial, sans-serif;
+}
+
+.kca-header {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  align-items: center;
+  background: #1f4d1f;
+  color: white;
+  padding: 10px;
+}
+
+.kca-logo img {
+  width: 60px;
+}
+
+.kca-title {
+  text-align: center;
+}
+
+.kca-title h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.kca-title h3 {
+ margin: 0;
+  background: #ffffff;
+  color: #050505;
+  padding: 6px 0;
+  width: 100%;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 0;
+}
+
+.kca-meta {
+  width: 100%;
+  margin-top: 5px;
+  border-collapse: collapse;
+}
+
+.kca-meta td {
+  background: #1f4d1f;
+  color: white;
+  padding: 6px 10px;
+  border: 1px solid #fff;
+}
+
+.daily-log-title {
+  background: #1f4d1f;
+  color: white;
+  text-align: center;
+  padding: 6px;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.log-table {
+  width: 10%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.log-table th, .log-table td {
+  border: 1px solid #999;
+  text-align: center;
+  padding: 4px;
+}
+
+.log-table th {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  background: #e5e7eb;
+}
+
+.name-col {
+  min-width: 180px;
+  background: #e5e7eb;
+  font-weight: bold;
+  text-align: left;
+}
+
+.date-col {
+writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 600;
+  background: #e5e7eb;
+}
+
+.cell-present { background: #8ef0a6; }
+.cell-cd { background: #fde68a; }
+.cell-inj { background: #fca5a5; }
+.cell-pr { background:#852424; }
+.cell-rest { background: #93c5fd; }
+
+.legend-box {
+  margin-top: 10px;
+  width: 300px;
+  border: 1px solid #333;
+  font-size: 12px;
+}
+
+.legend-box div {
+  padding: 4px;
+  border-bottom: 1px solid #333;
+}
+
+.legend-st { background: #86efac; }
+.legend-cd { background: #fde68a; }
+.legend-inj { background: #fca5a5; }
+.legend-per { background: #852424; }
+.legend-r { background: #93c5fd; }
     .report-page { 
-        max-width: 1000px; 
+        max-width: 1250px; 
         margin: 0 auto; 
-        padding: 1rem;
+        padding: 3rem;
     }
 
     .page-header {
@@ -19,7 +243,7 @@
         margin: 0 0 0.5rem 0;
         font-size: 1.5rem;
         font-weight: 600;
-        color: #f1f5f9;
+        color: #000000;
     }
 
     .page-subtitle {
@@ -95,10 +319,9 @@
     }
 
     .table-wrapper {
-        border-radius: 0.5rem;
-        border: 1px solid #475569;
-        overflow: hidden;
-        margin-bottom: 1.5rem;
+         width: 100%;
+        overflow-x: auto;
+        border: 1px solid #ccc;
     }
 
     .report-table, .summary-table {
@@ -254,114 +477,140 @@
       </div>
     </form>
 
-    {% if report_month %}
-    <div class="report-results">
-      <div class="results-header">
-        <h3 style="color:#f1f5f9; margin:0;">
-          {{ report_month }} ({{ total_days }} days)
-        </h3>
-        <span class="pill-blue">{{ report_data|length }} records</span>
-      </div>
+   
 
-      {% if report_data %}
-      <!-- Detailed Table -->
-      <div class="table-wrapper">
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Camp</th>
-              <th>Status</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for attendance in report_data %}
-            <tr>
-              <td>
-                <div class="player-info">
-                  <span class="player-avatar">{{ attendance.player.name|first|upper }}</span>
-                  <span class="player-name">{{ attendance.player.name }}</span>
-                </div>
-              </td>
-              <td>{{ attendance.camp.name }}</td>
-              <td>
-                <span class="status-badge status-{{ attendance.status|lower }}">
-                  {{ attendance.get_status_display }}
-                </span>
-              </td>
-              <td>{{ attendance.attendance_date|date:"M j" }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="4" style="text-align:center; color:#94a3b8; padding:2rem;">
-                No attendance recorded for {{ report_month }}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+    <!-- DEMO of Report Card -->
+        {% if report_month %}
+    <div class="kca-container">
 
-      <!-- Stats -->
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-number">{{ report_data|length }}</div>
-          <div class="stat-label">Total Records</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number">{{ summary_stats.total_players }}</div>
-          <div class="stat-label">Unique Players</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number">{{ summary_stats.total_present }}</div>
-          <div class="stat-label">Total Present</div>
-        </div>
-      </div>
-
-      <!-- Player Summary -->
-      {% if player_summaries %}
-      <div class="summary-section">
-        <div class="summary-header">
-          <h4 style="color:#f1f5f9; margin:0;">Player Status Summary</h4>
-          <span class="pill-blue">{{ player_summaries|length }} players</span>
-        </div>
-        <div class="table-wrapper">
-          <table class="report-table summary-table">
-            <thead>
-              <tr>
-                <th>Player</th>
-                <th>ST/RH</th>
-                <th>CD</th>
-                <th>A-INJ</th>
-                <th>A-PR</th>
-                <th>R</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for player_summary in player_summaries %}
-              <tr>
-                <td>{{ player_summary.player_name }}</td>
-                <td>{{ player_summary.st_rh_count }}</td>
-                <td>{{ player_summary.cd_count }}</td>
-                <td>{{ player_summary.a_inj_count }}</td>
-                <td>{{ player_summary.a_pr_count }}</td>
-                <td>{{ player_summary.r_count }}</td>
-                <td><strong>{{ player_summary.total_count }}</strong></td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      {% endif %}
-      {% else %}
-      <div style="text-align:center; padding:2rem; color:#94a3b8;">
-        No attendance data for {{ report_month }}
-      </div>
-      {% endif %}
+  <!-- HEADER -->
+  <div class="kca-header">
+    <div class="kca-logo">
+      <img src="{% static 'KCA.png' %}">
     </div>
+    <div class="kca-title">
+      <h2>Kerala Cricket Association</h2>
+      <h3>Player Activity Log</h3>
+    </div>
+  </div>
+
+  <!-- META -->
+  <table class="kca-meta">
+    <tr>
+      <td>Team</td>
+      <td>Senior Mens Team</td>
+    </tr>
+    <tr>
+      <td>Month</td>
+      <td>{{ report_month }}</td>
+  </table>
+
+  <!-- DAILY LOG TITLE -->
+  <div class="daily-log-title">Daily Log</div>
+
+  <!-- LOG TABLE -->
+   <div class="table-wrapper">
+
+<table class="daily-log-table">
+  <thead>
+    <tr>
+      <th class="name-col">Names</th>
+      {% for d in days_in_month %}
+        <th class="date-col">{{ d|date:"d/m/Y" }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for player in players %}
+      <tr>
+        <td class="name-cell">{{ player.name }}</td>
+
+        {% for d in days_in_month %}
+          {% with status=attendance_map|get_item:player.id|get_item:d %}
+            <td class="
+              {% if status == 'ST/RH' %}cell-present
+              {% elif status == 'CD' %}cell-cd
+              {% elif status == 'A-INJ' %}cell-inj
+              {% elif status == 'A-PR' %}cell-pr
+              {% elif status == 'R' %}cell-rest
+              {% endif %}
+            ">
+              {{ status|default_if_none:"" }}
+            </td>
+          {% endwith %}
+        {% endfor %}
+      </tr>
+        {% empty %}
+    <tr>
+      <td colspan="39" style="text-align:center;">
+        No summary data available
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+</div>
+
+
+
+  <!-- LEGEND -->
+  <div class="legend-box">
+    <div class="legend-st">ST/RH – Strength & Rehab Session</div>
+    <div class="legend-cd">CD – Conditioning Session</div>
+    <div class="legend-inj">A-INJ – Absent due to Injury</div>
+    <div class="legend-per">A-PR – Absent Due to Personal Reason</div>
+    <div class="legend-r">R – Rest</div>
+    <div class="legend-pr">Not Defined</div>
+  </div>
+  <!-- <div class="kca-container"> -->
+<div class="daily-log-title">Monthly Summary</div>
+
+ <div ">
+
+  <table class="excel-summary-table">
+
+    <tr class="excel-header">
+      <th>Names</th>
+      <th>ST/RH</th>
+      <th>CD</th>
+      <th>A-INJ</th>
+      <th>A-PR</th>
+      <th>R</th>
+      <th>Total Present</th>
+      <th>Total Absent</th>
+      <th>Total</th>
+    </tr>
+
+    {% for p in player_summaries %}
+    <tr>
+      <td class="name-cell">{{ p.player_name }}</td>
+      <td>{{ p.st_rh_count }}</td>
+      <td>{{ p.cd_count }}</td>
+      <td>{{ p.a_inj_count }}</td>
+      <td>{{ p.a_pr_count }}</td>
+      <td>{{ p.r_count }}</td>
+      <td>{{ p.present_days }}</td>
+      <td>{{ p.absent_days }}</td>
+      <td>{{ p.total_count }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="9" style="text-align:center;">
+        No summary data available
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+
+</div>
+
+
+<!-- </div> -->
+
+
+</div>
     {% endif %}
   </div>
 </div>

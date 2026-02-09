@@ -85,6 +85,10 @@ urlpatterns = [
                   path('organization/camp/<int:camp_id>/attendance/', views.camp_attendance_view, name='camp_attendance'),
                   path('ajax/filter-players-attendance/', views.filter_players_attendance, name='filter_players_attendance'),
                   path('organization/attendance-report/', views.attendance_report_view, name='attendance_report'),
+                  path('reports/attendance-view/',views.attendance_group_view,name='attendance_group_view'),
+                  path('reports/attendance-group/', views.attendance_group_report, name='attendance_group_report'),
+
+
                   path('bowlerdrills/create/', views.bowlerdrills_create, name='bowlerdrills_create'),
                   path('bowlerdrills/create/<int:camp_id>/', views.bowlerdrills_create, name='bowlerdrills_create'),
                   path('bowlerdrills/', views.bowlerdrills_list, name='bowlerdrills_list'),
