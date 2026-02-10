@@ -3,20 +3,269 @@
 
 {% block title %}Player Load Report{% endblock %}
 
+{% block extra_head %}
+<style>
+
+.container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+.header-banner {
+    background-color: #264d12;
+    padding: 15px 20px;
+    color: #fff;
+}
+
+.main-title {
+    text-align: center;
+    margin: 0 0 10px;
+     font-size: 28px;
+    font-weight: 700; 
+     color: #fff;
+}
+.title-strip {
+    background: #ffffff;
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 8px 20px;
+    margin-bottom: 15px;
+}
+
+.title-strip .kca-logo {
+    position: absolute;
+    left: 80px;
+    width: 140px;
+    height: auto;
+    padding: 8px;
+    background-color: #fff;
+    border-radius: 65px;
+}
+
+.sub-title {
+    margin: 0;
+    font-size: 21px; 
+    font-weight: 600; 
+    text-align: center;
+}
+
+
+.player-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+
+
+/* TABLE */
+.info-table {
+    border-collapse: collapse;
+    font-size: 14px;
+}
+.load-summary .info-table {
+    width: 100%;
+    table-layout: fixed; 
+}
+
+.load-summary .info-table th,
+.load-summary .info-table td {
+    width: 20%;         
+    text-align: center;
+}
+
+.info-table th,
+.info-table td {
+    border: 1px solid #ffffff;
+    padding: 4px 8px;
+}
+
+.info-table th {
+    text-align: left;
+    font-weight: 600;
+}
+
+
+.load-summary {
+    margin-top: 5px;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.load-summary .info-table th,
+.load-summary .info-table td {
+    text-align: center;
+    padding: 6px 12px;
+}
+
+.load-summary .info-table th {
+    background-color: #1e5aa8;  
+    color: #ffffff;
+    font-weight: 600;
+}
+
+
+
+.report-filter-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 18px 20px 20px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+}
+
+.report-filter-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    color: #1f2933;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.report-filter-title i {
+    color: #1e5aa8;
+}
+
+.report-filter-card .form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 4px;
+}
+
+.report-filter-card .form-control,
+.report-filter-card .form-select {
+    height: 42px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+}
+
+.report-filter-card .form-control:focus,
+.report-filter-card .form-select:focus {
+    border-color: #1e5aa8;
+    box-shadow: 0 0 0 0.15rem rgba(30,90,168,0.15);
+}
+
+.report-filter-card .btn-primary {
+    background: linear-gradient(135deg, #1e5aa8, #174a8c);
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.report-filter-card .btn-primary:hover {
+    background: linear-gradient(135deg, #174a8c, #123b73);
+}
+
+.section-title {
+    background:#064aa1;
+    color: #ffffff;
+    text-align: center;
+    font-weight: 700;
+    padding: 8px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 14px;
+    border-radius: 5px 5px 0 0;
+}
+
+.daily-summary {
+    padding: 12px 20px;
+    border-radius: 0 0 6px 6px;
+}
+
+.daily-summary table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.daily-summary th,
+.daily-summary td {
+    border: 2px solid #000000;
+    padding: 6px 8px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.daily-summary thead th {
+    background: #ffffff;
+    font-weight: 600;
+}
+
+.daily-summary .metric-col {
+    font-weight: 600;
+    text-align: center;
+    background: #ffffff;
+    width: 120px;
+}
+
+.daily-summary tbody tr {
+    height: 34px;
+    background: #ffffff;
+}
+.coach-container{
+    padding: 24px;
+    display: flex;
+    justify-content: end;
+
+}
+.coach-card {
+    background-color: #312f2f;
+    color: #e0e0e0;
+    width: 400px;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.coach-card h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.coach-card p {
+    margin: 0.3rem 0;
+    font-size: 14px;
+}
+
+
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h2 class="mb-3">
+<div class="container" style="margin-bottom: 100px;">
+
+
+
+<div class="row mb-4">
+    <div class="col-12">
+
+        <div class="report-filter-card">
+
+            <!-- Title -->
+            <div class="report-filter-title">
+                <i class="fas fa-sliders-h"></i>
                 Player Load Report
-            </h2>
-            
+            </div>
+
             <form method="post" id="reportForm" class="row g-3 g-md-4 align-items-end" action="{% url 'bowler_report_generated' %}">
                 {% csrf_token %}
-                
+
                 <!-- Player -->
                 <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Player <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">
+                        Player <span class="text-danger">*</span>
+                    </label>
                     <select name="player" id="player" class="form-select" required>
                         <option value="">-- Select Player --</option>
                         {% for player in players %}
@@ -29,239 +278,489 @@
 
                 <!-- Reference Date -->
                 <div class="col-12 col-md-2">
-                    <label class="form-label fw-bold">Reference Date</label>
-                    <input type="date" name="selected_date" class="form-control" value="{{ selected_date }}" required>
+                    <label class="form-label fw-bold">
+                        Reference Date
+                    </label>
+                    <input 
+                        type="date" 
+                        name="selected_date" 
+                        class="form-control" 
+                        value="{{ selected_date }}" 
+                        required>
                 </div>
 
                 <!-- Camp -->
                 <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Camp</label>
+                    <label class="form-label fw-bold">
+                        Camp
+                    </label>
                     <input type="hidden" name="camp" value="{{ camp_select.id|default:'' }}">
-                    <input type="text" 
-                           value="{% if camp_select %}{{ camp_select.name }}{% else %}All Camps{% endif %}" 
-                           class="form-control" 
-                           disabled 
-                           style="background-color: #f8f9fa; cursor: not-allowed; min-height: 38px;">
+                    <input 
+                        type="text"
+                        value="{% if camp_select %}{{ camp_select.name }}{% else %}All Camps{% endif %}"
+                        class="form-control"
+                        disabled
+                        style="background-color: #f8f9fa; cursor: not-allowed;">
                 </div>
 
                 <!-- Generate Button -->
                 <div class="col-12 col-md-4">
                     <label class="form-label invisible">&nbsp;</label>
-                    <button type="submit" class="btn btn-primary w-100 h-100" style="min-height: 38px;">
-                        <i class="fas fa-search me-1"></i>Generate Report
+                    <button type="submit" class="btn btn-primary w-100" style="height: 42px;">
+                        <i class="fas fa-search me-1"></i>
+                        Generate Report
                     </button>
                 </div>
+
             </form>
-        </div>
+
+        </div> 
+
+    </div>
+</div>
+
+{% if selected_player_id and load_drills_7d %}
+<div style="background-color: #264d12; padding: 10px;">
+<div class="header-banner">
+
+    <h1 class="main-title">Kerala Cricket Association</h1>
+
+    <div class="title-strip">
+    <img src="{% static 'KCA.png' %}" class="kca-logo" alt="KCA Logo">
+    <h2 class="sub-title">
+        Player Load Tracker
+    </h2>
+</div>
+
+    <div class="player-info-row">
+        <table class="info-table">
+            <tr><th>Name</th><td>{{ selected_player_name|default:"Player" }}</td></tr>
+            <tr><th>Start Date</th><td>{{ selected_date|date:"d M Y"  }}</td></tr>
+        </table>
     </div>
 
-    <!-- 👇 NEW PLAYER SUMMARY CARD 👇 -->
-{% if selected_player_id and load_drills_7d %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow-lg border-0 h-100">
-            <div class="card-header bg-gradient-primary text-white p-3">
-                <h6 class="mb-0">
-                    <i class="fas fa-user-shield me-2"></i>{{ selected_player_name|default:"Player" }} - Load Summary
-                </h6>
-            </div>
-            <div class="card-body p-4">
-                <div class="row h-100 g-3 align-items-stretch">
-                    <!-- Player Info - Full height -->
-                    <div class="col-md-2 d-flex align-items-center justify-content-center">
-                        <div class="text-center w-100">
-                            <div class="h4 mb-1 fw-bold text-primary">{{ selected_player_name|default:"Player" }}</div>
-                            <small class="text-muted">Ref: {{ selected_date }}</small>
-                        </div>
-                    </div>
-                    
-                    <!-- 5 Equal Stat Cards -->
-                    <div class="col-md-10">
-                        <div class="row h-100 g-2">
-                            <!-- Stat 1: Active Days -->
-                            <div class="col-md-2 col-6 h-100">
-                                <div class="stat-card h-100 d-flex flex-column justify-content-center p-3">
-                                    <div class="h5 fw-bold text-success mb-1">{{ active_sessions_7d|default:0 }}</div>
-                                    <small class="text-muted">Active Days</small>
-                                    <small >{{ active_sessions_7d|default:0 }}/7</small>
-                                </div>
-                            </div>
-                            
-                            <!-- Stat 2: Avg Balls -->
-                            <div class="col-md-2 col-6 h-100">
-                                <div class="stat-card h-100 d-flex flex-column justify-content-center p-3">
-                                    <div class="h5 fw-bold text-info mb-1">{{ avg_balls_7d|floatformat:0|default:0 }}</div>
-                                    <small class="text-muted">Avg Balls/Day</small>
-                                </div>
-                            </div>
-                            
-                            <!-- Stat 3: Last A:C -->
-                            <div class="col-md-2 col-6 h-100">
-                                <div class="stat-card h-100 d-flex flex-column justify-content-center p-3">
-                                    <div class="h5 fw-bold {% if last_day_ac > 1.5 %}text-danger{% elif last_day_ac > 1.0 %}text-warning{% else %}text-success{% endif %} mb-1">
-                                        {{ last_day_ac|floatformat:2|default:0 }}
-                                    </div>
-                                    <small class="text-muted">Last A:C</small>
-                                </div>
-                            </div>
-                            
-                            <!-- Stat 4: Acute Load -->
-                            <div class="col-md-2 col-6 h-100">
-                                <div class="stat-card h-100 d-flex flex-column justify-content-center p-3">
-                                    <div class="h5 fw-bold text-primary mb-1">{{ last_day_acute|floatformat:1|default:0 }}</div>
-                                    <small class="text-muted">Acute Load</small>
-                                </div>
-                            </div>
-                            
-                            <!-- Stat 5: Chronic Load -->
-                            <div class="col-md-2 col-6 h-100">
-                                <div class="stat-card h-100 d-flex flex-column justify-content-center p-3">
-                                    <div class="h5 fw-bold text-info mb-1">{{ last_day_chronic|floatformat:1|default:0 }}</div>
-                                    <small class="text-muted">Chronic Load</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="load-summary">
+    <table class="info-table">
+        <tr>
+            <th>Number Of Sessions</th>
+            <th>Average Balls Bowled</th>
+            <th>AC Ratio</th>
+            <th>Acute Load</th>
+            <th>Chronic Load</th>
+        </tr>
+        <tr>
+            <td>{{ active_sessions_7d|default:0 }}</td>
+            <td>{{ avg_balls_7d|floatformat:0|default:0 }}</td>
+            <td>{{ last_day_ac|floatformat:2|default:0 }}</td>
+            <td>{{ last_day_acute|floatformat:1|default:0 }}</td>
+            <td>{{ last_day_chronic|floatformat:1|default:0 }}</td>
+        </tr>
+    </table>
+</div>
+
+
+</div>
+
+  {% if load_drills_7d or load_drills_28d %}
+<div class="section-title">Daily summary</div>
+
+<div class="daily-summary">
+{% if load_drills_7d %}
+<table class="info-table daily-summary-table">
+    <thead>
+        <tr>
+            <th class="metric-col">Date</th>
+            {% for drill in load_drills_7d %}
+                <th>{{ drill.date|date:"d M Y" }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th class="metric-col">Balls</th>
+            {% for drill in load_drills_7d %}
+                <td>{{ drill.no_balls|default:"–" }}</td>
+            {% endfor %}
+        </tr>
+    </tbody>
+</table>
+{% else %}
+<div class="text-center text-muted py-3">
+    No load data available
 </div>
 {% endif %}
-
-
-    <!-- Tables -->
-    {% if load_drills_7d or load_drills_28d %}
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-success text-white">
-                    <h6 class="mb-0">
-                        <i class="fas fa-clock me-2"></i>Acute Load - Last 7 Days 
-                        <span class="badge bg-light text-dark ms-2">{{ load_drills_7d|length }}/7</span>
-                    </h6>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0 small">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Balls</th>
-                                    <th>Acute (λ=0.25)</th>
-                                    <th>A:C</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for drill in load_drills_7d %}
-                                <tr>
-                                    <td>{{ drill.date|date:"d/m" }}</td>
-                                    <td>{{ drill.no_balls }}</td>
-                                    <td class="fw-bold">{{ drill.acute_load }}</td>
-                                    <td class="{% if drill.ac_ratio > 1.5 %}text-danger{% elif drill.ac_ratio > 1.0 %}text-warning{% else %}text-success{% endif %} fw-bold">
-                                        {{ drill.ac_ratio }}
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="4" class="text-center text-muted py-3">No data</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-info text-white">
-                    <h6 class="mb-0">
-                        <i class="fas fa-calendar-alt me-2"></i>Chronic Load - Last 28 Days 
-                        <span class="badge bg-light text-dark ms-2">{{ load_drills_28d|length }}/28</span>
-                    </h6>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0 small">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Balls</th>
-                                    <th>Acute</th>
-                                    <th>Chronic (λ=0.069)</th>
-                                    <th>A:C</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for drill in load_drills_28d %}
-                                <tr>
-                                    <td>{{ drill.date|date:"d/m" }}</td>
-                                    <td>{{ drill.no_balls }}</td>
-                                    <td class="fw-bold">{{ drill.acute_load }}</td>
-                                    <td class="fw-bold">{{ drill.chronic_load }}</td>
-                                    <td class="{% if drill.ac_ratio > 1.5 %}text-danger{% elif drill.ac_ratio > 1.0 %}text-warning{% else %}text-success{% endif %} fw-bold">
-                                        {{ drill.ac_ratio }}
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="5" class="text-center text-muted py-3">No data</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Info Alert -->
-    {% comment %} <div class="row">
-        <div class="col-12">
-            <div class="alert alert-info">
-                <small>
-                    <strong>Reference Date:</strong> {{ selected_date }} | 
-                    <strong>λ Acute:</strong> 0.25 (7-day) | 
-                    <strong>λ Chronic:</strong> 0.069 (28-day) | 
-                    <strong>A:C >1.5:</strong> High risk | 
-                    <strong>A:C >1.0:</strong> Moderate risk
-                </small>
-            </div>
-        </div>
-    </div> {% endcomment %}
-    
-    {% else %}
-    <div class="row">
-        <div class="col-12 text-center py-5">
-           
-            <h4 class="text-muted">Click Generate Report</h4>
-            <p class="text-muted">Select player, reference date and camp to view 7/28 day load tables.</p>
-        </div>
-    </div>
-    {% endif %}
 </div>
 
-<style>
-.bg-gradient-primary {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-}
-.stat-card {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 10px;
-    border: 1px solid #dee2e6;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-.stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-</style>
+
+
+<div class="mt-4"style="background-color: #fff; padding: 10px;">
+    <h3 class="text-start fw-bold" style="color: rgb(116, 121, 121);">Balls Bowled (Last 7 Days)</h3>
+    <canvas id="dailyLoadChart" height="120"></canvas>
+</div>
+
+<div class="mt-4" style="background-color: #fff;padding: 10px;">
+    <div class="section-title">Workload Calculation</div>
+     <h3 class="text-start fw-bold" style="color: rgb(116, 121, 121);">A : C Workload Ratio (EWMA)</h3>
+    <canvas id="multiLoadChart" height="150"></canvas>
+</div>
+
+{% endif %}
+
+   
+<div style="background-color: #fff; margin-top: 10px; padding: 10px;">
+    <h5>NOTE:</h5>
+<p>
+The Acute:Chronic Workload Ratio (ACWR) using Exponentially Weighted Moving Averages (EWMA) is a refined approach to monitor training load. EWMA places greater emphasis on recent workloads while still considering historical data, making it more sensitive to daily fluctuations in training.Interpretation of Ranges (commonly cited in literature): Acute (7 days): 𝜆 =0.25 ; Chronic (28 days): 𝜆=0.069
+</p>
+<p>< 0.8 → Undertraining (low risk but potential loss of fitness)</p>
+<p>0.8 – 1.3 → Optimal/“Sweet Spot” (balanced load, reduced injury risk)</p>
+<p>> 1.5 → Increased injury risk (spike in load)</p>
+<p>> 2.0 → Very high risk (sudden overload)</p>
+</div>
+   <div class="coach-container">
+ <div class="coach-card">
+        <h3>Coach Details</h3>
+        <p><strong>Name:</strong> {{ coach.name }}</p>
+        <p><strong>Role:</strong> {{ coach.role }}</p>
+        <p><strong>Email:</strong> {{ coach.email }}</p>
+    </div>
+   </div>
+   
+{% endif %}
+</div>
+</div>
 
 <script>
 document.getElementById('player').addEventListener('change', function() {
     if (!this.value) {
         document.getElementById('reportForm').reset();
     }
+});
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const table = document.querySelector(".daily-summary table");
+    if (!table) return;
+
+    const labels = Array.from(
+        table.querySelectorAll("thead th")
+    ).slice(1).map(th => th.innerText.trim());
+
+    const balls = Array.from(
+        table.querySelector("tbody tr").querySelectorAll("td")
+    ).map(td => td.innerText.trim() === "–" ? 0 : Number(td.innerText.trim()));
+
+    const validBalls = balls.filter(v => v > 0);
+    const average = validBalls.length
+        ? validBalls.reduce((a, b) => a + b, 0) / validBalls.length
+        : 0;
+
+    const ctx = document.getElementById("dailyLoadChart").getContext("2d");
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Balls',
+                    data: balls,
+                    backgroundColor: '#1e5aa8',
+                    borderRadius: 6,
+                    order: 1 
+                },
+                {
+                    type: 'line',
+                    label: 'Average',
+                    data: labels.map(() => average),
+                    borderColor: '#dc3545',
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    tension: 0,
+                    order: 99,       
+                    fill: false,
+                    yAxisID: 'y'   
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        generateLabels() {
+                            return [
+                                { text: 'Balls (Blue Bar)', fillStyle: '#1e5aa8' },
+                                { text: 'Average (Red Line)', strokeStyle: '#dc3545', lineWidth: 3 }
+                            ];
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            if (ctx.dataset.type === 'line') {
+                                return ` Average: ${average.toFixed(1)} balls`;
+                            }
+                            return ` Balls: ${ctx.raw}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Balls' },
+                    stacked: false
+                },
+                x: {
+                    title: { display: true, text: 'Date' },
+                    stacked: false
+                }
+            }
+        },
+        plugins: [{
+            afterDraw(chart) {
+                const { ctx, scales: { y } } = chart;
+                ctx.save();
+                ctx.fillStyle = '#dc3545';
+                ctx.font = 'bold 12px Arial';
+                ctx.fillText(
+                    `Avg: ${average.toFixed(1)} balls`,
+                    chart.chartArea.right - 135,
+                    y.getPixelForValue(average) - 6
+                );
+                ctx.restore();
+            }
+        }]
+    });
+});
+</script>
+{{ load_drills_28d|json_script:"loadDrills28dData" }}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const loadDrills28d = JSON.parse(document.getElementById("loadDrills28dData").textContent || "[]");
+
+    if (!loadDrills28d.length) {
+        console.warn("No 28-day chronic load data available.");
+        return;
+    }
+
+    const labels = loadDrills28d.map(d => d.date);
+    const balls = loadDrills28d.map(d => Number(d.no_balls || 0)); 
+    const chronic = loadDrills28d.map(d => Number(d.chronic_load || 0));
+    const acute = loadDrills28d.map(d => Number(d.acute_load || 0));
+
+    const validBalls = balls.filter(v => v > 0);
+    const average = validBalls.length ? validBalls.reduce((a,b)=>a+b,0)/validBalls.length : 0;
+
+    const ctx = document.getElementById("dailyLoadChart").getContext("2d");
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Balls',
+                    data: balls,
+                    backgroundColor: '#1e5aa8',
+                    borderRadius: 6
+                },
+                {
+                    type: 'line',
+                    label: 'Average',
+                    data: labels.map(() => average),
+                    borderColor: '#dc3545',
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        generateLabels() {
+                            return [
+                                { text: 'Balls (Blue Bar)', fillStyle: '#1e5aa8' },
+                                { text: 'Average (Red Line)', strokeStyle: '#dc3545', lineWidth: 3 }
+                            ];
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            if (ctx.dataset.type === 'line') {
+                                return ` Average: ${average.toFixed(1)} balls`;
+                            }
+                            return ` Balls: ${ctx.raw}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Balls' } },
+                x: { title: { display: true, text: 'Date' } }
+            }
+        },
+        plugins: [
+            {
+                afterDraw(chart) {
+                    const { ctx, scales: { y } } = chart;
+                    ctx.save();
+                    ctx.fillStyle = '#dc3545';
+                    ctx.font = 'bold 12px Arial';
+                    ctx.fillText(`Avg: ${average.toFixed(1)} balls`, chart.chartArea.right - 135, y.getPixelForValue(average) - 6);
+                    ctx.restore();
+                }
+            }
+        ]
+    });
+});
+</script>
+{{ load_drills_28d|json_script:"loadDrills28dData" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const loadDrills28d = JSON.parse(document.getElementById("loadDrills28dData").textContent || "[]");
+
+    if (!loadDrills28d.length) return;
+    const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+    });
+};
+
+    const labels = loadDrills28d.map(d => formatDate(d.date));
+    const balls = loadDrills28d.map(d => Number(d.no_balls || 0));
+    const acute = loadDrills28d.map(d => Number(d.acute_load || 0));
+    const chronic = loadDrills28d.map(d => Number(d.chronic_load || 0));
+    const acRatio = loadDrills28d.map(d => Number(d.ac_ratio || 0));
+
+    const ctx = document.getElementById("multiLoadChart").getContext("2d");
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+    {
+        type: 'bar',
+        label: 'Balls',
+        data: balls,
+        backgroundColor: '#1e5aa8',
+        borderRadius: 6,
+        yAxisID: 'y',
+        order: 1   
+    },
+
+    {
+        type: 'line',
+        label: 'EWMA(Acute Load)',
+        data: acute,
+        borderColor: '#dc3545',
+        backgroundColor: '#dc3545',
+        borderWidth: 2,
+        tension: 0,
+        fill: false,
+        pointRadius: 4,
+        pointBackgroundColor: '#dc3545',
+        yAxisID: 'y',
+        order: 20,  
+        z: 20
+    },
+
+    {
+        type: 'line',
+        label: 'EWMA(Chronic Load)',
+        data: chronic,
+        borderColor: '#fbbc04',
+        backgroundColor: '#fbbc04',
+        borderWidth: 2,
+        tension: 0,
+        fill: false,
+        pointRadius: 4,
+        pointBackgroundColor: '#fbbc04',
+        yAxisID: 'y',
+        order: 21,  
+        z: 21
+    },
+
+    {
+        type: 'line',
+        label: 'A:C Ratio',
+        data: acRatio,
+        borderColor: '#28a745',
+        borderWidth: 2,
+        borderDash: [6, 3],
+        tension: 0,
+        fill: false,
+        pointRadius: 4,
+        pointBackgroundColor: '#28a745',
+        yAxisID: 'yRatio',
+        order: 30,  
+        z: 30
+    }
+]
+
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            stacked: false,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return `${ctx.dataset.label}: ${ctx.raw}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Date' }
+                },
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    title: { display: true, text: 'Balls / Load' },
+                    beginAtZero: true
+                },
+                yRatio: {
+                    type: 'linear',
+                    position: 'right',
+                    title: { display: true, text: 'A:C Ratio' },
+                    beginAtZero: true,
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        }
+    });
 });
 </script>
 {% endblock %}
