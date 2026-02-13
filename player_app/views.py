@@ -8420,7 +8420,7 @@ def bowlerdrills_create(request, camp_id=None):
             organization=user_org, 
             
         )
-        players = camp.participants.filter(organization=user_org).order_by('name')
+        players = camp.participants.filter(organization=user_org,role__in=['Bowler','All-rounder']).order_by('name')
         selected_camp_id = camp_id
     
     if request.method == 'POST':
@@ -8438,7 +8438,7 @@ def bowlerdrills_create(request, camp_id=None):
                     balls_key = f'balls_{player.id}'
                     balls_bowled = request.POST.get(balls_key)
                     
-                    if balls_bowled and int(balls_bowled) > 0:
+                    if balls_bowled and int(balls_bowled) >= 0:
                         BowlerDrill.objects.create(
                             player_id=player.id,
                             camp_id=camp_id,
@@ -8623,151 +8623,203 @@ from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required
-
 @login_required
 def bowler_report_generated(request):
     user_org = getattr(request.user, "organization", None)
     player_id = request.POST.get('player')
     selected_date = request.POST.get('selected_date')
     form_camp_id = request.POST.get('camp')
-
-    # Use form camp OR None
-    final_camp_id = form_camp_id
-    camp_select = None
     
-    # Safe camp lookup
+    # Use form camp OR session camp
+    final_camp_id = form_camp_id or request.session.get('bowling_camp_id')
+    
+    camp_select = None
     if final_camp_id:
         try:
-            camp_select = CampTournament.objects.get(
-                id=final_camp_id,
-               
-            )
+            camp_select = CampTournament.objects.get(id=final_camp_id)
         except CampTournament.DoesNotExist:
             camp_select = None
             final_camp_id = None
 
-    # Filter players by camp + bowler/all-rounder role
+    # Filter players
     if final_camp_id:
         players = Player.objects.filter(
             bowler_drills__camp_id=final_camp_id,
             organization=user_org,
-            role__in=['Bowler', 'All-rounder']  #  Only Bowlers + All-rounders
+            role__in=['Bowler', 'All-rounder']
         ).distinct().order_by('name')
     else:
         players = Player.objects.filter(
             organization=user_org,
-            role__in=['Bowler', 'All-rounder']  #  Only Bowlers + All-rounders
+            role__in=['Bowler', 'All-rounder']
         ).order_by('name')
 
     camps = CampTournament.objects.filter(
         bowler_drills__player__organization=user_org
     ).distinct().order_by('name')
 
-    # Default to today if no date selected
     if not selected_date:
         selected_date = timezone.now().date().strftime('%Y-%m-%d')
 
     drills = BowlerDrill.objects.none()
     load_drills_7d = []
     load_drills_28d = []
+    all_load_drills = []
+    
+    # **INITIALIZE**
+    start_filter = None
+    end_filter_7d = None  # End of 7-day window (selected_date - 1 day)
+    lookback_days = 28
+    selected_player = None
+    selected_player_name = ''
+    
+    # **SESSION SETTINGS**
+    lambda_acute = request.session.get('bowling_acute_lambda', 0.25)
+    lambda_chronic = request.session.get('bowling_cronic_lambda', 0.069)
+    date_range = request.session.get('bowling_date_range', 'last28')
+    
     
     if player_id:
-        selected_player = Player.objects.filter(
-            id=player_id, 
-            organization=user_org
-        ).first()
-        if selected_player:
-            drill_filter = {'player_id': player_id}
-            if final_camp_id:
-                drill_filter['camp_id'] = final_camp_id
-            
-            # Filter drills around selected date
-            selected_date_obj = timezone.datetime.strptime(selected_date, '%Y-%m-%d').date()
-            start_filter = selected_date_obj - timedelta(days=35)
-            end_filter = selected_date_obj + timedelta(days=7)
-            
-            drill_filter['date__gte'] = start_filter
-            drill_filter['date__lte'] = end_filter
-            
-            drills = BowlerDrill.objects.filter(
-                **drill_filter
-            ).select_related('player', 'camp').order_by('date')
+        selected_player = Player.objects.filter(id=player_id, organization=user_org).first()
+        selected_player_name = getattr(selected_player, 'name', '')
+        
+        drill_filter = {'player_id': player_id}
+        if final_camp_id:
+            drill_filter['camp_id'] = final_camp_id
+        
+        # **🎯 SELECTED DATE SETUP**
+        selected_date_obj = timezone.datetime.strptime(selected_date, '%Y-%m-%d').date()
+        
+        # **LAST 7 DAYS: selected_date backwards (18 Jan -> 17,16,15,14,13,12,11 Jan)**
+        end_filter_7d = selected_date_obj - timedelta(days=1)  # Last day before selected_date
+        start_filter_7d = end_filter_7d - timedelta(days=6)    # 7 days total
+        
+        # **FULL LOOKUP RANGE: 7-day + chronic lookback**
+        days_back = {'last28': 28, 'last10': 10, 'last60': 60, 'last90': 90, 'last180': 180, 'last365': 365}
+        lookback_days = days_back.get(date_range, 28)
+        start_filter = start_filter_7d - timedelta(days=lookback_days - 7)  # Extend for chronic
+        end_filter = selected_date_obj  # Up to selected_date
+        
 
-            # Calculate EWMA
-            if drills.exists():
-                drill_list = list(drills)
-                lambda_acute = 0.25
-                lambda_chronic = 0.069
+        
+        drill_filter['date__gte'] = start_filter
+        drill_filter['date__lte'] = end_filter
+        
+        drills = BowlerDrill.objects.filter(**drill_filter).select_related('player', 'camp').order_by('date')
+      
+        
+        # **EWMA CALCULATION**
+        if drills.exists():
+            drill_list = list(drills)
+            acute_prev = 0
+            chronic_prev = 0
+            
+            for drill in drill_list:
+                balls = drill.no_balls
+                acute_load = lambda_acute * balls + (1 - lambda_acute) * acute_prev
+                chronic_load = lambda_chronic * balls + (1 - lambda_chronic) * chronic_prev
                 
-                acute_prev = 0
-                chronic_prev = 0
-                all_load_drills = []
+                ac_ratio = acute_load / chronic_load if chronic_load > 0 else 0
                 
-                for drill in drill_list:
-                    balls = drill.no_balls
-                    acute_load = lambda_acute * balls + (1 - lambda_acute) * acute_prev
-                    chronic_load = lambda_chronic * balls + (1 - lambda_chronic) * chronic_prev
-                    
-                    ac_ratio = acute_load / chronic_load if chronic_load > 0 else 0
-                    
-                    all_load_drills.append({
-                        'date': drill.date,
-                        'no_balls': balls,
-                        'acute_load': round(acute_load, 2),
-                        'chronic_load': round(chronic_load, 2),
-                        'ac_ratio': round(ac_ratio, 2),
-                        'days_from_selected': (drill.date - selected_date_obj).days
-                    })
-                    
-                    acute_prev = acute_load
-                    chronic_prev = chronic_load
+                all_load_drills.append({
+                    'date': drill.date,
+                    'no_balls': balls,
+                    'acute_load': round(acute_load, 2),
+                    'chronic_load': round(chronic_load, 2),
+                    'ac_ratio': round(ac_ratio, 2),
+                    'days_from_selected': (drill.date - selected_date_obj).days
+                })
                 
-                # Filter for tables
-                past_drills = [d for d in all_load_drills if d['days_from_selected'] <= 0]
-                load_drills_7d = sorted(past_drills[-7:], key=lambda x: x['date'], reverse=True)
-                load_drills_28d = sorted(past_drills[-28:], key=lambda x: x['date'], reverse=True)
+                acute_prev = acute_load
+                chronic_prev = chronic_load
+            
+            # **FILL COMPLETE RANGE**
+            all_dates = []
+            current_date = start_filter
+            while current_date <= end_filter:
+                all_dates.append(current_date)
+                current_date += timedelta(days=1)
+            
+            complete_load_drills = []
+            date_dict = {d['date']: d for d in all_load_drills}
+            last_acute = 0
+            last_chronic = 0
+            last_ac_ratio = 0
+            
+            for date_obj in all_dates:
+                if date_obj in date_dict:
+                    drill_data = date_dict[date_obj]
+                    last_acute = drill_data['acute_load']
+                    last_chronic = drill_data['chronic_load']
+                    last_ac_ratio = drill_data['ac_ratio']
+                else:
+                    drill_data = {
+                        'date': date_obj,
+                        'no_balls': 0,
+                        'acute_load': last_acute,
+                        'chronic_load': last_chronic,
+                        'ac_ratio': last_ac_ratio,
+                        'days_from_selected': (date_obj - selected_date_obj).days
+                    }
+                complete_load_drills.append(drill_data)
+            
+            all_load_drills = sorted(complete_load_drills, key=lambda x: x['date'], reverse=True)
+            
+            # **🎯 LAST 7 DAYS: Exactly 7 days before selected_date**
+            load_drills_7d = [d for d in all_load_drills if start_filter_7d <= d['date'] <= end_filter_7d]
+            load_drills_7d = sorted(load_drills_7d, key=lambda x: x['date'], reverse=True)
+            
+            # **28 DAYS: From selected_date backwards**
+            past_28_days = [d for d in all_load_drills if d['days_from_selected'] <= 0][:28]
+            load_drills_28d = sorted(past_28_days, key=lambda x: x['date'], reverse=True)
 
-    #  ADD SUMMARY STATS
-
-    active_sessions_7d = 0
-    avg_balls_7d = 0
+    # **SUMMARY STATS (7-day window)**
+    active_sessions_7d = len([d for d in load_drills_7d if d['no_balls'] > 0]) if load_drills_7d else 0
+    total_balls_7d = sum(d['no_balls'] for d in load_drills_7d)
+    avg_balls_7d = round(total_balls_7d / active_sessions_7d, 1) if active_sessions_7d > 0 else 0
+    
     last_day_ac = 0
     last_day_acute = 0
     last_day_chronic = 0
-
-    if player_id and load_drills_7d:
-        selected_player = Player.objects.filter(id=player_id, organization=user_org).first()
-        selected_player_name = selected_player.name if selected_player else ""
-        
-        active_sessions_7d = len(load_drills_7d)
-        total_balls_7d = sum(drill['no_balls'] for drill in load_drills_7d)
-        avg_balls_7d = round(total_balls_7d / active_sessions_7d, 1) if active_sessions_7d > 0 else 0
-        
-        if load_drills_7d:
-            last_drill = load_drills_7d[0]
-            last_day_ac = last_drill['ac_ratio']
-            last_day_acute = last_drill['acute_load']
-            last_day_chronic = last_drill['chronic_load']
+    if load_drills_7d:
+        last_drill = load_drills_7d[0]  # Most recent (end_filter_7d)
+        last_day_ac = last_drill['ac_ratio']
+        last_day_acute = last_drill['acute_load']
+        last_day_chronic = last_drill['chronic_load']
 
     context = {
         'players': players,
         'camps': camps,
         'drills': drills,
-        'load_drills_7d': load_drills_7d,
+        'load_drills_7d': load_drills_7d,  # ✅ 17,16,15,14,13,12,11 Jan
         'load_drills_28d': load_drills_28d,
+        'all_load_drills': all_load_drills,
         'selected_player_id': player_id,
         'selected_camp': final_camp_id,
         'selected_date': selected_date,
         'camp_select': camp_select,
-        # SUMMARY STATS
+        'session_settings': {
+            'acute_lambda': lambda_acute,
+            'chronic_lambda': lambda_chronic,
+            'date_range': date_range,
+        },
         'selected_player_name': selected_player_name,
         'active_sessions_7d': active_sessions_7d,
         'avg_balls_7d': avg_balls_7d,
         'last_day_ac': last_day_ac,
         'last_day_acute': last_day_acute,
         'last_day_chronic': last_day_chronic,
+        'date_range_info': {
+            'selected_date': selected_date_obj.strftime('%d %b %Y') if 'selected_date_obj' in locals() else '',
+            'seven_day_start': start_filter_7d.strftime('%d %b') if 'start_filter_7d' in locals() else '',
+            'seven_day_end': end_filter_7d.strftime('%d %b') if 'end_filter_7d' in locals() else '',
+            'full_start': start_filter.strftime('%d %b') if start_filter else '',
+            'full_end': end_filter.strftime('%d %b') if 'end_filter' in locals() else '',
+        }
     }
     return render(request, 'player_app/tests/player_load_report.html', context)
+
+
 
 def attendance_group_view(request):
     user_org = getattr(request.user, "organization", None)
@@ -8777,6 +8829,40 @@ def attendance_group_view(request):
         "camps":camps
     }
     return render(request,'player_app/camps/attendance_group_report.html',context)
+
+def bowling_settings_view(request,camp_select=None):
+    user_org = getattr(request.user, "organization", None)
+    return render(request,'player_app/tests/bowling_settings.html',{'organization': user_org, 'camp_select': camp_select})  
+
+from django.shortcuts import redirect
+from django.contrib import messages
+
+def bowling_settings_update(request):
+    if request.method == 'POST':
+        # Extract form values safely with defaults
+        acute_lambda = request.POST.get('acute_lambda', 0.25)
+        cronic_lambda = request.POST.get('cronic_lambda', 0.069)
+        date_range = request.POST.get('date', 'last28')
+        camp_id = request.POST.get('camp_id', None)
+       
+
+        # Save to session (dict-like, auto-saves on assignment)
+        request.session['bowling_acute_lambda'] = float(acute_lambda)
+        request.session['bowling_cronic_lambda'] = float(cronic_lambda)
+        request.session['bowling_date_range'] = date_range
+        
+        # Optional: Save session explicitly and add success message
+        request.session.save()
+        messages.success(request, 'Report settings saved successfully!')
+        
+        # Redirect to avoid resubmission (include your settings page URL)
+        return redirect('bowler_report_check',camp_id=camp_id)  # Replace with your settings page URL name
+    
+    # Handle GET (optional: show current session values in template)
+    return redirect('bowling_settings')
+
+
+
 from django.shortcuts import render
 from datetime import date  # Add this import
 from dateutil.relativedelta import relativedelta

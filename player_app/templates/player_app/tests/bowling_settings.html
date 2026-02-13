@@ -1,0 +1,155 @@
+{% extends "player_app/organization/base.html" %}
+{% block title %}Report Settings{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Basic reset and body padding */
+  body, html {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+
+  /* Main container to allow scrolling */
+  .settings-container {
+    max-width: 760px;
+    margin: 2rem auto 3rem;
+    padding: 2rem 2rem 3rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow-y: auto; /* Enable vertical scroll if needed */
+    max-height: 90vh; /* Prevent page overflow */
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 1.8rem;
+    color: #333;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+
+  fieldset {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    background: #fff;
+  }
+
+  legend {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #005A9C;
+    padding: 0 8px;
+  }
+
+  label {
+    display: flex;
+    align-items: center;
+    margin: 0.6rem 0;
+    font-size: 0.95rem;
+    color: #222;
+  }
+
+  label input[type="radio"],
+  label input[type="checkbox"] {
+    margin-right: 0.6rem;
+  }
+
+  select, input[type="number"] {
+    font-size: 1rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    flex-grow: 1;
+    max-width: 220px;
+  }
+
+  /* Align input next to label text, spacing */
+  label > input[type="number"] {
+    margin-left: 1rem;
+    max-width: 160px;
+  }
+
+  /* Button styling */
+  button[type="submit"] {
+    align-self: center;
+    padding: 0.75rem 2.2rem;
+    font-size: 1rem;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.25s ease-in-out;
+  }
+  button[type="submit"]:hover {
+    background-color: #0056b3;
+  }
+
+  /* Responsive: smaller devices */
+  @media (max-width: 480px) {
+    .settings-container {
+      margin: 1rem;
+      padding: 1rem;
+    }
+    fieldset {
+      padding: 1rem 1rem;
+    }
+    label, select, input[type="number"] {
+      font-size: 0.9rem;
+    }
+    label > input[type="number"] {
+      margin-left: 0.5rem;
+      max-width: 100px;
+    }
+    button[type="submit"] {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+  <h1>Report Settings</h1>
+
+  <form method="post" action="{% url 'bowling_settings_update' %}">
+    {% csrf_token %}
+     <input type="hidden" name="camp_id" value="{{ camp_select}}">
+    <fieldset>
+      <legend>Acute Lamda</legend>
+       <label for="acute_lambda">Acute Lamda Value:</label>
+       <input type="number" step="any" name="acute_lambda" id="acute_lambda" value="" placeholder="Enter Acute Lamda" required>
+       <small style="color: #555;">(Default Value : 0.25)</small>
+    </fieldset>
+
+    <fieldset>
+      <legend>Cronic Lamda</legend>
+       <label for="cronic_lambda">Cronic Lamda Value:</label>
+       <input type="number" step="any" name="cronic_lambda" id="cronic_lambda" value="" placeholder="Enter Cronic Lamda" required>
+       <small style="color: #555;">(Default Value : 0.069)</small>
+    </fieldset>
+      
+    <fieldset>
+      <legend>Select Date</legend>
+      <select name="date" required>
+        <option value="last28">Last 28 Days</option>
+        <option value="last10">Last 10 Days</option>
+        <option value="last60">Last 60 Days</option>
+        <option value="last90">Last 90 Days</option>
+        <option value="last180">Last 180 Days</option>
+        <option value="last365">Last 365 Days</option>
+      </select>
+    </fieldset>
+   
+
+    <button type="submit">Save Settings</button>
+  </form>
+</div>
+{% endblock %}

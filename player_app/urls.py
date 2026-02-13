@@ -94,6 +94,8 @@ urlpatterns = [
                   path('bowlerdrills/', views.bowlerdrills_list, name='bowlerdrills_list'),
                   path('bowler_report_check/<int:camp_id>/', views.bowler_report_check, name='bowler_report_check'),
                   path('bowler_report_generated/',views.bowler_report_generated,name='bowler_report_generated'),
+                  path('bowling-settings/<int:camp_select>/', views.bowling_settings_view, name='bowling_settings'),
+                  path('bowling-settings/update/', views.bowling_settings_update, name='bowling_settings_update'),
 
                   path('reports/camp-drills/', views.camp_drill_report, name='camp_drill_report'),
                   path('reports/player-drills/', views.player_drill_report, name='player_drill_report'),
