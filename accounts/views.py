@@ -71,7 +71,7 @@ def add_staff(request):
 
 def organization_register(request):
     if request.method == 'POST':
-        form = OrganizationRegistrationForm(request.POST)
+        form = OrganizationRegistrationForm(request.POST,request.FILES)
         if form.is_valid():
             form.save()
             messages.success(request, 'Organization add successfully. Please log in.')
@@ -185,9 +185,11 @@ def edit_organization(request, pk):
 
 def delete_organization(request, pk):
     organization = get_object_or_404(Organization, pk=pk)
-    organization.delete()
-    return redirect('organization_list')
-
+    if request.method == 'POST':
+        organization.delete()
+        messages.success(request, f'{organization.name} deleted successfully!')
+        return redirect('organization_list')
+    return render(request, 'delete_organization.html', {'organization': organization})
 
 from django.contrib.auth.decorators import login_required
 
@@ -198,7 +200,7 @@ def staff_dashboard(request):
 
 # views.py
 from django.http import JsonResponse
-
+from accounts.forms import StaffForms
 
 # Staff list view
 def staff_list(request):
@@ -209,47 +211,43 @@ def staff_list(request):
 # Edit view to fetch staff data for the modal
 def staff_edit(request, staff_id):
     staff = get_object_or_404(Staff, id=staff_id)
-    data = {
-        'id': staff.id,
-        'name': staff.name,
-        'age': staff.age,
-        'mobile_number': staff.mobile_number,
-        'email': staff.email,
-        'address': staff.address,
-        'organization': staff.organization.id,
-        'player_management': staff.player_management,
-        'injury_tracking': staff.injury_tracking,
-        'add_form': staff.add_form,
-        'add_result': staff.add_result,
-        'view_result': staff.view_result
-    }
-    return JsonResponse(data)
+    
+    if request.method == 'POST':
+        form = StaffForms(request.POST, instance=staff)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Staff {staff.name} updated successfully!')
+            return redirect('staff_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = StaffForms(instance=staff)
+    
+    return render(request, 'staff_edit.html', {
+        'form': form,
+        'staff': staff
+    })
 
-# Update view to handle staff updates
 def staff_update(request, staff_id):
+    """AJAX endpoint for modal updates (if needed)"""
     if request.method == 'POST':
         staff = get_object_or_404(Staff, id=staff_id)
-        staff.name = request.POST.get('name')
-        staff.age = request.POST.get('age')
-        staff.mobile_number = request.POST.get('mobile_number')
-        staff.email = request.POST.get('email')
-        staff.address = request.POST.get('address')
-        staff.organization = request.POST.get('organization')  # Set organization
-        staff.player_management = request.POST.get('player_management') == 'true'
-        staff.injury_tracking = request.POST.get('injury_tracking') == 'true'
-        staff.add_form = request.POST.get('add_form') == 'true'
-        staff.add_result = request.POST.get('add_result') == 'true'
-        staff.view_result = request.POST.get('view_result') == 'true'
-        staff.save()
-        return JsonResponse({'success': True})
+        form = StaffForm(request.POST, instance=staff)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True})
+        return JsonResponse({'success': False, 'errors': form.errors})
+    return JsonResponse({'success': False})
 
 # Delete view to handle staff deletion
 def staff_delete(request, staff_id):
+    staff = get_object_or_404(Staff, pk=staff_id)
+    user = staff.user  # Get the associated user
     if request.method == 'POST':
-        staff = get_object_or_404(Staff, id=staff_id)
         staff.delete()
-        return JsonResponse({'success': True})
-
+        user.delete()  # Delete the associated user
+        return redirect('staff_list')
+    return render(request, 'staff_delete.html', {'staff': staff})
 
 
 def staff_register(request):
@@ -334,36 +332,32 @@ from accounts.forms import UserFormOrg, StaffRegistrationFormOrg
 @login_required
 def staff_register_org(request):
     if request.method == "POST":
-        user_form = UserFormOrg(request.POST)
-        staff_form = StaffRegistrationFormOrg(request.POST)  # Adjust if your form is named differently
+        user_form = UserFormOrg(request.POST, request.FILES)
+        staff_form = StaffRegistrationFormOrg(request.POST, request.FILES)  
 
         if user_form.is_valid() and staff_form.is_valid():
             try:
-                # Create and save user
+
                 user = user_form.save(commit=False)
                 user.set_password(user_form.cleaned_data['password'])
                 user.save()
 
+
                 staff = staff_form.save(commit=False)
                 staff.user = user
-
-                # Set organization from logged-in user
-                organization = getattr(request.user, 'organization', None)
-                if not organization:
-                    staff_form.add_error(None, "Your user is not assigned to any organization.")
-                    return render(request, 'organization/add_staff_org.html', {
-                        'user_form': user_form,
-                        'staff_form': staff_form,
-                    })
-
-                staff.organization = organization
                 staff.save()
 
-                messages.success(request, "Staff registration successful!")
-                return redirect('staff_list_org')
+                messages.success(request, "Staff registration successful with profile image!")
+                return redirect('staff_list')
 
             except IntegrityError as e:
-                staff_form.add_error(None, f"An error occurred: {str(e)}")
+
+                if 'user' in locals():
+                    user.delete()
+                staff_form.add_error(None, f"Error: {str(e)}")
+        else:
+
+            messages.error(request, "Please fix the errors below.")
 
     else:
         user_form = UserFormOrg()

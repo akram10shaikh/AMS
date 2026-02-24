@@ -1,165 +1,304 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Staff</title>
-    <style>
-        /* Styling for the entire page layout */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-        }
+{% extends 'base_new.html' %}
 
-        /* Sidebar styling */
-        .sidebar {
-            width: 250px;
-            background-color: #333;
-            color: #fff;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            padding-top: 20px;
-            display: flex;
-            flex-direction: column;
-        }
+{% block title %}Add Staff{% endblock %}
 
-        .sidebar h2 {
-            text-align: center;
-            font-size: 20px;
-            margin-bottom: 20px;
-        }
+{% block extra_head %}
+<style>
 
-        .sidebar a {
-            padding: 15px;
-            text-decoration: none;
-            color: #fff;
-            display: block;
-            font-size: 16px;
-        }
+    .sidebar {
+        width: 60px;
+        background-color: var(--sidebar-bg-color, #343a40);
+        height: calc(100vh - 60px);
+        padding-top: 20px;
+        position: fixed;
+        top: 60px;
+        left: 0;
+        overflow: hidden;
+        transition: width 0.3s;
+        z-index: 1002;
+        box-shadow: 0 1px 10px #0002;
+        color: white;
+    }
+    .sidebar:hover { width: 200px; }
+    .sidebar a {
+        padding: 12px 22px;
+        text-decoration: none;
+        font-size: 1rem;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        transition: background 0.2s;
+    }
+    .sidebar a i {
+        margin-right: 12px;
+        font-size: 1.2rem;
+        width: 24px;
+        text-align: center;
+    }
+    .sidebar a:hover { background-color: #007bff; }
+    .sidebar .text { display: none; }
+    .sidebar:hover .text { display: inline; }
+    .sidebar:hover ~ .main-content { margin-left: 200px; }
 
-        .sidebar a:hover {
-            background-color: #575757;
-        }
 
-        /* Main content styling */
-        .content {
-            margin-left: 250px; /* Offset by sidebar width */
-            padding: 20px;
-            width: 100%;
-        }
+    .main-content {
+        margin-left: 60px;
+        padding: 24px;
+        background: #f8fafc;
+        min-height: calc(100vh - 60px);
+    }
 
-        /* Centering the heading */
-        h1 {
-            text-align: center;
-            font-size: 24px;
-            color: #333;
-            margin-top: 20px;
-        }
+    .form-card {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+    }
 
-        /* Styling the form container */
-        .form-container {
-            max-width: 500px;
-            margin: 0 auto; /* Center the form on the page */
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-        }
+    .form-header {
+        
+        padding: 24px;
+        color: black;
+    }
 
-        /* Aligning each form field */
-        .form-field {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 15px;
-        }
+    .form-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
 
-        .form-field label {
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
+    .form-body {
+        padding: 32px;
+    }
 
-        /* Styling input fields and checkboxes */
-        .form-field input[type="text"],
-        .form-field input[type="email"],
-        .form-field input[type="number"],
-        .form-field select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
 
-        .form-field input[type="checkbox"] {
-            width: auto;
-            margin-right: 8px;
-        }
+    .form-group {
+        margin-bottom: 20px;
+    }
 
-        /* Styling the submit button */
-        .form-container button[type="submit"] {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
 
-        .form-container button[type="submit"]:hover {
-            background-color: #45a049;
-        }
-    </style>
-</head>
-<body>
+    .form-control, .form-select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+    }
 
-    <!-- Sidebar Navigation -->
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        padding-top: 24px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+    }
+    .btn-primary:hover { background: #2563eb; }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+    .btn-secondary:hover { background: #4b5563; }
+
+    .errorlist {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 4px;
+    }
+
+    .alert {
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+
+    .alert-danger {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+    }
+
+    @media (max-width: 768px) {
+        .main-content { margin-left: 0; padding: 16px; }
+        .form-row { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- SIDEBAR -->
     <div class="sidebar">
-        <h2>Dashboard</h2>
-        <a href="{% url 'player_list' %}">Player Dashboard</a>
-        <a href="{% url 'organization_list' %}">Organization Dashboard</a>
-        <a href="{% url 'add_organization' %}">Add Organization</a>
+        <a href="{% url 'super_admin_dashboard' %}">
+            <i class="fas fa-tachometer-alt"></i>
+            <span class="text">Dashboard</span>
+        </a>
+        <a href="{% url 'staff_list' %}">
+            <i class="fas fa-user-tie"></i>
+            <span class="text">Staff List</span>
+        </a>
+        <a href="{% url 'add_organization' %}">
+            <i class="fas fa-building"></i>
+            <span class="text">Add Organization</span>
+        </a>
+        <a href="{% url 'player_list' %}">
+            <i class="fas fa-users"></i>
+            <span class="text">Players</span>
+        </a>
+        <a href="{% url 'organization_list' %}">
+            <i class="fas fa-building"></i>
+            <span class="text">Organizations</span> 
+        </a>
+        <a href="{% url 'logout' %}">
+            <i class="fas fa-sign-out-alt"></i>
+            <span class="text">Logout</span>
+        </a>
     </div>
 
-    <!-- Main Content Area -->
-    <div class="content">
-        <!-- Centered Heading -->
-        <h1>Add Staff</h1>
+    <!-- MAIN FORM -->
+    <div class="form-card">
+        <div class="form-header">
+            <h1 class="form-title">
+                <i class="fas fa-user-plus me-2"></i>
+                Add New Staff
+            </h1>
+        </div>
 
-        <!-- Form with inline-styled container -->
-        <div class="form-container">
+        <div class="form-body">
+            {% if user_form.errors or staff_form.errors %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Please fix the errors below:
+                    {{ user_form.non_field_errors }}
+                    {{ staff_form.non_field_errors }}
+                </div>
+            {% endif %}
+
             <form method="post">
                 {% csrf_token %}
-
-                <!-- Display user_form fields with alignment -->
+                
+                <!-- USER FORM FIELDS -->
                 {% for field in user_form %}
-                    <div class="form-field">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <div class="form-group {% if field.field.name in 'username email password' %}form-row-item{% endif %}">
+                        <label class="form-label">{{ field.label }}</label>
                         {{ field }}
+                        {% if field.errors %}
+                            <div class="errorlist">{{ field.errors }}</div>
+                        {% endif %}
                     </div>
                 {% endfor %}
 
-                <!-- Display staff_form fields with alignment -->
-                {% for field in staff_form %}
-                    <div class="form-field">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {{ field }}
+                <!-- STAFF FORM FIELDS -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        {{ staff_form.name }}
+                        {% if staff_form.name.errors %}
+                            <div class="errorlist">{{ staff_form.name.errors }}</div>
+                        {% endif %}
                     </div>
-                {% endfor %}
+                    <div class="form-group">
+                        <label class="form-label">Age</label>
+                        {{ staff_form.age }}
+                        {% if staff_form.age.errors %}
+                            <div class="errorlist">{{ staff_form.age.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
 
-                <button type="submit">Add Staff</button>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Mobile Number</label>
+                        {{ staff_form.mobile_number }}
+                        {% if staff_form.mobile_number.errors %}
+                            <div class="errorlist">{{ staff_form.mobile_number.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Role</label>
+                        {{ staff_form.role }}
+                        {% if staff_form.role.errors %}
+                            <div class="errorlist">{{ staff_form.role.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Organization</label>
+                        {{ staff_form.organization }}
+                        {% if staff_form.organization.errors %}
+                            <div class="errorlist">{{ staff_form.organization.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        {{ staff_form.address }}
+                        {% if staff_form.address.errors %}
+                            <div class="errorlist">{{ staff_form.address.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <a href="{% url 'staff_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Add Staff
+                    </button>
+                </div>
             </form>
         </div>
     </div>
-
-</body>
-</html>
+</div>
+{% endblock %}

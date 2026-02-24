@@ -1,18 +1,132 @@
-<form method="post" id="edit-organization-form">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Update</button>
-</form>
+{% extends 'base_new.html' %}
 
-<script>
-    $('#edit-organization-form').on('submit', function(event) {
-        event.preventDefault();
-        var url = $(this).attr('action');
-        $.post(url, $(this).serialize(), function(data) {
-            if (data.success) {
-                alert(data.message);
-                location.reload();
-            }
-        });
-    });
-</script>
+{% block title %}Edit Organization{% endblock %}
+
+{% block extra_head %}
+<style>
+.main-content {
+    margin-left: 60px; padding: 40px;
+    min-height: calc(100vh - 60px);
+}
+.form-card {
+    max-width: 700px; margin: 0 auto;
+    background: white; border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef; overflow: hidden;
+}
+.form-header {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white; padding: 30px;
+    text-align: center;
+}
+.form-title {
+    font-size: 2rem; font-weight: 700; margin: 0;
+}
+.form-body {
+    padding: 40px;
+}
+.form-group {
+    margin-bottom: 25px;
+}
+.form-label {
+    display: block; font-weight: 600;
+    color: #2c3e50; margin-bottom: 8px;
+    font-size: 1.05rem;
+}
+.form-control {
+    width: 100%; padding: 15px 20px;
+    border: 2px solid #e9ecef; border-radius: 10px;
+    font-size: 1rem; transition: all 0.3s;
+}
+.form-control:focus {
+    outline: none; border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+}
+.btn {
+    padding: 14px 30px; border: none;
+    border-radius: 10px; font-weight: 600;
+    cursor: pointer; font-size: 1rem;
+    transition: all 0.3s; text-decoration: none;
+    display: inline-flex; align-items: center;
+    gap: 10px;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(52,152,219,0.4);
+}
+.btn-secondary {
+    background: #6c757d; color: white;
+}
+.btn-secondary:hover {
+    background: #5a6268; transform: translateY(-2px);
+}
+.alert {
+    padding: 15px 20px; border-radius: 10px;
+    margin-bottom: 20px;
+}
+.alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="form-card">
+        <div class="form-header">
+            <h1 class="form-title">
+                <i class="fas fa-edit me-3"></i>
+                Edit Organization
+            </h1>
+            <p class="mb-0 opacity-90">Update organization details</p>
+        </div>
+        
+        <div class="form-body">
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Please correct the following errors:
+                    {{ form.non_field_errors }}
+                    <ul>
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li>{{ field }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label class="form-label">Organization Name</label>
+                    {{ form.name }}
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    {{ form.phone_number }}
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Address</label>
+                    {{ form.address }}
+                </div>
+
+                <div class="d-flex gap-3 justify-content-end">
+                    <a href="{% url 'organization_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,254 +1,252 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Admin Dashboard</title>
+{% extends 'base_new.html' %}
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
+{% block title %}Super Admin Dashboard{% endblock %}
 
-        html, body {
-            height: 100%;
-            width: 100%;
-        }
-
-        body {
-            background-color: #f4f4f4;
-            display: flex;
-        }
-
-        .dashboard-container {
-            display: flex;
-            flex-grow: 1;
-            height: 100%;
-            width: 100%;
-            border: 1px solid #ddd;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background-color: #fff;
-        }
-
-        .sidebar {
-            width: 20%;
-            background-color: #2c3e50;
-            color: white;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            height: 100%;
-        }
-
-        .sidebar h2 {
-            margin-bottom: 20px;
-            font-size: 1.5em;
-        }
-
-        .sidebar ul {
-            list-style: none;
-            width: 100%;
-        }
-
-        .sidebar ul li {
-            margin-bottom: 15px;
-            width: 100%;
-        }
-
-        .sidebar ul li a {
-            color: white;
-            text-decoration: none;
-            font-size: 1.1em;
-            padding: 10px;
-            display: block;
-            width: 100%;
-            transition: background-color 0.3s ease;
-        }
-
-        .sidebar ul li a:hover {
-            background-color: #18bc9c;
-        }
-
-        .main-content {
-            flex-grow: 1;
-            padding: 40px;
-            background-color: #ecf0f1;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .main-content h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            color: #2c3e50;
-        }
-
-        .main-content p {
-            font-size: 1.2em;
-            color: #34495e;
-        }
-
-        .create-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background-color: #18bc9c;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 1.1em;
-            cursor: pointer;
-            border-radius: 5px;
-            text-decoration: none;
-        }
-
-        .create-btn:hover {
-            background-color: #16a085;
-        }
-
-        .filter-section {
-            margin-bottom: 20px;
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .filter-section select {
-            padding: 10px;
-            width: 100%;
-            font-size: 1.1em;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
-        .card {
-            background: white;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .card h4 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .logout-section {
+{% block extra_head %}
+<style>
+     .sidebar {
+            width: 60px;
+            background-color: var(--sidebar-bg-color, #343a40);
+            height: calc(100vh - 60px);
+            padding-top: 20px;
             position: fixed;
-            top: 80px;
-            right: 10px;
-            background-color: #f1f1f1;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
+            top: 60px;
+            left: 0;
+            overflow: hidden;
+            transition: width 0.3s;
+            z-index: 1002;
+            box-shadow: 0 1px 10px #0002;
+            color: white;
+        }
+        .sidebar:hover {
+            width: 200px;
+        }
+        .sidebar a {
+            padding: 12px 22px;
+            text-decoration: none;
+            font-size: 1rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .sidebar a i {
+            margin-right: 12px;
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+        .sidebar a:hover {
+            background-color: #007bff;
+        }
+        .sidebar .text {
+            display: none;
+        }
+        .sidebar:hover .text {
+            display: inline;
+        }
+        .sidebar:hover ~ .main-content {
+            margin-left: 250px;
         }
 
-        .logout-section button {
-            background-color: #dd1710;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            margin-left: 10px;
-            cursor: pointer;
-        }
+        /* Color Schemes */
+        .scheme1 { --navbar-bg-color: #4CAF50; --sidebar-bg-color: #388E3C; }
+        .scheme2 { --navbar-bg-color: #2196F3; --sidebar-bg-color: #1976D2; }
+        .scheme3 { --navbar-bg-color: #FF9800; --sidebar-bg-color: #F57C00; }
+        .scheme4 { --navbar-bg-color: #9C27B0; --sidebar-bg-color: #7B1FA2; }
+        .scheme5 { --navbar-bg-color: #343a40; --sidebar-bg-color: #343a40; }
 
         @media (max-width: 768px) {
-            .dashboard-container {
-                flex-direction: column;
-            }
-
-            .sidebar {
-                width: 100%;
-                height: auto;
-                padding: 10px;
-                text-align: center;
-            }
-
             .main-content {
-                padding: 20px;
+                margin-left: 0;
+            }
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .dropdown-menu {
+                right: -10px;
+                left: -10px;
+                min-width: calc(100vw - 20px);
             }
         }
-    </style>
-</head>
-<body>
-    <div class="dashboard-container">
-        <div class="sidebar">
-            <h2>Super Admin</h2>
-            <ul>
-                <li><a href="{% url 'organization_list' %}">Organization Dashboard</a></li>
-                <li><a href="{% url 'staff_list' %}">Staff Dashboard</a></li>
-                <li><a href="{% url 'player_list' %}">Player Dashboard</a></li>
-                <li><a href="{% url 'form:list_forms' %}">Forms Dashboard</a></li>
-            </ul>
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="dashboard-container">
+    <!-- Clean Sidebar -->
+
+
+    <div class="sidebar" id="sidebar">
+           
+            <a href="{% url 'organization_list' %}">
+                <i class="fas fa-building"></i>
+                <span class="text">Organizations</span>
+            </a>
+            
+
+           
+            <a href="{% url 'staff_list' %}">
+                <i class="fas fa-user-tie"></i>
+                <span class="text">Staff</span>
+            </a>
+            <a href="{% url 'player_list' %}">
+                <i class="fas fa-users"></i>
+                <span class="text">Players</span>
+            </a>
+            
+
+            <a href="{% url 'form:list_forms' %}">
+                <i class="fas fa-file-alt"></i>
+                <span class="text">Forms</span>
+            </a>
+            
+            
+           
+            <a href="{% url 'logout' %}">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="text">Logout</span>
+            </a>
+            
+
+            <a href="{% url 'export_players_to_excel' %}">
+                <i class="fas fa-file-excel"></i>
+                <span class="text">Download as Excel</span>
+            </a>
+            
+            
+            <!-- Color Scheme Switcher -->
+            
+    </div>
+
+    <!-- Clean Main Content -->
+    <div class="main-content">
+        <!-- Simple Header -->
+        <div style="margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div>
+                    <h1 style="font-size: 2.2rem; font-weight: 700; margin: 0; color: #2c3e50;">Super Admin Dashboard</h1>
+                    <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 1rem;">Manage your organizations, staff, and players</p>
+                </div>
+                <a href="{% url 'add_organization' %}" class="create-btn" style="background: #3498db; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; transition: background 0.2s; border: none;">
+                    <i class="fas fa-plus mr-2"></i>Add Organization
+                </a>
+            </div>
         </div>
 
-        <div class="logout-section">
-            {% if user.is_authenticated %}
-                <span><strong>{{ user.username }}</strong> - {{ user.get_role_display }}</span>
-                <form method="POST" action="{% url 'logout' %}" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit">Logout</button>
-                </form>
-            {% else %}
-                <span>Not logged in</span>
-            {% endif %}
+        <!-- Organization Filter -->
+        <div class="filter-section" style="background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 25px; border: 1px solid #e1e8ed;">
+            <label style="display: block; margin-bottom: 12px; font-weight: 600; color: #2c3e50; font-size: 1.05rem;">
+                Select Organization
+            </label>
+            <form method="GET" action="{% url 'super_admin_dashboard' %}">
+                <select name="organization" id="organization" onchange="this.form.submit()" style="width: 100%; padding: 12px 16px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 1rem; background: #f8f9fa;">
+                    <option value="">-- All Organizations --</option>
+                    {% for org in organizations %}
+                        <option value="{{ org.id }}" {% if org.id == selected_org_id %}selected{% endif %}>
+                            {{ org.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
         </div>
 
-        <div class="main-content">
-            <a href="{% url 'add_organization' %}" class="create-btn">Create New Organization</a>
-            <h1>Super Admin Dashboard</h1>
-            <p>Use the navigation to manage organizations, staff, and players.</p>
-
-            <!-- Organization Filter Dropdown -->
-            <div class="filter-section">
-                <label for="organization"><strong>Select Organization:</strong></label>
-                <form method="GET" action="{% url 'super_admin_dashboard' %}">
-                    <select name="organization" id="organization" onchange="this.form.submit()">
-                        <option value="">-- Select an Organization --</option>
-                        {% for org in organizations %}
-                            <option value="{{ org.id }}" {% if org.id == selected_org_id %}selected{% endif %}>
-                                {{ org.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </form>
+        <!-- Organization Details -->
+        {% if selected_org_id %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
+            <!-- Players Card -->
+            <div style="background: #fff; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border-left: 4px solid #3498db;">
+                <h4 style="margin: 0 0 20px 0; font-size: 1.3rem; font-weight: 600; color: #2c3e50; display: flex; align-items: center;">
+                    <i class="fas fa-users mr-2" style="color: #3498db;"></i>
+                    Players ({{ selected_org.name }})
+                </h4>
+                {% if players %}
+                    <div style="max-height: 350px; overflow-y: auto;">
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            {% for player in players %}
+                            <li style="padding: 12px; background: #f8f9fa; margin-bottom: 8px; border-radius: 8px; border-left: 3px solid #3498db;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="font-weight: 500;">{{ player.name }}</span>
+                                    <small style="color: #7f8c8d;">{{ player.email }}</small>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 30px; color: #95a5a6;">
+                        <i class="fas fa-users fa-2x mb-2" style="opacity: 0.5;"></i>
+                        <p>No players found</p>
+                    </div>
+                {% endif %}
             </div>
 
-            {% if selected_org_id %}
-                <div class="card">
-                    <h4>Players in {{ selected_org.name }}</h4>
-                    {% if players %}
-                        <ul>
-                            {% for player in players %}
-                                <li>{{ player.name }} - {{ player.email }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>No players found.</p>
-                    {% endif %}
-                </div>
-
-                <div class="card">
-                    <h4>Staff Members in {{ selected_org.name }}</h4>
-                    {% if staff_members %}
-                        <ul>
+            <!-- Staff Card -->
+            <div style="background: #fff; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border-left: 4px solid #e67e22;">
+                <h4 style="margin: 0 0 20px 0; font-size: 1.3rem; font-weight: 600; color: #2c3e50; display: flex; align-items: center;">
+                    <i class="fas fa-user-tie mr-2" style="color: #e67e22;"></i>
+                    Staff Members ({{ selected_org.name }})
+                </h4>
+                {% if staff_members %}
+                    <div style="max-height: 350px; overflow-y: auto;">
+                        <ul style="list-style: none; padding: 0; margin: 0;">
                             {% for staff in staff_members %}
-                                <li>{{ staff.name }} - {{ staff.email }}</li>
+                            <li style="padding: 12px; background: #f8f9fa; margin-bottom: 8px; border-radius: 8px; border-left: 3px solid #e67e22;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="font-weight: 500;">{{ staff.name }}</span>
+                                    <small style="color: #7f8c8d;">{{ staff.email }}</small>
+                                </div>
+                            </li>
                             {% endfor %}
                         </ul>
-                    {% else %}
-                        <p>No staff found.</p>
-                    {% endif %}
-                </div>
-            {% endif %}
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 30px; color: #95a5a6;">
+                        <i class="fas fa-user fa-2x mb-2" style="opacity: 0.5;"></i>
+                        <p>No staff found</p>
+                    </div>
+                {% endif %}
+            </div>
         </div>
+        {% endif %}
     </div>
-</body>
-</html>
+</div>
+
+<style>
+/* Simple hover effects */
+.sidebar a:hover,
+.create-btn:hover,
+li:hover {
+    background: #ecf0f1 !important;
+    color: #2c3e50 !important;
+    transform: translateX(3px);
+}
+
+.filter-section select:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-container {
+        flex-direction: column;
+    }
+    .sidebar {
+        order: 2;
+        width: 100%;
+        height: auto;
+        padding: 15px;
+    }
+    .main-content {
+        order: 1;
+        margin-left: 0;
+    }
+}
+</style>
+{% endblock %}

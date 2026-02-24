@@ -1,18 +1,106 @@
-<p>Are you sure you want to delete the organization "{{ organization.name }}"?</p>
-<form method="post" id="delete-organization-form">
-    {% csrf_token %}
-    <button type="submit">Yes, delete</button>
-</form>
+{% extends 'base_new.html' %}
 
-<script>
-    $('#delete-organization-form').on('submit', function(event) {
-        event.preventDefault();
-        var url = $(this).attr('action');
-        $.post(url, $(this).serialize(), function(data) {
-            if (data.success) {
-                alert(data.message);
-                location.reload();
-            }
-        });
-    });
-</script>
+{% block title %}Delete Organization{% endblock %}
+
+{% block extra_head %}
+<style>
+    .main-content {
+        margin-left: 60px; padding: 40px;
+        min-height: calc(100vh - 60px);
+    }
+    .delete-card {
+        max-width: 600px; margin: 0 auto;
+        background: white; border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(231,76,60,0.2);
+        border: 1px solid #f1f3f4; overflow: hidden;
+    }
+    .delete-header {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white; padding: 30px;
+        text-align: center;
+    }
+    .delete-title {
+        font-size: 1.8rem; font-weight: 700; margin: 0 0 10px 0;
+    }
+    .org-name {
+        font-size: 1.4rem; font-weight: 600;
+        background: rgba(255,255,255,0.2); padding: 8px 20px;
+        border-radius: 25px; display: inline-block;
+    }
+    .delete-body {
+        padding: 40px; text-align: center;
+    }
+    .warning-icon {
+        font-size: 4rem; color: #e74c3c;
+        margin-bottom: 20px;
+    }
+    .warning-text {
+        color: #2c3e50; font-size: 1.1rem;
+        margin-bottom: 30px;
+    }
+    .btn {
+        padding: 14px 30px; border: none;
+        border-radius: 10px; font-weight: 600;
+        cursor: pointer; font-size: 1rem;
+        transition: all 0.3s; text-decoration: none;
+        display: inline-flex; align-items: center;
+        gap: 10px; margin: 0 10px;
+    }
+    .btn-danger {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+    }
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(231,76,60,0.4);
+    }
+    .btn-secondary {
+        background: #6c757d; color: white;
+    }
+    .btn-secondary:hover {
+        background: #5a6268; transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="delete-card">
+        <div class="delete-header">
+            <h1 class="delete-title">
+                <i class="fas fa-exclamation-triangle me-3"></i>
+                Delete Organization
+            </h1>
+        </div>
+        
+        <div class="delete-body">
+            <div class="warning-icon">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            
+            <h2>Delete <span class="org-name">{{ organization.name }}</span>?</h2>
+            <p class="warning-text">
+                This action <strong>cannot be undone</strong>. 
+                This will permanently delete the organization and all related data.
+            </p>
+            
+            <p class="text-muted mb-4">
+                <strong>Phone:</strong> {{ organization.phone_number }}<br>
+                <strong>Address:</strong> {{ organization.address|truncatechars:50 }}
+            </p>
+
+            <form method="POST" style="display: inline;">
+                {% csrf_token %}
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{% url 'organization_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you absolutely sure? This cannot be undone.')">
+                        <i class="fas fa-trash"></i> Yes, Delete Forever
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

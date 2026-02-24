@@ -1,0 +1,258 @@
+{% extends 'base_new.html' %}
+
+{% block title %}Delete Staff{% endblock %}
+
+{% block extra_head %}
+<style>
+
+    .sidebar {
+        width: 60px;
+        background-color: var(--sidebar-bg-color, #343a40);
+        height: calc(100vh - 60px);
+        padding-top: 20px;
+        position: fixed;
+        top: 60px;
+        left: 0;
+        overflow: hidden;
+        transition: width 0.3s;
+        z-index: 1002;
+        box-shadow: 0 1px 10px #0002;
+        color: white;
+    }
+    .sidebar:hover { width: 200px; }
+    .sidebar a {
+        padding: 12px 22px;
+        text-decoration: none;
+        font-size: 1rem;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        transition: background 0.2s;
+    }
+    .sidebar a i {
+        margin-right: 12px;
+        font-size: 1.2rem;
+        width: 24px;
+        text-align: center;
+    }
+    .sidebar a:hover { background-color: #007bff; }
+    .sidebar .text { display: none; }
+    .sidebar:hover .text { display: inline; }
+    .sidebar:hover ~ .main-content { margin-left: 200px; }
+
+    
+    .main-content {
+        margin-left: 60px;
+        padding: 24px;
+        background: #f8fafc;
+        min-height: calc(100vh - 60px);
+    }
+
+    .form-card {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+    }
+
+    .form-header {
+        background: #fef2f2;
+        padding: 24px;
+        border-bottom: 1px solid #fecaca;
+    }
+
+    .form-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #dc2626;
+    }
+
+    .staff-details {
+        background: #f8fafc;
+        padding: 24px;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 0;
+    }
+
+    .detail-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 16px;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #64748b;
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .detail-value {
+        font-size: 1.1rem;
+        color: #1e293b;
+        font-weight: 500;
+    }
+
+    .warning-box {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 24px;
+    }
+
+    .warning-icon {
+        font-size: 2rem;
+        color: #d97706;
+        margin-right: 12px;
+    }
+
+    .warning-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #92400e;
+        margin: 0 0 8px 0;
+    }
+
+    .warning-text {
+        color: #a16207;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        padding-top: 24px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-danger {
+        background: #dc2626;
+        color: white;
+    }
+    .btn-danger:hover { background: #b91c1c; }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+    .btn-secondary:hover { background: #4b5563; }
+
+    @media (max-width: 768px) {
+        .main-content { margin-left: 0; padding: 16px; }
+        .detail-row { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    
+    <div class="sidebar">
+        <a href="{% url 'super_admin_dashboard' %}">
+            <i class="fas fa-tachometer-alt"></i>
+            <span class="text">Dashboard</span>
+        </a>
+        <a href="{% url 'staff_list' %}">
+            <i class="fas fa-user-tie"></i>
+            <span class="text">Staff</span>
+        </a>
+        <a href="{% url 'player_list' %}">
+            <i class="fas fa-users"></i>
+            <span class="text">Players</span>
+        </a>
+        <a href="{% url 'organization_list' %}">
+            <i class="fas fa-building"></i>
+            <span class="text">Organizations</span>
+        </a>
+        <a href="{% url 'logout' %}">
+            <i class="fas fa-sign-out-alt"></i>
+            <span class="text">Logout</span>
+        </a>
+    </div>
+
+    <div class="form-card">
+        <div class="form-header">
+            <h1 class="form-title">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Delete Staff: {{ staff.name }}
+            </h1>
+        </div>
+
+        <div class="staff-details">
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-label">Name</span>
+                    <span class="detail-value">{{ staff.name }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Role</span>
+                    <span class="detail-value">{{ staff.get_role_display }}</span>
+                </div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value">{{ staff.email|default:"Not provided" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Mobile</span>
+                    <span class="detail-value">{{ staff.mobile_number|default:"Not provided" }}</span>
+                </div>
+            </div>
+            {% if staff.organization %}
+            <div class="detail-row">
+                <div class="detail-item">
+                    <span class="detail-label">Organization</span>
+                    <span class="detail-value">{{ staff.organization.name }}</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="btn-group">
+                    <a href="{% url 'staff_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you absolutely sure you want to delete {{ staff.name }}? This action cannot be undone.')">
+                        <i class="fas fa-trash"></i> Yes, Delete Staff
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

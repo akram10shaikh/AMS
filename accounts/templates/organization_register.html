@@ -1,175 +1,287 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Organization</title>
-    <style>
-        /* General page styling */
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+{% extends 'base_new.html' %}
 
-        /* Sidebar Navigation styling */
-        .sidebar {
-            background-color: #333;
-            width: 250px;
-            height: 100vh;
-            padding: 20px;
-            position: fixed;
-            left: 0;
-            top: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-        }
+{% block title %}Register Organization{% endblock %}
 
-        .sidebar h2 {
-            color: white;
-            text-align: center;
-            margin-bottom: 30px;
-        }
+{% block extra_head %}
+<style>
+/* PERFECT SIDEBAR */
+.sidebar {
+    width: 60px;
+    background-color: var(--sidebar-bg-color, #343a40);
+    height: calc(100vh - 60px);
+    padding-top: 20px;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    overflow: hidden;
+    transition: width 0.3s;
+    z-index: 1002;
+    box-shadow: 0 1px 10px #0002;
+    color: white;
+}
+.sidebar:hover { width: 200px; }
+.sidebar a {
+    padding: 12px 22px;
+    text-decoration: none;
+    font-size: 1rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+.sidebar a i {
+    margin-right: 12px;
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+}
+.sidebar a:hover { background-color: #007bff; }
+.sidebar .text { display: none; }
+.sidebar:hover .text { display: inline; }
+.sidebar:hover ~ .main-content { margin-left: 200px; }
 
-        .sidebar ul {
-            list-style-type: none;
-            padding: 0;
-        }
+/* MAIN CONTENT */
+.main-content {
+    margin-left: 60px;
+    padding: 24px;
+    background: #f8fafc;
+    min-height: calc(100vh - 60px);
+}
 
-        .sidebar ul li {
-            margin-bottom: 20px;
-        }
+.form-card {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
 
-        .sidebar ul li a {
-            color: white;
-            text-decoration: none;
-            font-size: 18px;
-            font-weight: bold;
-            display: block;
-            padding: 10px 0;
-            text-align: center;
-            background-color: #444;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
+.form-header {
+    background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+    padding: 24px;
+    border-bottom: 1px solid #e2e8f0;
+}
 
-        .sidebar ul li a:hover {
-            background-color: #48c6ef;
-        }
+.form-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: black;
+}
 
-        /* Container for the form - centered */
-        .register-container {
-            background-color: white;
-            width: 500px;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            margin-left: 270px; /* Adjusting for sidebar width */
-        }
+.form-body {
+    padding: 32px;
+}
 
-        h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #333;
-            text-align: center;
-        }
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
 
-        /* Form styling */
-        form {
-            width: 100%; /* Make the form take full width */
-        }
+.form-group {
+    margin-bottom: 20px;
+}
 
-        input[type="text"], input[type="email"], textarea {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
+.form-label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
 
-        textarea {
-            resize: none;
-        }
+.form-control, .form-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
 
-        input[type="text"]:focus, input[type="email"]:focus, textarea:focus {
-            border-color: #48c6ef;
-            outline: none;
-            box-shadow: 0 0 8px rgba(72, 198, 239, 0.4);
-        }
+.form-control:focus, .form-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
 
-        .register-button {
-            padding: 12px;
-            background-color: #48c6ef;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            width: 100%;
-        }
+.btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 24px;
+    border-top: 1px solid #e2e8f0;
+}
 
-        .register-button:hover {
-            background-color: #48a2d1;
-        }
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
 
-        /* Footer for redirecting */
-        .register-footer {
-            margin-top: 15px;
-            text-align: center;
-        }
+.btn-primary { background: #3b82f6; color: white; }
+.btn-primary:hover { background: #2563eb; }
+.btn-secondary { background: #6b7280; color: white; }
+.btn-secondary:hover { background: #4b5563; }
 
-        .register-footer a {
-            color: #48c6ef;
-            text-decoration: none;
-            font-weight: bold;
-        }
+.errorlist {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 4px;
+}
 
-        .register-footer a:hover {
-            text-decoration: underline;
-        }
+.alert {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
 
-    </style>
-</head>
-<body>
+.alert-danger { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
 
-    <!-- Sidebar Navigation -->
+@media (max-width: 768px) {
+    .main-content { margin-left: 0; padding: 16px; }
+    .form-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- SIDEBAR -->
     <div class="sidebar">
-        <h2>Dashboard</h2>
-        <ul>
-            <li><a href="{% url 'add_organization' %}">Add Organization</a></li>
-            <li><a href="{% url 'player_create' %}">Add Player</a></li>
-            <li><a href="{% url 'add_staff' %}">Add Staff</a></li>
-            <li><a href="{% url 'form:list_forms' %}">Create Forms</a></li>
-        </ul>
+        <a href="{% url 'super_admin_dashboard' %}">
+            <i class="fas fa-tachometer-alt"></i>
+            <span class="text">Dashboard</span>
+        </a>
+        <a href="{% url 'add_organization' %}">
+            <i class="fas fa-building"></i>
+            <span class="text">Add Organization</span>
+        </a>
+        <a href="{% url 'player_list' %}">
+            <i class="fas fa-users"></i>
+            <span class="text">Players</span>
+        </a>
+        <a href="{% url 'form:list_forms' %}">
+            <i class="fas fa-file-alt"></i>
+            <span class="text">Forms</span>
+        </a>
+        <a href="{% url 'staff_list' %}">
+            <i class="fas fa-user-tie"></i>
+            <span class="text">Staff</span>
+        </a>
+        <a href="{% url 'logout' %}">
+            <i class="fas fa-sign-out-alt"></i>
+            <span class="text">Logout</span>
+        </a>
     </div>
 
-    <!-- Form container - Centered -->
-    <div class="register-container">
-        <h1>Add Organization</h1>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="register-button">Add</button>
-        </form>
+    <!-- FORM -->
+    <div class="form-card">
+        <div class="form-header">
+            <h1 class="form-title">
+               
+                Add Organization
+            </h1>
+        </div>
 
-        <!-- Footer -->
-        <div class="register-footer">
+        <div class="form-body">
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Please fix the errors below:
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
 
+          
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">{{ form.name.label }}</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="errorlist">{{ form.name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">{{ form.phone_number.label }}</label>
+                        {{ form.phone_number }}
+                        {% if form.phone_number.errors %}
+                            <div class="errorlist">{{ form.phone_number.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">{{ form.email.label }}</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="errorlist">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">{{ form.role.label }}</label>
+                        {{ form.role }}
+                        {% if form.role.errors %}
+                            <div class="errorlist">{{ form.role.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">{{ form.password.label }}</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <div class="errorlist">{{ form.password.errors }}</div>
+                        {% endif %}
+                    </div>
+                  
+                    <div class="form-group">
+                        <label class="form-label">{{ form.image.label }}</label>
+                        {{ form.image }}
+                        {% if form.image.errors %}
+                            <div class="errorlist">{{ form.image.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Upload organization logo (JPG, PNG)</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">{{ form.address.label }}</label>
+                    {{ form.address }}
+                    {% if form.address.errors %}
+                        <div class="errorlist">{{ form.address.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="btn-group">
+                    <a href="{% url 'organization_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-building"></i> Create Organization
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
-
-</body>
-</html>
+</div>
+{% endblock %}

@@ -1,226 +1,288 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Management</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body {
-            display: flex;
-        }
-        /* Sidebar styles */
-        .sidebar {
-            width: 250px;
-            height: 100vh;
-            position: fixed;
-            background-color: #000; /* Black background */
-            padding-top: 20px;
-        }
-        .sidebar .nav-link {
-            color: #fff; /* White text for links */
-        }
-        .sidebar .nav-link:hover {
-            background-color: #444; /* Dark gray background on hover */
-            color: #fff;
-        }
-        .content {
-            margin-left: 270px; /* Space for the sidebar */
-            padding: 20px;
-            width: calc(100% - 270px); /* Adjust content width */
-        }
-    </style>
-</head>
-<body>
+{% extends 'base_new.html' %}
 
-<!-- Sidebar -->
-<div class="sidebar">
-    <h3 class="text-center text-white">Menu</h3>
-    <div class="list-group list-group-flush">
-        <a href="{% url 'organization_list' %}" class="list-group-item list-group-item-action bg-black">Organization Dashboard</a>
-        <a href="{% url 'staff_register' %}" class="list-group-item list-group-item-action bg-black">Add Staff</a>
-        <a href="{% url 'player_list' %}" class="list-group-item list-group-item-action bg-black">Player Dashboard</a>
+{% block title %}Staff Management{% endblock %}
+
+{% block extra_head %}
+<style>
+/* KEEP YOUR PERFECT SIDEBAR */
+.sidebar {
+    width: 60px;
+    background-color: var(--sidebar-bg-color, #343a40);
+    height: calc(100vh - 60px);
+    padding-top: 20px;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    overflow: hidden;
+    transition: width 0.3s;
+    z-index: 1002;
+    box-shadow: 0 1px 10px #0002;
+    color: white;
+}
+.sidebar:hover { width: 200px; }
+.sidebar a {
+    padding: 12px 22px;
+    text-decoration: none;
+    font-size: 1rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+.sidebar a i {
+    margin-right: 12px;
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+}
+.sidebar a:hover { background-color: #007bff; }
+.sidebar .text { display: none; }
+.sidebar:hover .text { display: inline; }
+.sidebar:hover ~ .main-content { margin-left: 200px; }
+
+/* MINIMAL CLEAN DESIGN */
+.main-content {
+    margin-left: 20px;
+    padding: 20px;
+    transition: margin-left 0.3s ease;
+    background: #f8fafc;
+    min-height: calc(100vh - 60px);
+}
+
+.content-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.card-header {
+    background: #f1f5f9;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.card-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.table-container {
+    padding: 24px;
+}
+
+.table {
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table th {
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 16px 20px;
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+}
+
+.table tr:hover {
+    background: #f8fafc;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    margin-right: 8px;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+.btn-primary:hover { background: #2563eb; }
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+}
+.btn-danger:hover { background: #dc2626; }
+
+.name-badge {
+    background: #3b82f6;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.permission-tag {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin: 1px;
+}
+
+.permission-player { background: #10b981; color: white; }
+.permission-injury { background: #f59e0b; color: white; }
+.permission-form { background: #3b82f6; color: white; }
+.permission-result { background: #ef4444; color: white; }
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+    .main-content { margin-left: 0; padding: 16px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- YOUR PERFECT SIDEBAR -->
+    <div class="sidebar">
+        <a href="{% url 'super_admin_dashboard' %}">
+            <i class="fas fa-tachometer-alt"></i>
+            <span class="text">Dashboard</span>
+        </a>
+        <a href="{% url 'staff_register_org' %}">
+            <i class="fas fa-user-tie"></i>
+            <span class="text">Add Staff</span>
+        </a>
+        <a href="{% url 'player_list' %}">
+            <i class="fas fa-users"></i>
+            <span class="text">Players</span>
+        </a>
+        <a href="{% url 'organization_list' %}">
+            <i class="fas fa-building"></i>
+            <span class="text">Organizations</span>
+        </a>
+        <a href="{% url 'logout' %}">
+            <i class="fas fa-sign-out-alt"></i>
+            <span class="text">Logout</span>
+        </a>
     </div>
-</div>
 
-<!-- Main Content -->
-<div class="content">
-    <div class="container mt-5">
-        <h2 class="text-center">Staff List</h2>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Age</th>
-                    <th>Mobile Number</th>
-                    <th>Email</th>
-                    <th>Address</th>
-                    <th>Organization</th>
-                    <th>Permissions</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for staff in staff_members %}
-                <tr id="staff-{{ staff.id }}">
-                    <td>{{ staff.name }}</td>
-                    <td>{{ staff.age }}</td>
-                    <td>{{ staff.mobile_number }}</td>
-                    <td>{{ staff.email }}</td>
-                    <td>{{ staff.address }}</td>
-                    <td>{{ staff.organization.name }}</td>
-                    <td>
-                        {% if staff.player_management %}Player Management{% endif %}
-                        {% if staff.injury_tracking %}Injury Tracking{% endif %}
-                        {% if staff.add_form %}Add Form{% endif %}
-                        {% if staff.add_result %}Add Result{% endif %}
-                        {% if staff.view_result %}View Result{% endif %}
-                    </td>
-                    <td>
-                        <button class="btn btn-primary btn-sm edit-btn" data-id="{{ staff.id }}">Edit</button>
-                        <button class="btn btn-danger btn-sm delete-btn" data-id="{{ staff.id }}">Delete</button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Edit Modal -->
-<div class="modal fade" id="editModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Staff</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+    <!-- CLEAN MINIMAL CONTENT -->
+    <div class="content-card">
+        <div class="card-header">
+            <h1 class="card-title">Staff Management</h1>
+        </div>
+        
+        <div class="table-container">
+            {% if staff_members %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>Mobile</th>
+                        <th>Email</th>
+                        <th>Address</th>
+                        <th>Organization</th>
+                        <th>Permissions</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for staff in staff_members %}
+                    <tr>
+                        <td>{{ staff.name }}</td>
+                        <td>{{ staff.age }}</td>
+                        <td>{{ staff.mobile_number }}</td>
+                        <td>{{ staff.email }}</td>
+                        <td>{{ staff.address|truncatechars:25 }}</td>
+                        <td>{{ staff.organization.name }}</td>
+                        <td>
+                            {% if staff.player_management %}
+                                <span class="permission-tag permission-player">Player</span>
+                            {% endif %}
+                            {% if staff.injury_tracking %}
+                                <span class="permission-tag permission-injury">Injury</span>
+                            {% endif %}
+                            {% if staff.add_form %}
+                                <span class="permission-tag permission-form">Form</span>
+                            {% endif %}
+                            {% if staff.add_result %}
+                                <span class="permission-tag permission-result">Result</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'staff_edit' staff.id %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'staff_delete' staff.id %}" class="btn btn-danger btn-sm delete-btn" >
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users-slash"></i>
+                <h3>No Staff Members</h3>
+                <p>Add your first staff member to get started.</p>
+                <a href="{% url 'add_staff' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Staff
+                </a>
             </div>
-            <div class="modal-body">
-                <form id="editForm">
-                    {% csrf_token %}
-                    <input type="hidden" id="edit-staff-id">
-                    <div class="form-group">
-                        <label for="edit-name">Name</label>
-                        <input type="text" class="form-control" id="edit-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-age">Age</label>
-                        <input type="number" class="form-control" id="edit-age" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-mobile_number">Mobile Number</label>
-                        <input type="text" class="form-control" id="edit-mobile_number" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-email">Email</label>
-                        <input type="email" class="form-control" id="edit-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-address">Address</label>
-                        <textarea class="form-control" id="edit-address" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-organization">Organization</label>
-                        <select class="form-control" id="edit-organization" required>
-                            {% for org in organizations %}
-                                <option value="{{ org.id }}">{{ org.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group form-check">
-                        <input type="checkbox" class="form-check-input" id="edit-player_management">
-                        <label class="form-check-label" for="edit-player_management">Player Management</label>
-                    </div>
-                    <div class="form-group form-check">
-                        <input type="checkbox" class="form-check-input" id="edit-injury_tracking">
-                        <label class="form-check-label" for="edit-injury_tracking">Injury Tracking</label>
-                    </div>
-                    <div class="form-group form-check">
-                        <input type="checkbox" class="form-check-input" id="edit-add_form">
-                        <label class="form-check-label" for="edit-add_form">Add Form</label>
-                    </div>
-                    <div class="form-group form-check">
-                        <input type="checkbox" class="form-check-input" id="edit-add_result">
-                        <label class="form-check-label" for="edit-add_result">Add Result</label>
-                    </div>
-                    <div class="form-group form-check">
-                        <input type="checkbox" class="form-check-input" id="edit-view_result">
-                        <label class="form-check-label" for="edit-view_result">View Result</label>
-                    </div>
-                    <button type="button" class="btn btn-primary" id="update-btn">Update</button>
-                </form>
-            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 $(document).ready(function() {
-    $('.edit-btn').on('click', function() {
-        var staffId = $(this).data('id');
-        $.get(`/staff/${staffId}/edit/`, function(data) {
-            $('#edit-staff-id').val(data.id);
-            $('#edit-name').val(data.name);
-            $('#edit-age').val(data.age);
-            $('#edit-mobile_number').val(data.mobile_number);
-            $('#edit-email').val(data.email);
-            $('#edit-address').val(data.address);
-            $('#edit-organization').val(data.organization);
-            $('#edit-player_management').prop('checked', data.player_management);
-            $('#edit-injury_tracking').prop('checked', data.injury_tracking);
-            $('#edit-add_form').prop('checked', data.add_form);
-            $('#edit-add_result').prop('checked', data.add_result);
-            $('#edit-view_result').prop('checked', data.view_result);
-            $('#editModal').modal('show');
-        });
+    $('.delete-btn').click(function() {
+        $('#delete-staff-id').val($(this).data('id'));
+        $('#deleteModal').modal('show');
     });
 
-    $('#update-btn').on('click', function() {
-        var staffId = $('#edit-staff-id').val();
-        $.ajax({
-            url: `/staff/${staffId}/update/`,
-            type: 'POST',
-            data: {
-                'name': $('#edit-name').val(),
-                'age': $('#edit-age').val(),
-                'mobile_number': $('#edit-mobile_number').val(),
-                'email': $('#edit-email').val(),
-                'address': $('#edit-address').val(),
-                'organization': $('#edit-organization').val(),
-                'player_management': $('#edit-player_management').is(':checked'),
-                'injury_tracking': $('#edit-injury_tracking').is(':checked'),
-                'add_form': $('#edit-add_form').is(':checked'),
-                'add_result': $('#edit-add_result').is(':checked'),
-                'view_result': $('#edit-view_result').is(':checked'),
-                'csrfmiddlewaretoken': '{{ csrf_token }}'
-            },
-            success: function(data) {
-                $('#editModal').modal('hide');
-                location.reload();
-            }
-        });
-    });
-
-    $('.delete-btn').on('click', function() {
-        var staffId = $(this).data('id');
-        if (confirm('Are you sure you want to delete this staff member?')) {
-            $.ajax({
-                url: `/staff/${staffId}/delete/`,
-                type: 'POST',
-                data: {
-                    'csrfmiddlewaretoken': '{{ csrf_token }}'
-                },
-                success: function() {
-                    $('#staff-' + staffId).remove();
-                }
-            });
-        }
+    $('#confirm-delete').click(function() {
+        var staffId = $('#delete-staff-id').val();
+        $.post(`/staff/${staffId}/delete/`, $('#deleteForm').serialize())
+            .done(function() {
+                $(`#staff-${staffId}`).fadeOut(300, function() { $(this).remove(); });
+                $('#deleteModal').modal('hide');
+            })
+            .fail(function() { alert('Delete failed'); });
     });
 });
 </script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-</html>
+{% endblock %}

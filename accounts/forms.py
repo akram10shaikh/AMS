@@ -7,21 +7,42 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+ROLE_CHO = [
+        ('OrganizationAdmin', 'Organization Admin'),
+    ]   
+
 class OrganizationRegistrationForm(forms.ModelForm):
     email = forms.EmailField(required=True)
     password = forms.CharField(widget=forms.PasswordInput)
-
+    image = forms.ImageField(required=False,label="Organization Logo/Profile Image",widget=forms.FileInput(attrs={'class': 'form-control'}))
+    role = forms.ChoiceField(
+        choices=ROLE_CHO,
+        required=False  
+    )
     class Meta:
         model = Organization
-        fields = ['name', 'phone_number', 'address','role']
+        fields = ['name', 'phone_number', 'address', 'role']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'role': forms.Select(attrs={'class': 'form-control'}),
+        }
 
     def save(self, commit=True):
+       
         user = User.objects.create_user(
             username=self.cleaned_data['email'],
             email=self.cleaned_data['email'],
             password=self.cleaned_data['password'],
             role=self.cleaned_data['role'],
         )
+        
+
+        if self.cleaned_data['image']:
+            user.image = self.cleaned_data['image']
+            user.save()
+
         organization = super().save(commit=False)
         organization.user = user
         if commit:
@@ -106,9 +127,21 @@ class StaffRegistrationForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super(StaffRegistrationForm, self).__init__(*args, **kwargs)
-        # Dynamically filter organizations if needed (e.g., based on logged-in user's org)
-        # self.fields['organization'].queryset = Organization.objects.filter(user=self.user)
+        super(StaffRegistrationFormOrg, self).__init__(*args, **kwargs)
+        
+        # ✅ POPULATE ORGANIZATION DROPDOWN with ALL organizations
+        self.fields['organization'].queryset = Organization.objects.all().order_by('name')
+        
+        # Optional: Filter organizations if needed (uncomment below)
+        # request = kwargs.pop('request', None)
+        # if request and request.user.organization:
+        #     self.fields['organization'].queryset = Organization.objects.filter(
+        #         id=request.user.organization.id
+        #     )
+        
+        # Make organization required
+        self.fields['organization'].required = True
+        self.fields['organization'].empty_label = "Select an organization"
 
 
 # NEw
@@ -120,7 +153,7 @@ class StaffRegistrationFormOrg(forms.ModelForm):
                   'player_management', 'injury_tracking', 'add_form',
                   'add_result', 'view_result', 'create_camps_tournaments',
                   'view_camps_tournaments', 'create_program', 'assign_program',
-                  'view_programs', 'staff_role']
+                  'view_programs', 'staff_role','organization']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'age': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -137,7 +170,8 @@ class StaffRegistrationFormOrg(forms.ModelForm):
             'create_program': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'assign_program': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'view_programs': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'staff_role': forms.Select(attrs={'class': 'form-control'})
+            'staff_role': forms.Select(attrs={'class': 'form-control'}),
+            'organization': forms.Select(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -151,11 +185,43 @@ ROLE_CHOICES = [
         ('Staff', 'Staff'),
     ]
 class UserFormOrg(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput())
+   
     role = forms.ChoiceField(
         choices=ROLE_CHOICES,
-        required=False  # required only if user_role == 'Staff'
+        required=False  
     )
     class Meta:
         model = User
-        fields = ['username', 'password','role']
+        fields = ['username', 'password','role','image']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'password': forms.PasswordInput(attrs={'class': 'form-control'}),
+            'role': forms.Select(attrs={'class': 'form-control'}),
+            'image': forms.FileInput(attrs={'class': 'form-control'})
+        }
+
+
+
+
+class StaffForms(forms.ModelForm):
+    class Meta:
+        model = Staff
+        fields = [
+            'name', 'age', 'mobile_number', 'email', 'address',
+            'role', 'staff_role', 'organization',
+            'player_management', 'injury_tracking', 'create_injury',
+            'view_injuries', 'update_injury_status', 'close_injuries',
+            'add_form', 'add_result', 'view_result',
+            'create_camps_tournaments', 'view_camps_tournaments',
+            'create_program', 'assign_program', 'view_programs'
+        ]
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'age': forms.NumberInput(attrs={'class': 'form-control', 'min': 18}),
+            'mobile_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'role': forms.Select(attrs={'class': 'form-select'}),
+            'staff_role': forms.Select(attrs={'class': 'form-select'}),
+            'organization': forms.Select(attrs={'class': 'form-select'}),
+        }

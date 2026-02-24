@@ -34,6 +34,7 @@ class Organization(models.Model):
     phone_number = models.CharField(max_length=15, blank=True)
     address = models.TextField(blank=True)
     role = models.CharField(max_length=20, default='OrganizationAdmin')
+   
 
     def __str__(self):
         return self.name
