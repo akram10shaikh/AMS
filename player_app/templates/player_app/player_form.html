@@ -1,86 +1,184 @@
-<!--player_form.html-->
-
-
+{% extends 'base.html' %}
 
 {% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Player{% endblock %}
 
-{% block content %}
-
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% if form.instance.pk %}Edit your{% else %}Add{% endif %} Player Details</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <style>
-        .form-group {
-            margin-bottom: 1rem;
+{% block extra_head %}
+<style>
+    body {
+        background-color: #ffffff;
+        color: #000000;
+    }
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    .container {
+        max-width: 900px;
+        margin: 50px auto;
+        padding: 30px;
+        background: #1e1a1a;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        color: #ffffff;
+        border: 1px solid #333333;
+    }
+    .btn-submit {
+        background: linear-gradient(135deg, #6200EE, #4a00b3);
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(98, 0, 238, 0.4);
+    }
+    .section-heading {
+        margin: 2rem 0 1.5rem 0;
+        padding-bottom: 10px;
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #6200EE;
+        border-bottom: 2px solid #6200EE;
+        position: relative;
+    }
+    .section-heading::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -2px;
+        width: 50px;
+        height: 2px;
+        background: linear-gradient(90deg, #00ff88, #ffaa00);
+    }
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    .form-row > .form-group {
+        flex: 1;
+        min-width: 300px;
+    }
+   
+    h1 {
+        color: #6200EE;
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 20px;
+        text-shadow: 0 2px 10px rgba(98, 0, 238, 0.3);
+    }
+    label {
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 8px;
+        display: block;
+    }
+    input, select, textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #333333;
+        border-radius: 8px;
+        background: #1c1c1c;
+        color: #ffffff;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #6200EE;
+        box-shadow: 0 0 0 3px rgba(98, 0, 238, 0.2);
+        background: #222222;
+    }
+    .errorlist {
+        color: #ff4757;
+        background: rgba(255, 71, 87, 0.1);
+        padding: 8px 12px;
+        border-radius: 6px;
+        border-left: 4px solid #ff4757;
+        margin-top: 5px;
+        font-size: 0.9rem;
+    }
+    .small-image {
+        max-width: 150px;
+        max-height: 150px;
+        border-radius: 8px;
+        border: 2px solid #6200EE;
+        margin-top: 10px;
+        transition: all 0.3s ease;
+    }
+    .small-image:hover {
+        transform: scale(1.05);
+    }
+    .required::after {
+        content: " *";
+        color: #ff4757;
+    }
+    .form-hint {
+        color: #00ff88;
+        font-size: 0.9rem;
+        margin-top: 5px;
+        font-style: italic;
+    }
+    .medical-documents-section {
+        background: #1c1c1c;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        border-left: 4px solid #6200EE;
+    }
+    .medical-documents-section h4 {
+        margin-top: 0;
+        color: #6200EE;
+    }
+    .medical-documents-section ul {
+        list-style: none;
+        padding: 0;
+    }
+    .medical-documents-section li {
+        padding: 10px;
+        background: #2c2c2c;
+        margin: 5px 0;
+        border-radius: 6px;
+    }
+    @media (max-width: 768px) {
+        .form-row > .form-group {
+            min-width: 100%;
         }
         .container {
-            max-width: 900px;
-            margin-top: 50px;
+            margin: 20px 10px;
             padding: 20px;
-            background: black; /* Changed background to black */
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            color: white; /* Ensuring text is readable */
         }
-        .btn-submit {
-            background-color: #6200EE;
-            color: white;
-        }
-        .section-heading {
-            margin-top: 1.5rem;
-            margin-bottom: 1rem;
-            font-size: 1.25rem;
-            font-weight: bold;
-            border-bottom: 2px solid #6200EE;
-            padding-bottom: 5px;
-        }
-        .form-row > .form-group {
-            padding-right: 15px;
-        }
-        body {
-            background-color: black; /* Changed background to black */
-            color: white; /* Ensuring text is readable */
-        }
-        h1 {
-            color: #6200EE;
-        }
-        .errorlist {
-            color: red;
-        }
-        .small-image {
-            max-width: 150px;
-            max-height: 150px;
-            display: block;
-            margin-top: 10px;
-        }
-        .required::after {
-            content: " *";
-            color: red;
-        }
-    </style>
-</head>
-<body>
+    }
+</style>
+{% endblock %}
 
+{% block content %}
 <div class="container">
-    <h1 class="mb-4 text-center">{% if form.instance.pk %}Updating an existing {% else %}Add{% endif %} Player
-        record</h1>
+    <h1>
+        {% if form.instance.pk %}
+            Updating Player: {{ form.instance.name }}
+        {% else %}
+            Add New Player
+        {% endif %}
+    </h1>
+
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
         <!-- Personal Information Section -->
         <div class="section-heading">Personal Information</div>
         <div class="form-row">
-            <div class="form-group col-md-6">
-                {{ form.name.label_tag }}<span class="required"></span>
+            <div class="form-group">
+                <label>{{ form.name.label }}<span class="required"></span></label>
                 {{ form.name }}
                 {{ form.name.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.image.label_tag }}
+            <div class="form-group">
+                <label>{{ form.image.label }}</label>
                 {{ form.image }}
                 {% if form.instance.pk and form.instance.image %}
                 <a href="{{ form.instance.image.url }}" target="_blank">
@@ -89,259 +187,264 @@
                 {% endif %}
                 {{ form.image.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.email.label_tag}}<span class="required"></span>
+            <div class="form-group">
+                <label>{{ form.email.label }}<span class="required"></span></label>
                 {{ form.email }}
                 {{ form.email.errors }}
             </div>
-            <div class="form-group col-md-6">
+            <div class="form-group">
                 {% if form.instance.pk %}
-                <div style="color: rgb(3, 248, 36); font-size: 0.9rem; margin-top: 5px;">
-                    [ If you want to change the password, please enter a new one below ]
-                </div>
+                <div class="form-hint">[Enter new password to change it]</div>
                 {% endif %}
-                {{ form.password.label_tag }}<span class="required"></span>
+                <label>{{ form.password.label }}<span class="required"></span></label>
                 {{ form.password }}
                 {{ form.password.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.date_of_birth.label_tag }}<span class="required"></span>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>{{ form.date_of_birth.label }}<span class="required"></span></label>
                 {{ form.date_of_birth }}
                 {{ form.date_of_birth.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.primary_contact_number.label_tag }}<span class="required"></span>
+            <div class="form-group">
+                <label>{{ form.primary_contact_number.label }}<span class="required"></span></label>
                 {{ form.primary_contact_number }}
                 {{ form.primary_contact_number.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.secondary_contact_number.label_tag }}
+            <div class="form-group">
+                <label>{{ form.secondary_contact_number.label }}</label>
                 {{ form.secondary_contact_number }}
                 {{ form.secondary_contact_number.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.gender.label_tag }}
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>{{ form.gender.label }}</label>
                 {{ form.gender }}
                 {{ form.gender.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.aadhar_number.label_tag }}<span class="required"></span>
+            <div class="form-group">
+                <label>{{ form.aadhar_number.label }}<span class="required"></span></label>
                 {{ form.aadhar_number }}
                 {{ form.aadhar_number.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.state.label_tag }}<span class="required"></span>
+            <div class="form-group">
+                <label>{{ form.state.label }}<span class="required"></span></label>
                 {{ form.state }}
                 {{ form.state.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.district.label_tag }}<span class="required"></span>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>{{ form.district.label }}<span class="required"></span></label>
                 {{ form.district }}
                 {{ form.district.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.pincode.label_tag }}<span class="required"></span>
+            <div class="form-group">
+                <label>{{ form.pincode.label }}<span class="required"></span></label>
                 {{ form.pincode }}
                 {{ form.pincode.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.address.label_tag }}<span class="required"></span>
-                {{ form.address }}
-                {{ form.address.errors }}
-            </div>
-            <div class="form-group col-md-6">
-                {{ form.nationality.label_tag }}<span class="required"></span>
+            <div class="form-group">
+                <label>{{ form.nationality.label }}<span class="required"></span></label>
                 {{ form.nationality }}
                 {{ form.nationality.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.Player_Group.label_tag }}
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>{{ form.Player_Group.label }}</label>
                 {{ form.Player_Group }}
                 {{ form.Player_Group.errors }}
             </div>
-            <div class="form-group col-md-6">
+            <div class="form-group">
                 {% if request.user.role == 'OrganizationAdmin' %}
-                    <!-- Show the default organization name for OrganizationAdmin -->
                     <label>Default Organization:</label>
-                    <span>{{ request.user.organization.name }}</span>
+                    <div style="background: rgba(0, 255, 136, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid #00ff88;">
+                        <strong>{{ request.user.organization.name }}</strong>
+                    </div>
                 {% elif request.user.role == 'Staff' %}
-                    <!-- Show the organization name linked to the Staff -->
-                    <label for="organization">Your Default Organization</label>
-                    <p>{{ request.user.staff.organization.name }}</p>  <!-- Show the organization name linked to the Staff -->
-                {% elif request.user.player %}
-                    <!-- If the user is a player, show the organization but don't allow editing -->
                     <label>Your Organization:</label>
-                    <p>{{ request.user.player.organization.name }}</p>
-                    <p class="text-muted">You cannot update your organization.</p>
+                    <div style="background: rgba(0, 255, 136, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid #00ff88;">
+                        <strong>{{ request.user.staff.organization.name }}</strong>
+                    </div>
+                {% elif request.user.player %}
+                    <label>Your Organization:</label>
+                    <div style="background: rgba(255, 168, 2, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid #ffa502;">
+                        <strong>{{ request.user.player.organization.name }}</strong>
+                        <small style="color: #cccccc;">Cannot be changed</small>
+                    </div>
                 {% else %}
-                    <!-- Show organization field for users other than OrganizationAdmin and Staff -->
-                    {{ form.organization.label_tag }}<span class="required"></span>
+                    <label>{{ form.organization.label }}<span class="required"></span></label>
                     {{ form.organization }}
                     {{ form.organization.errors }}
                 {% endif %}
             </div>
-            
-
         </div>
 
         <!-- Sports Related Information Section -->
-        <div class="section-heading">Sports Related Information</div>
+        <div class="section-heading">Sports Information</div>
         <div class="form-row">
-            <div class="form-group col-md-6">
-                {{ form.role.label_tag }}<span class="required"></span>
+            <div class="form-group">
+                <label>{{ form.role.label }}<span class="required"></span></label>
                 {{ form.role }}
                 {{ form.role.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.batting_style.label_tag }}
+            <div class="form-group">
+                <label>{{ form.batting_style.label }}</label>
                 {{ form.batting_style }}
                 {{ form.batting_style.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.bowling_style.label_tag }}
+            <div class="form-group">
+                <label>{{ form.bowling_style.label }}</label>
                 {{ form.bowling_style }}
                 {{ form.bowling_style.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.handedness.label_tag }}
+            <div class="form-group">
+                <label>{{ form.handedness.label }}</label>
                 {{ form.handedness }}
                 {{ form.handedness.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.sports_role.label_tag }}
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>{{ form.sports_role.label }}</label>
                 {{ form.sports_role }}
                 {{ form.sports_role.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.id_card_number.label_tag }}<span class="required"></span>
+            <div class="form-group">
+                <label>{{ form.id_card_number.label }}<span class="required"></span></label>
                 {{ form.id_card_number }}
                 {{ form.id_card_number.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.weight.label_tag }}
+            <div class="form-group">
+                <label>{{ form.weight.label }}</label>
                 {{ form.weight }}
                 {{ form.weight.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.height.label_tag }}
+            <div class="form-group">
+                <label>{{ form.height.label }}</label>
                 {{ form.height }}
                 {{ form.height.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.age_category.label_tag }}
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>{{ form.age_category.label }}</label>
                 {{ form.age_category }}
                 {{ form.age_category.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.team.label_tag }}
+            <div class="form-group">
+                <label>{{ form.team.label }}</label>
                 {{ form.team }}
                 {{ form.team.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.position.label_tag }}
+            <div class="form-group">
+                <label>{{ form.position.label }}</label>
                 {{ form.position }}
                 {{ form.position.errors }}
             </div>
         </div>
 
-        <!-- Files and Documents Uploads Section -->
-        <div class="section-heading">Files and Documents Uploads</div>
+        <!-- Documents Section -->
+        <div class="section-heading">Documents Upload</div>
         <div class="form-row">
-            
-
-            <div class="form-group col-md-6">
-                {{ form.aadhar_card_upload.label_tag }}<span class="required"></span>
+            <div class="form-group">
+                <label>{{ form.aadhar_card_upload.label }}<span class="required"></span></label>
                 {{ form.aadhar_card_upload }}
                 {{ form.aadhar_card_upload.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.pan_card_upload.label_tag }}
+            <div class="form-group">
+                <label>{{ form.pan_card_upload.label }}</label>
                 {{ form.pan_card_upload }}
                 {{ form.pan_card_upload.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.marksheets_upload.label_tag }}
+            <div class="form-group">
+                <label>{{ form.marksheets_upload.label }}</label>
                 {{ form.marksheets_upload }}
                 {{ form.marksheets_upload.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.insurance_documents_upload.label_tag }}
-                {{ form.medical_documents}}
-                {{ form.medical_documents.errors }}
+            <div class="form-group">
+                <label>{{ form.insurance_documents_upload.label }}</label>
+                {{ form.insurance_documents_upload }}
+                {{ form.insurance_documents_upload.errors }}
             </div>
         </div>
 
-        <!-- Medical Documents Upload Section -->
+        <!-- Medical Documents -->
         <div class="section-heading">Medical Documents</div>
-        <div class="form-group">
-            <label for="documents">Upload Medical Documents:</label>
-            <input type="file" name="documents" multiple class="form-control">
-            <small class="text-muted">You can select multiple files.</small>
+        <div class="form-group" style="max-width: 100%;">
+            <label>Upload Medical Documents:</label>
+            <input type="file" name="documents" multiple style="width: 100%; padding: 12px; border: 2px solid #333333; border-radius: 8px; background: #1c1c1c; color: #ffffff;">
+            <small style="color: #cccccc;">You can select multiple files</small>
         </div>
 
-<!-- Display Existing Medical Documents -->
+        {% if player.medical_documents.all %}
         <div class="medical-documents-section">
             <h4>Existing Medical Documents</h4>
             <ul>
                 {% for document in player.medical_documents.all %}
                     <li>
-                        <a href="{{ document.document.url }}" target="_blank">{{ document.document.name }}</a>
-                        (Uploaded on: {{ document.uploaded_at|date:"Y-m-d H:i" }})
+                        <a href="{{ document.document.url }}" target="_blank" style="color: #6200EE;">{{ document.document.name }}</a>
+                        ({{ document.uploaded_at|date:"Y-m-d H:i" }})
                     </li>
                 {% empty %}
                     <li>No medical documents uploaded.</li>
                 {% endfor %}
             </ul>
         </div>
+        {% endif %}
 
-
-
-        <!-- Guardian Information Section -->
+        <!-- Guardian Information -->
         <div class="section-heading">Guardian Information</div>
         <div class="form-row">
-            <div class="form-group col-md-6">
-                {{ form.guardian_name.label_tag }}<span class="required"></span>
+            <div class="form-group">
+                <label>{{ form.guardian_name.label }}<span class="required"></span></label>
                 {{ form.guardian_name }}
                 {{ form.guardian_name.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.relation.label_tag }}
+            <div class="form-group">
+                <label>{{ form.relation.label }}</label>
                 {{ form.relation }}
                 {{ form.relation.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.guardian_mobile_number.label_tag }}
+            <div class="form-group">
+                <label>{{ form.guardian_mobile_number.label }}</label>
                 {{ form.guardian_mobile_number }}
                 {{ form.guardian_mobile_number.errors }}
             </div>
         </div>
 
-        <!-- Wellness Report Section -->
+        <!-- Wellness Report -->
         <div class="section-heading">Wellness Report</div>
         <div class="form-row">
-            <div class="form-group col-md-6">
-                {{ form.disease.label_tag }}
+            <div class="form-group">
+                <label>{{ form.disease.label }}</label>
                 {{ form.disease }}
                 {{ form.disease.errors }}
             </div>
-            <div class="form-group col-md-6">
-                {{ form.allergies.label_tag }}
+            <div class="form-group">
+                <label>{{ form.allergies.label }}</label>
                 {{ form.allergies }}
                 {{ form.allergies.errors }}
             </div>
-            <div class="form-group col-md-12">
-                {{ form.additional_information.label_tag }}
-                {{ form.additional_information }}
-                {{ form.additional_information.errors }}
-            </div>
+        </div>
+        <div class="form-group" style="max-width: 100%;">
+            <label>{{ form.additional_information.label }}</label>
+            {{ form.additional_information }}
+            {{ form.additional_information.errors }}
         </div>
 
-        <div class="text-center">
-            <button type="submit" class="btn btn-submit mt-3">Save</button>
+        <div style="text-align: center; margin-top: 40px;">
+            <button type="submit" class="btn-submit">Save Player</button>
         </div>
     </form>
 </div>
-</body>
-</html>
-
 {% endblock %}

@@ -5,215 +5,459 @@
 {% block extra_head %}
 <style>
     body {
-        background-color: #000000;
-        color: #ffffff;
+        background-color: #fffdfd;
+        color: #000000;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
+    
     .container {
         background-color: #1c1c1c;
-        border-radius: 8px;
-        padding: 10px;
-        box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-        font-size: 0.75rem;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
+        margin: 20px auto;
+        max-width: 1400px;
+        font-size: 0.85rem;
     }
+    
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
     h1 {
         color: #ffffff;
-        margin-bottom: 10px;
-        font-size: 1.2rem;
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
     }
+    
     .table {
         width: 100%;
-        border-collapse: collapse;
-        font-size: 0.75rem;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 8px;
+        overflow: hidden;
+        font-size: 0.85rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
+    
     .table thead th {
-        background-color: #343a40;
+        background: linear-gradient(135deg, #343a40 0%, #495057 100%);
         color: #ffffff;
         text-align: center;
-        padding: 6px;
+        padding: 12px 8px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: none;
     }
+    
     .table tbody td {
         background-color: #2c2c2c;
         color: #ffffff;
-        padding: 6px;
-        border: 1px solid #444444;
+        padding: 12px 8px;
+        border-bottom: 1px solid #444444;
+        border-right: 1px solid #444444;
     }
+    
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
     .table tbody tr:hover {
         background-color: #3a3a3a;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
     }
+    
+    .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .table tbody td:last-child {
+        border-right: none;
+    }
+    
     .btn {
-        margin: 0 2px;
-        border-radius: 4px;
-        padding: 4px 6px;
-        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin: 2px;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
         text-decoration: none;
         color: #ffffff;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+        white-space: nowrap;
     }
-    .btn-edit {
-        background-color: #ffc107;
+    
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
-    .btn-delete {
-        background-color: #dc3545;
-    }
-    .btn-add {
-        background-color: #007bff;
-    }
-    .btn-upload {
-        background-color: #28a745;
-    }
-    .btn-primary {
-        background-color: #007bff;
-    }
-    .btn-secondary {
-        background-color: #6c757d;
-    }
-    .btn-info {
-        background-color: #17a2b8;
-    }
+    
+    .btn-edit { background: linear-gradient(135deg, #ffc107 0%, #ffed4e 100%); color: #000; }
+    .btn-delete { background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%); }
+    .btn-add { background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); }
+    .btn-upload { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
+    .btn-primary { background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); }
+    .btn-info { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); }
+    .btn-secondary { background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); }
+    
     .search-bar {
-        margin-bottom: 10px;
+        margin-bottom: 20px;
     }
+    
     .search-bar input {
         width: 100%;
-        padding: 6px;
-        font-size: 0.75rem;
-        border-radius: 4px;
-        border: 1px solid #ced4da;
+        padding: 12px 16px;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        border: 2px solid #444444;
         background-color: #1c1c1c;
         color: #ffffff;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
     }
+    
+    .search-bar input:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+    
+    .search-bar input::placeholder {
+        color: #888888;
+    }
+    
     .d-flex {
         display: flex;
         justify-content: space-between;
-        margin-top: 10px;
+        align-items: center;
+        margin-top: 25px;
+        flex-wrap: wrap;
+        gap: 10px;
     }
+    
+    .organization-selector {
+        background: #2c2c2c;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .organization-selector h2 {
+        margin: 0 0 15px 0;
+        color: #ffffff;
+        font-size: 1.1rem;
+    }
+    
+    .organization-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .organization-list li a {
+        display: inline-block;
+        padding: 6px 12px;
+        background: #343a40;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+    }
+    
+    .organization-list li a:hover {
+        background: #007bff;
+        transform: translateY(-1px);
+    }
+    
     .dropdown {
         position: relative;
         display: inline-block;
     }
+    
+    .dropbtn {
+        border: none;
+        font-size: 0.85rem;
+    }
+    
     .dropdown-content {
         display: none;
         position: absolute;
-        background-color: #333333;
-        min-width: 160px;
-        box-shadow: 0px 8px 16px 0px rgba(255, 255, 255, 0.2);
-        z-index: 1;
+        right: 0;
+        background: #333333;
+        min-width: 200px;
+        border-radius: 8px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+        overflow: hidden;
+        margin-top: 5px;
     }
+    
     .dropdown-content a {
         color: #ffffff;
-        padding: 8px 10px;
+        padding: 12px 16px;
         text-decoration: none;
         display: block;
-        font-size: 0.75rem;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #444444;
     }
+    
+    .dropdown-content a:last-child {
+        border-bottom: none;
+    }
+    
     .dropdown-content a:hover {
-        background-color: #444444;
+        background: #444444;
+        color: #ffffff;
     }
+    
     .dropdown:hover .dropdown-content {
         display: block;
+    }
+    
+    .hidden-form {
+        display: none;
+    }
+    
+    @media (max-width: 768px) {
+        .container {
+            margin: 10px;
+            padding: 15px;
+        }
+        
+        .header-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        h1 {
+            text-align: center;
+        }
+        
+        .d-flex {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .table {
+            font-size: 0.75rem;
+        }
+        
+        .table thead {
+            display: none;
+        }
+        
+        .table tbody tr {
+            display: block;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+        
+        .table tbody td {
+            display: block;
+            text-align: right;
+            position: relative;
+            padding-left: 50%;
+            border: none;
+            border-bottom: 1px solid #444444;
+        }
+        
+        .table tbody td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 12px;
+            width: 45%;
+            font-weight: 600;
+            color: #cccccc;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="header-container" style="display: flex; justify-content: space-between; align-items: center;">
-    <h1>Player List</h1>
-    <div class="dropdown">
-        <button class="btn btn-primary dropbtn">More Actions</button>
-        <div class="dropdown-content" style="right: 0;">
-            <a href="{% url 'export_players_to_excel' %}">Extract Excel</a>
-            <a href="{% url 'download_blank_excel' %}">Download Blank Template</a>
-            <a href="#" onclick="document.getElementById('fileInput').click();">Insert data through Excel</a>
+<div class="container">
+    <!-- Header with Actions -->
+    <div class="header-container">
+        <h1>Player List</h1>
+        <div class="dropdown">
+            <button class="btn btn-primary dropbtn">⋮ More Actions</button>
+            <div class="dropdown-content">
+                <a href="{% url 'export_players_to_excel' %}">📊 Extract Excel</a>
+                <a href="{% url 'download_blank_excel' %}">📥 Download Template</a>
+                <a href="#" onclick="document.getElementById('fileInput').click(); return false;">📁 Upload Excel</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search by name, ID, or state..." autocomplete="off">
+    </div>
+
+    <!-- Organization Selector for Superusers -->
+    {% if request.user.is_superuser %}
+    <div class="organization-selector">
+        <h2>🏢 Select Organization</h2>
+        <ul class="organization-list">
+            {% for organization in organizations %}
+            <li>
+                <a href="?organization={{ organization.id }}">
+                    {{ organization.name }}
+                </a>
+            </li>
+            {% empty %}
+            <li>No organizations available</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Players Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>State</th>
+                    <th>Age</th>
+                    <th>Role</th>
+                    <th>Organization</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="playerTableBody">
+                {% for player in players %}
+                    {% if request.user.is_superuser or player.organization == request.user.organization %}
+                    <tr data-player-id="{{ player.id }}"
+                        data-name="{{ player.name|lower }}"
+                        data-state="{{ player.state|lower }}">
+                        <td data-label="ID">{{ player.id }}</td>
+                        <td data-label="Name">
+                            <a href="{% url 'player_detail' player.pk %}" style="color: #4dabf7; font-weight: 500;">
+                                {{ player.name }}
+                            </a>
+                        </td>
+                        <td data-label="State">{{ player.state }}</td>
+                        <td data-label="Age">{{ player.age }}</td>
+                        <td data-label="Role" style="font-weight: 500;">{{ player.role }}</td>
+                        <td data-label="Organization">{{ player.organization }}</td>
+                        <td data-label="Actions" class="text-center">
+                            <a href="{% url 'player_update' player.pk %}" class="btn btn-edit" title="Edit Player">
+                                ✏️ Edit
+                            </a>
+                            <a href="{% url 'player_delete' player.pk %}" 
+                               class="btn btn-delete" 
+                               onclick="return confirm('Are you sure you want to delete {{ player.name }}?');"
+                               title="Delete Player">
+                                🗑️ Delete
+                            </a>
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #888888;">
+                            No players found matching your criteria.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex">
+        <a href="{% url 'player_create' %}" class="btn btn-add" title="Add New Player">
+            ➕ Add New Player
+        </a>
+        
+        <!-- Hidden File Upload Form -->
+        <form id="uploadForm" class="hidden-form" action="{% url 'upload_file' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="file" id="fileInput" accept=".xlsx,.xls" style="display: none;">
+        </form>
+        
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{% url 'manage_groups' %}" class="btn btn-info" title="Manage Groups">
+                👥 Manage Groups
+            </a>
+            <a href="{% url 'create_injury' %}" class="btn btn-secondary" title="Injury Management">
+                🩹 Injury Management
+            </a>
         </div>
     </div>
 </div>
 
-<!-- Search Bar -->
-<div class="search-bar">
-    <input type="text" id="searchInput" placeholder="Search by name...">
-</div>
-
-<!-- Show Organizations Dropdown for Superusers -->
-{% if request.user.is_superuser %}
-    <div class="container">
-        <h2>Select Organization</h2>
-        <ul>
-            {% for organization in organizations %}
-                <li>
-                    <a href="?organization={{ organization.id }}" style="color: #ffffff;">{{ organization.name }}</a>
-                </li>
-            {% endfor %}
-        </ul>
-    </div>
-{% endif %}
-
-<!-- Player Table -->
-<table class="table table-striped table-bordered">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>State</th>
-            <th>Age</th>
-            <th>Role</th>
-            <th>Organization</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody id="playerTableBody">
-        {% for player in players %}
-            {% if request.user.is_superuser or player.organization == request.user.organization %}
-                <tr>
-                    <td>{{ player.id }}</td>
-                    <td><a href="{% url 'player_detail' player.pk %}" style="color: #ffffff;">{{ player.name }}</a></td>
-                    <td>{{ player.state }}</td>
-                    <td>{{ player.age }}</td>
-                    <td>{{ player.role }}</td>
-                    <td>{{ player.organization }}</td>
-                    <td class="text-center">
-                        <a href="{% url 'player_update' player.pk %}" class="btn btn-edit">Edit</a>
-                        <a href="{% url 'player_delete' player.pk %}" class="btn btn-delete" onclick="return confirm('Are you sure you want to delete this player?');">Delete</a>
-                    </td>
-                </tr>
-            {% endif %}
-        {% endfor %}
-    </tbody>
-</table>
-
-<div class="d-flex">
-    <a href="{% url 'player_create' %}" class="btn btn-add">Add New Player</a>
-
-    <form action="{% url 'upload_file' %}" method="post" enctype="multipart/form-data" style="display: none;">
-        {% csrf_token %}
-        <input type="file" name="file" id="fileInput">
-        <button type="submit" id="uploadButton"></button>
-    </form>
-
-    <a href="{% url 'manage_groups' %}" class="btn btn-info">Manage Groups</a>
-    <a href="{% url 'create_injury' %}"><i class="fas fa-users"></i><span class="text">Injury Management</span></a>
-</div>
-
 <script>
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        var searchValue = this.value.toLowerCase();
-        var rows = document.querySelectorAll('#playerTableBody tr');
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const tableBody = document.getElementById('playerTableBody');
+    const fileInput = document.getElementById('fileInput');
+    const uploadForm = document.getElementById('uploadForm');
 
-        rows.forEach(function(row) {
-            var idCell = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
-            var nameCell = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-            var stateCell = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+    // Enhanced Search Functionality
+    searchInput.addEventListener('input', function() {
+        const searchValue = this.value.toLowerCase().trim();
+        const rows = tableBody.querySelectorAll('tr[data-player-id]');
 
-            if (idCell.indexOf(searchValue) > -1 ||
-                nameCell.indexOf(searchValue) > -1 ||
-                stateCell.indexOf(searchValue) > -1) {
+        rows.forEach(row => {
+            const name = row.dataset.name || '';
+            const id = row.dataset.playerId || row.textContent.toLowerCase();
+            const state = row.dataset.state || '';
+
+            if (name.includes(searchValue) || 
+                id.includes(searchValue) || 
+                state.includes(searchValue) ||
+                searchValue === '') {
                 row.style.display = '';
+                row.style.opacity = '1';
             } else {
                 row.style.display = 'none';
             }
         });
     });
 
-    document.getElementById('fileInput').addEventListener('change', function() {
-        document.getElementById('uploadButton').click();
+    // File Upload Handler
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (confirm(`Upload "${file.name}"? This will add/update players from the Excel file.`)) {
+                uploadForm.submit();
+            }
+        }
     });
+
+    // Add loading state to search
+    let searchTimeout;
+    searchInput.addEventListener('keyup', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            // Debounced search
+        }, 300);
+    });
+});
 </script>
 {% endblock %}

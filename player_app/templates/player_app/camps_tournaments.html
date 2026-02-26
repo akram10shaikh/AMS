@@ -3,16 +3,16 @@
 {% block title %}Camps & Tournaments{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
 <style>
     body {
-        background-color: #000; /* Black background */
-        color: #fff; /* White text color */
+        background-color: #fffafa; /* Black background */
+        color: #000000; /* White text color */
         font-size: 0.9em;
     }
 
     h1, h3 {
-        color: #fff;
+        color: #000000;
     }
 
     .camp-card {
@@ -113,7 +113,7 @@
         <ul>
             {% for organization in organizations %}
                 <li>
-                    <a href="?organization={{ organization.id }}" style="color: #ffffff;">{{ organization.name }}</a>
+                    <a href="?organization={{ organization.id }}" style="color: #000000;">{{ organization.name }}</a>
                 </li>
             {% endfor %}
         </ul>

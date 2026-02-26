@@ -3,47 +3,150 @@
 {% block title %}Create Injury{% endblock %}
 
 {% block extra_head %}
-
 <style>
-   
+  
 
     h1 {
-        color: #fff;
+        color: #000000;
         text-align: center;
-        margin-bottom: 15px;
+        margin: 40px 0 30px 0;
+        font-size: 2.2em;
+        font-weight: 600;
     }
 
     .form-container {
-        background: #222;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(255, 255, 255, 0.2);
-        width: 60%;
-        margin: auto;
+        background: linear-gradient(145deg, #222 0%, #333 100%);
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 4px 15px rgba(255, 255, 255, 0.1);
+        width: 90%;
+        max-width: 600px;
+        margin: 0 auto 40px auto;
+        border: 1px solid #444;
     }
 
-    .form-control {
-        background-color: #555;
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    label {
+        display: block;
         color: #fff;
-        border: 1px solid #666;
+        font-weight: 500;
+        margin-bottom: 8px;
+        font-size: 1em;
+    }
+
+    .form-control, select, input[type="date"], textarea {
+        width: 100%;
+        padding: 14px 16px;
+        background-color: #2a2a2a;
+        color: #fff;
+        border: 2px solid #555;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        font-family: inherit;
+    }
+
+    .form-control:focus, select:focus, input[type="date"]:focus, textarea:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+        background-color: #333;
+    }
+
+    .form-control::placeholder {
+        color: #aaa;
+    }
+
+    select option {
+        background-color: #333;
+        color: #fff;
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 14px 30px;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        min-width: 140px;
+        margin: 5px;
     }
 
     .btn-primary {
-        background-color: #007bff;
-        border-color: #007bff;
-    }
-
-    select {
-        font-size: 0.85em;
-        padding: 5px;
-        background-color: #333;
+        background: linear-gradient(145deg, #007bff 0%, #0056b3 100%);
         color: white;
-        border: 1px solid #555;
-        border-radius: 5px;
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
     }
 
-    .text-center {
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(145deg, #6c757d 0%, #545b62 100%);
+        color: white;
+        border: 2px solid #6c757d;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    }
+
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+        background: linear-gradient(145deg, #5a6268 0%, #495057 100%);
+    }
+
+    .button-group {
         text-align: center;
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 2px solid #444;
+    }
+
+    .errorlist {
+        color: #ff6b6b;
+        background: rgba(255, 107, 107, 0.1);
+        border: 1px solid #ff6b6b;
+        border-radius: 8px;
+        padding: 12px;
+        margin: 10px 0;
+        list-style: none;
+    }
+
+    .errorlist li {
+        margin: 5px 0;
+    }
+
+    @media (max-width: 768px) {
+        .form-container {
+            width: 95%;
+            padding: 25px 20px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 1.8em;
+            margin: 25px 0 20px 0;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+        }
     }
 </style>
 {% endblock %}
@@ -57,21 +160,22 @@
 
             <!-- Organization Selection (Only for Super Admin) -->
             {% if request.user.is_superuser %}
-                <div class="form-group">
-                    <label for="organization">Select Organization:</label>
-                    <select id="organization" name="organization" class="form-control">
-                        <option value="">Select an Organization</option>
-                        {% for org in organizations %}
-                            <option value="{{ org.id }}">{{ org.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="form-group">
+                <label for="organization">Select Organization:</label>
+                <select id="organization" name="organization" class="form-control">
+                    <option value="">Select an Organization</option>
+                    {% for org in organizations %}
+                        <option value="{{ org.id }}">{{ org.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             {% endif %}
 
             <!-- Player Selection -->
             <div class="form-group">
                 <label for="player">Select Player:</label>
-                <select id="player" name="player" class="form-control">
+                <select id="player" name="player" class="form-control" required>
+                    <option value="">Select a Player</option>
                     {% for player in players %}
                         {% if request.user.is_superuser or player.organization == request.user.organization %}
                             <option value="{{ player.id }}" data-org="{{ player.organization.id }}">{{ player.name }}</option>
@@ -80,66 +184,97 @@
                 </select>
             </div>
 
-            <!-- Rest of the Injury Form -->
+            <!-- Form Fields -->
             {{ form.non_field_errors }}
+            
             <div class="form-group">
-                <label for="injury_type">Injury Type:</label>
+                <label for="{{ form.injury_type.id_for_label }}">Injury Type:</label>
                 {{ form.injury_type }}
+                {% if form.injury_type.errors %}
+                    <ul class="errorlist">{{ form.injury_type.errors }}</ul>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="affected_body_part">Affected Body Part:</label>
+                <label for="{{ form.affected_body_part.id_for_label }}">Affected Body Part:</label>
                 {{ form.affected_body_part }}
+                {% if form.affected_body_part.errors %}
+                    <ul class="errorlist">{{ form.affected_body_part.errors }}</ul>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="severity">Severity:</label>
+                <label for="{{ form.severity.id_for_label }}">Severity:</label>
                 {{ form.severity }}
+                {% if form.severity.errors %}
+                    <ul class="errorlist">{{ form.severity.errors }}</ul>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="injury_date">Injury Date:</label>
+                <label for="{{ form.injury_date.id_for_label }}">Injury Date:</label>
                 {{ form.injury_date }}
+                {% if form.injury_date.errors %}
+                    <ul class="errorlist">{{ form.injury_date.errors }}</ul>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="status">Status:</label>
+                <label for="{{ form.status.id_for_label }}">Status:</label>
                 {{ form.status }}
+                {% if form.status.errors %}
+                    <ul class="errorlist">{{ form.status.errors }}</ul>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="notes">Notes:</label>
+                <label for="{{ form.notes.id_for_label }}">Notes:</label>
                 {{ form.notes }}
+                {% if form.notes.errors %}
+                    <ul class="errorlist">{{ form.notes.errors }}</ul>
+                {% endif %}
             </div>
 
-<!--            <div class="form-group">-->
-<!--                <label for="medical_documents">Medical Documents:</label>-->
-<!--                {{ form.medical_documents }}-->
-<!--            </div>-->
-
-            <div class="text-center">
-                <button type="submit" class="btn btn-primary">Submit</button>
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">Create Injury Record</button>
+                <a href="{% url 'injury_list' %}" class="btn btn-secondary">Back to Injury List</a>
             </div>
         </form>
-
-        <br>
-        <div class="text-center">
-            <a href="{% url 'injury_list' %}" class="btn btn-secondary">Back to Injury List</a>
-        </div>
     </div>
 
     <script>
         // Auto-filter players when an organization is selected (for Super Admins)
         document.getElementById("organization")?.addEventListener("change", function() {
             let selectedOrg = this.value;
-            let allPlayers = document.querySelectorAll("#player option");
+            let playerSelect = document.getElementById("player");
+            let allOptions = playerSelect.querySelectorAll("option:not(:first-child)");
 
-            allPlayers.forEach(option => {
+            allOptions.forEach(option => {
                 if (option.dataset.org === selectedOrg || selectedOrg === "") {
                     option.style.display = "block";
+                    option.hidden = false;
                 } else {
                     option.style.display = "none";
-                    option.selected = false;
+                    option.hidden = true;
+                    if (option.selected) {
+                        option.selected = false;
+                    }
+                }
+            });
+            
+            // Reset player selection if no matching players
+            if (playerSelect.children[1] && playerSelect.children[1].style.display === "none") {
+                playerSelect.selectedIndex = 0;
+            }
+        });
+
+        // Add visual feedback for required fields
+        document.querySelectorAll('.form-control[required]').forEach(field => {
+            field.addEventListener('blur', function() {
+                if (!this.value) {
+                    this.style.borderColor = '#ff6b6b';
+                } else {
+                    this.style.borderColor = '#007bff';
                 }
             });
         });
