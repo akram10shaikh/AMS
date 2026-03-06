@@ -4,198 +4,376 @@
 {% block title %}Edit Camp/Tournament{% endblock %}
 
 {% block extra_head %}
-
 <style>
-    /* Container customization */
-    .container {
-        max-width: 600px;
-        margin: 40px auto; /* Vertical spacing */
-        padding: 20px 30px;
-        background: #121212; /* Dark card background */
-        border-radius: 12px;
-        box-shadow:
-            0 4px 8px rgba(0, 0, 0, 0.9),
-            0 0 5px #007bff44;
-    }
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 25px 30px;
+    background-color: #fefefeff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.9), 0 0 6px #0d6efd44;
+    color: #060606ff;
+}
 
-    h1 {
-        color: black;
-        font-weight: 700;
-        margin-bottom: 2rem;
-        text-align: center;
-        letter-spacing: 0.04em;
-    }
+h1 { color: #010101ff; font-weight: 700; margin-bottom: 2rem; text-align: center; }
+label { font-weight: 600; color: #000000ff; display: block; margin-bottom: 0.6rem; }
 
-    /* Form group spacing */
-    .form-group {
-        margin-bottom: 1.6rem;
-    }
+.form-control {
+    background-color: #222533;
+    border: 1.8px solid #414770;
+    color: #f6f6f6ff;
+    font-size: 1rem;
+    padding: 10px 13px;
+    border-radius: 8px;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.7);
+    width: 100%;
+}
 
-    label {
-        display: block;
-        color: #01223fff; /* Soft blue label color */
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        letter-spacing: 0.02em;
-    }
+.form-control:focus { 
+    border-color: #0d6efd; 
+    box-shadow: 0 0 8px #0d6efdaa;
+    background-color: #1a1e2b;
+    color: #e7f0ff;
+}
 
-    /* Form controls */
-    .form-control {
-        background-color: #222428;
-        color: #e3eaff;
-        border: 1.5px solid #2f80ed;
-        padding: 10px 14px;
-        font-size: 1rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.2);
-        width: 100%;
-    }
+input[type="date"] {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3e%3cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 18px;
+    padding-right: 45px;
+}
 
-    .form-control:focus {
-        background-color: #1a1d22;
-        border-color: #52b788; /* Soft green focus */
-        outline: none;
-        box-shadow:
-            0 0 8px #52b788bb,
-            inset 0 1px 3px rgb(0 0 0 / 0.4);
-        color: #d1f7d1;
-    }
+input[type="date"][readonly] { 
+    background-color: #2d2f33 !important;
+    color: #ffd633 !important;
+    font-weight: 700;
+    border-color: #ffd633 !important;
+    cursor: not-allowed;
+}
 
-    /* Make readonly start date visually distinct */
-    input[type="date"][readonly] {
-        background-color: #2d2f33 !important;
-        color: #ffd633 !important; /* Vibrant yellow */
-        font-weight: 700;
-        border-color: #ffd633 !important;
-        cursor: not-allowed;
-    }
+/* STAFF & PARTICIPANTS SECTIONS */
+.staff-section, .participants-section {
+    background: #222533;
+    border: 1.8px solid #414770;
+    border-radius: 8px;
+    min-height: 160px;
+    max-height: 220px;
+    padding: 15px;
+    margin-top: 8px;
+    overflow-y: auto;
+}
 
-    /* Normal End Date styling */
-    input[type="date"] {
-        background-color: #252a30;
-        border: 1.5px solid #fb8c00;
-        font-weight: 700;
-        font-size: 1rem;
-        color: #ffe6a1;
-        border-radius: 8px;
-    }
+.list-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #f6f6f6ff;
+}
 
-    input[type="date"]:focus {
-        border-color: #ffb74d;
-        box-shadow: 0 0 8px #ffb74daa;
-        background-color: #312f23;
-        color: #fff4bb;
-        outline: none;
-    }
+.list-item:hover {
+    background: rgba(13,110,253,0.2);
+    border: 1px solid #0d6efd;
+}
 
-    /* Select multiple participants, height and scroll */
-    select[multiple] {
-        min-height: 140px;
-        background-color: #22272b;
-        border: 1.5px solid #2f80ed;
-        border-radius: 8px;
-        color: #d4e9ff;
-        padding: 10px 12px;
-        font-size: 1rem;
-        transition: border-color 0.3s ease;
-        overflow-y: auto;
-    }
+.list-checkbox {
+    margin-right: 12px;
+    width: 18px;
+    height: 18px;
+    accent-color: #0d6efd;
+    cursor: pointer;
+}
 
-    select[multiple]:focus {
-        border-color: #52b788;
-        box-shadow: 0 0 8px #52b788bb;
-        outline: none;
-        background-color: #1a1f22;
-        color: #cdf7cd;
-    }
+.list-name {
+    flex: 1;
+    font-size: 0.95rem;
+}
 
-    /* Button styling */
-    .btn-primary {
-        background-color: #2168f3;
-        border-color: #2168f3;
-        font-size: 1.1rem;
-        font-weight: 700;
-        padding: 12px 0;
-        width: 100%;
-        border-radius: 10px;
-        box-shadow: 0 6px 12px rgba(33, 104, 243, 0.6);
-        transition: background-color 0.3s ease;
-    }
+.selected-count {
+    background: #0d6efd;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin-top: 8px;
+    display: none;
+}
 
-    .btn-primary:hover,
-    .btn-primary:focus {
-        background-color: #1659d6;
-        border-color: #1659d6;
-        box-shadow: 0 8px 18px rgba(22, 89, 214, 0.8);
-        outline: none;
-    }
+.btn-primary {
+    background-color: #198754;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 12px 0;
+    border-radius: 10px;
+    width: 100%;
+    transition: all 0.3s ease;
+}
 
-    /* Mobile responsiveness */
-    @media (max-width: 480px) {
-        .container {
-            padding: 15px 20px;
-            margin: 20px 10px;
-        }
+.btn-primary:hover { 
+    background-color: #157347; 
+    box-shadow: 0 0 15px #157347cc; 
+}
+.btn-secondary {
+    background-color: #6c757d;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 12px 0;
+    border-radius: 10px;
+    width: 100%;
+    transition: all 0.3s ease;
+}
 
-        h1 {
-            font-size: 1.6rem;
-            margin-bottom: 1.2rem;
-        }
-    }
+.btn-secondary:hover { 
+    background-color: #5a6268; 
+    box-shadow: 0 0 15px #5a6268cc; 
+}
+.form-text { 
+    color: #8890a8; 
+    font-size: 0.875rem; 
+    margin-top: 5px; 
+    display: block; 
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container" style="margin-bottom:200px;">
-    <h1 style='color:white;'>Edit Camp/Tournament</h1>
+<div class="container mt-4">
+    <h1>Edit Camp/Tournament</h1>
 
-    <form method="post" novalidate>
+    <form method="post" id="campEditForm">
         {% csrf_token %}
+
         <div class="form-group">
-            <label for="campName" style='color:white;'>Camp/Tournament Name:</label>
-            <input type="text" class="form-control" id="campName" name="name" value="{{ camp.name }}" required>
+            <label>Camp/Tournament Name:</label>
+            <input type="text" name="name" class="form-control" value="{{ camp.name }}" required>
         </div>
 
         <div class="form-group">
-            <label for="campType" style='color:white;'>Type:</label>
-            <select class="form-control" id="campType" name="camp_type" required>
+            <label>Type:</label>
+            <select name="camp_type" class="form-control" required>
                 <option value="camp" {% if camp.camp_type == "camp" %}selected{% endif %}>Camp</option>
                 <option value="tournament" {% if camp.camp_type == "tournament" %}selected{% endif %}>Tournament</option>
             </select>
         </div>
 
         <div class="form-group">
-            <label for="startDate" style='color:white;'>Start Date:</label>
-            <input type="date" class="form-control" id="startDate" name="start_date"
-                   value="{{ camp.start_date|date:'Y-m-d' }}" readonly>
+            <label>Start Date:</label>
+            <input type="date" name="start_date" class="form-control" value="{{ camp.start_date|date:'Y-m-d' }}" readonly>
         </div>
 
         <div class="form-group">
-            <label for="endDate" style='color:white;'>End Date:</label>
-            <input type="date" class="form-control" id="endDate" name="end_date"
-                   value="{{ camp.end_date|date:'Y-m-d' }}" min="{{ camp.start_date|date:'Y-m-d' }}">
+            <label>End Date:</label>
+            <input type="date" name="end_date" class="form-control" value="{{ camp.end_date|date:'Y-m-d' }}" min="{{ camp.start_date|date:'Y-m-d' }}">
         </div>
 
         <div class="form-group">
-            <label for="venue" style='color:white;'>Venue:</label>
-            <input type="text" class="form-control" id="venue" name="venue" value="{{ camp.venue }}">
+            <label>Venue:</label>
+            <input type="text" name="venue" class="form-control" value="{{ camp.venue|default:'' }}">
         </div>
 
+        <!-- ✅ STAFF SECTION -->
         <div class="form-group">
-            <label for="participants" style='color:white;'>Participants:</label>
-            <select class="form-control" id="participants" name="participants" multiple>
-                {% for player in participants %}
-                    {% if player.organization == camp.organization %}
-                        <option value="{{ player.id }}" {% if player in camp.participants.all %}selected{% endif %}>
-                            {{ player.name }}
-                        </option>
-                    {% endif %}
-                {% endfor %}
-            </select>
+            <label>Staff (Coaches/Physios):</label>
+            <div class="form-group">
+                <input type="text" id="staffSearch" class="form-control" placeholder="🔍 Search staff by name..." autocomplete="off">
+            </div>
+            <div id="staffList" class="staff-section">
+                <div style="text-align: center; color: #8890a8; padding: 20px;">
+                    Loading staff...
+                </div>
+            </div>
+            <div id="staffCount" class="selected-count">
+                <span id="staffCountNum">0</span> staff selected
+            </div>
+            <input type="hidden" name="selected_staff" id="selectedStaff" value="">
+            <small class="form-text">Click checkboxes to select/deselect staff</small>
         </div>
 
-        <button type="submit" class="btn btn-primary mt-3" style="margin-bottom:50px;">Save Changes</button>
+        <!-- ✅ PARTICIPANTS SECTION -->
+        <div class="form-group">
+            <label>Participants:</label>
+            <div class="form-group">
+                <input type="text" id="participantSearch" class="form-control" placeholder="🔍 Search participants by name..." autocomplete="off">
+            </div>
+            <div id="participantList" class="participants-section">
+                <div style="text-align: center; color: #8890a8; padding: 20px;">
+                    Loading participants...
+                </div>
+            </div>
+            <div id="participantCount" class="selected-count">
+                <span id="participantCountNum">0</span> participants selected
+            </div>
+            <input type="hidden" name="participants" id="selectedParticipants" value="">
+            <small class="form-text">Click checkboxes to select/deselect participants</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3" onclick="return confirmSubmit()" >
+            Save Changes
+        </button>
+        <a href="{% url 'organization_camps_tournaments' %}" class="btn btn-secondary mt-3" style="margin-left: 10px; margin-bottom: 60px;">Cancel</a>
     </form>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Get all participants from template context
+    const allParticipants = [
+        {% for player in participants %}
+            {% if player.organization == camp.organization %}
+            {id: {{ player.id }}, name: "{{ player.name }}"},
+            {% endif %}
+        {% endfor %}
+    ];
+
+    // Get all staff from template context (add staff queryset to your view context)
+    const allStaff = [
+        {% for staff_member in staff %}
+        {id: {{ staff_member.id }}, name: "{{ staff_member.name|default:'Staff' }} ({{ staff_member.staff_role|default:'Staff' }})"},
+        {% endfor %}
+    ];
+
+    // Get existing selected participant IDs
+    const existingParticipantIds = [
+        {% for participant in camp.participants.all %}
+        {{ participant.id }},
+        {% endfor %}
+    ];
+
+    // Get existing selected staff IDs (adjust field name to match your model)
+    const existingStaffIds = [
+        {% for staff_member in camp.staff_members.all %}
+        {{ staff_member.id }},
+        {% endfor %}
+    ];
+
+    // Elements
+    const staffSearch = document.getElementById("staffSearch");
+    const staffList = document.getElementById("staffList");
+    const selectedStaffInput = document.getElementById("selectedStaff");
+    const staffCount = document.getElementById("staffCount");
+    const staffCountNum = document.getElementById("staffCountNum");
+
+    const participantSearch = document.getElementById("participantSearch");
+    const participantList = document.getElementById("participantList");
+    const selectedParticipantsInput = document.getElementById("selectedParticipants");
+    const participantCount = document.getElementById("participantCount");
+    const participantCountNum = document.getElementById("participantCountNum");
+
+    let currentStaff = allStaff;
+    let currentParticipants = allParticipants;
+    let selectedStaffIds = new Set(existingStaffIds.map(id => id.toString()));
+    let selectedParticipantIds = new Set(existingParticipantIds.map(id => id.toString()));
+
+    // STAFF FUNCTIONS
+    function renderStaffList(staff) {
+        staffList.innerHTML = "";
+        staff.forEach(staffMember => {
+            const isSelected = selectedStaffIds.has(staffMember.id.toString());
+            const div = document.createElement("div");
+            div.className = "list-item";
+            div.dataset.staffId = staffMember.id;
+            div.innerHTML = `
+                <input type="checkbox" class="list-checkbox" ${isSelected ? 'checked' : ''} 
+                       onchange="toggleStaff(${staffMember.id}, this.checked)">
+                <span class="list-name">${staffMember.name}</span>
+            `;
+            staffList.appendChild(div);
+        });
+    }
+
+    window.toggleStaff = function(staffId, isChecked) {
+        if (isChecked) {
+            selectedStaffIds.add(staffId.toString());
+        } else {
+            selectedStaffIds.delete(staffId.toString());
+        }
+        updateStaffInput();
+    };
+
+    function updateStaffInput() {
+        const ids = Array.from(selectedStaffIds);
+        selectedStaffInput.value = ids.join(',');
+        staffCountNum.textContent = ids.length;
+        staffCount.style.display = ids.length > 0 ? 'block' : 'none';
+    }
+
+    // PARTICIPANT FUNCTIONS
+    function renderParticipantList(participants) {
+        participantList.innerHTML = "";
+        participants.forEach(participant => {
+            const isSelected = selectedParticipantIds.has(participant.id.toString());
+            const div = document.createElement("div");
+            div.className = "list-item";
+            div.dataset.participantId = participant.id;
+            div.innerHTML = `
+                <input type="checkbox" class="list-checkbox" ${isSelected ? 'checked' : ''} 
+                       onchange="toggleParticipant(${participant.id}, this.checked)">
+                <span class="list-name">${participant.name}</span>
+            `;
+            participantList.appendChild(div);
+        });
+    }
+
+    window.toggleParticipant = function(participantId, isChecked) {
+        if (isChecked) {
+            selectedParticipantIds.add(participantId.toString());
+        } else {
+            selectedParticipantIds.delete(participantId.toString());
+        }
+        updateParticipantInput();
+    };
+
+    function updateParticipantInput() {
+        const ids = Array.from(selectedParticipantIds);
+        selectedParticipantsInput.value = ids.join(',');
+        participantCountNum.textContent = ids.length;
+        participantCount.style.display = ids.length > 0 ? 'block' : 'none';
+    }
+
+    // Search functionality
+    staffSearch.addEventListener("input", function() {
+        const searchTerm = this.value.toLowerCase();
+        const filteredStaff = allStaff.filter(staff => 
+            staff.name.toLowerCase().includes(searchTerm)
+        );
+        renderStaffList(filteredStaff);
+    });
+
+    participantSearch.addEventListener("input", function() {
+        const searchTerm = this.value.toLowerCase();
+        const filteredParticipants = allParticipants.filter(participant => 
+            participant.name.toLowerCase().includes(searchTerm)
+        );
+        renderParticipantList(filteredParticipants);
+    });
+
+    // Confirmation popup
+    window.confirmSubmit = function() {
+        const pCount = selectedParticipantIds.size;
+        const sCount = selectedStaffIds.size;
+        if (pCount === 0 && sCount === 0) {
+            alert('Please select at least one participant OR staff member.');
+            return false;
+        }
+        return confirm(`Save with ${pCount} participants + ${sCount} staff?`);
+    };
+
+    // Initialize
+    console.log("✅ Loaded:", {
+        participants: allParticipants.length, 
+        staff: allStaff.length,
+        selected: { participants: existingParticipantIds.length, staff: existingStaffIds.length }
+    });
+    
+    renderStaffList(allStaff);
+    renderParticipantList(allParticipants);
+    updateStaffInput();
+    updateParticipantInput();
+});
+</script>
 {% endblock %}

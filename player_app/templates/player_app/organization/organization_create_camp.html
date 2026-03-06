@@ -4,104 +4,111 @@
 {% block title %}Create Camp/Tournament{% endblock %}
 
 {% block extra_head %}
-{% comment %} <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"> {% endcomment %}
 <style>
-  /* Body and basic text left untouched as per your request */
-
-  /* Form container tweaks */
-  .container {
-    max-width: 600px;
+.container {
+    max-width: 800px;
     margin: 40px auto;
     padding: 25px 30px;
-    background-color: #fefefeff; /* dark card background */
+    background-color: #fefefeff;
     border-radius: 12px;
-    box-shadow:
-      0 4px 15px rgba(0, 0, 0, 0.9),
-      0 0 6px #0d6efd44; /* subtle glow blue */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.9), 0 0 6px #0d6efd44;
     color: #060606ff;
-  }
+}
 
-  h1 {
-    color: #010101ff;
-    font-weight: 700;
-    margin-bottom: 2rem;
-    letter-spacing: 0.03em;
-    text-align: center;
-  }
+/* VISIBLE WHITE CALENDAR */
+input[type="date"] {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3e%3cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 18px;
+    padding-right: 45px;
+}
 
-  /* Label styling */
-  .form-group label {
-    font-weight: 600;
-    color: #000000ff; /* soft periwinkle */
-    display: block;
-    margin-bottom: 0.6rem;
-  }
+h1 { color: #010101ff; font-weight: 700; margin-bottom: 2rem; text-align: center; }
+label { font-weight: 600; color: #000000ff; display: block; margin-bottom: 0.6rem; }
 
-  /* Input, select styling */
-  .form-control {
+.form-control {
     background-color: #222533;
     border: 1.8px solid #414770;
     color: #f6f6f6ff;
     font-size: 1rem;
     padding: 10px 13px;
     border-radius: 8px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
     box-shadow: inset 0 1px 4px rgba(0,0,0,0.7);
     width: 100%;
-  }
+}
 
-  .form-control::placeholder {
-    color: #8890a8;
-  }
-
-  .form-control:focus {
-    border-color: #0d6efd;
-    box-shadow:
-      0 0 8px #0d6efdaa,
-      inset 0 1px 6px rgba(13,110,253,0.7);
-    background-color: #1a1e2b;
-    color: #e7f0ff;
-    outline: none;
-  }
-
-  /* Multiple select adjustments */
-  select[multiple] {
-    min-height: 140px;
-    background-color: #222533;
-    border-color: #414770;
-    color: #cfd8ff;
-    padding: 10px 12px;
-    border-radius: 8px;
-    overflow-y: auto;
-  }
-
-  select[multiple]:focus {
-    border-color: #0d6efd;
+.form-control:focus { 
+    border-color: #0d6efd; 
     box-shadow: 0 0 8px #0d6efdaa;
     background-color: #1a1e2b;
     color: #e7f0ff;
-  }
+}
 
-  /* Button styling */
-  .btn-success {
+/* STAFF & PLAYER LIST STYLING */
+.staff-section, .player-section {
+    background: #222533;
+    border: 1.8px solid #414770;
+    border-radius: 8px;
+    min-height: 160px;
+    max-height: 220px;
+    padding: 15px;
+    margin-top: 8px;
+    overflow-y: auto;
+}
+
+.list-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #f6f6f6ff;
+}
+
+.list-item:hover {
+    background: rgba(13,110,253,0.2);
+    border: 1px solid #0d6efd;
+}
+
+.list-checkbox {
+    margin-right: 12px;
+    width: 18px;
+    height: 18px;
+    accent-color: #0d6efd;
+    cursor: pointer;
+}
+
+.list-name {
+    flex: 1;
+    font-size: 0.95rem;
+}
+
+.selected-count {
+    background: #0d6efd;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin-top: 8px;
+    display: none;
+}
+
+.btn-success {
     background-color: #198754;
-    border-color: #198754;
     font-weight: 700;
     font-size: 1.05rem;
     padding: 12px 0;
     border-radius: 10px;
-    transition: background-color 0.3s ease;
     width: 100%;
-  }
+    transition: all 0.3s ease;
+}
 
-  .btn-success:hover,
-  .btn-success:focus {
-    background-color: #157347;
-    border-color: #157347;
-    color: #e2efe3;
-    box-shadow: 0 0 10px #157347cc;
-    outline: none;
-  }
+.btn-success:hover { background-color: #157347; box-shadow: 0 0 15px #157347cc; }
+.form-text { color: #8890a8; font-size: 0.875rem; margin-top: 5px; display: block; }
 </style>
 {% endblock %}
 
@@ -109,7 +116,7 @@
 <div class="container mt-4">
     <h1>Create Camp/Tournament</h1>
 
-    <form method="post">
+    <form method="post" id="campForm">
         {% csrf_token %}
 
         <div class="form-group">
@@ -125,31 +132,25 @@
             </select>
         </div>
 
-   <div class="form-group">
-        <label for="gender_type">Gender:</label>
-        <select name="gender_type" id="gender_type" class="form-control" required>
-            <option value="M">Male</option>
-            <option value="F">Female</option>
-        </select>
-    </div>
+        <div class="form-group">
+            <label for="gender_type">Gender:</label>
+            <select name="gender_type" id="gender_type" class="form-control" required>
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+            </select>
+        </div>
 
-    <!-- Age Category selection -->
-    <div class="form-group">
-        <label for="age_category">Age Category:</label>
-        <select name="age_category" id="age_category" class="form-control" required>
-            <!-- Options dynamically populated -->
-        </select>
-    </div>
+        <div class="form-group">
+            <label for="age_category">Age Category:</label>
+            <select name="age_category" id="age_category" class="form-control" required>
+                <!-- populated by JS -->
+            </select>
+        </div>
 
         <div class="form-group">
             <label for="start_date">Start Date:</label>
             <input type="date" name="start_date" id="start_date" class="form-control" required>
         </div>
-
-        {% comment %} <div class="form-group">
-            <label for="end_date">End Date:</label>
-            <input type="date" name="end_date" id="end_date" class="form-control" placeholder="Optional">
-        </div> {% endcomment %}
 
         <div class="form-group">
             <label for="venue">Venue:</label>
@@ -163,148 +164,226 @@
                 <option value="">-- Select Organization --</option>
                 {% for org in organizations %}
                 <option value="{{ org.id }}">{{ org.name }}</option>
-                {% empty %}
-                <option disabled>No organizations available</option>
                 {% endfor %}
             </select>
         </div>
         {% else %}
-            <input type="hidden" name="organization" id="organization" value="{{ request.user.organization.id }}">
+        <input type="hidden" name="organization" value="{{ request.user.organization.id }}">
         {% endif %}
 
-        {% comment %} <div class="form-group">
-            <label for="participants">Select Participants:</label>
-            <select name="participants" id="participants" class="form-control" multiple>
-                {% for player in players %}
-                    {% if player.organization.id == request.user.organization.id or request.user.is_superuser %}
-                    <option value="{{ player.id }}" data-org-id="{{ player.organization.id }}">
-                        {{ player.name }}
-                    </option>
-                    {% endif %}
-                {% endfor %}
-            </select>
-            <small class="form-text text-muted">Hold "Ctrl" (Windows) or "Cmd" (Mac) to select multiple participants.</small>
-        </div>  {% endcomment %}
+        <!-- ✅ STAFF SECTION -->
         <div class="form-group">
-        <label for="participants">Select Participants:</label>
-        <select name="participants" id="participants" class="form-control" multiple size="10" required>
-            <!-- Options dynamically populated -->
-        </select>
-        <small class="form-text text-muted">Hold "Ctrl" (Windows) or "Cmd" (Mac) to select multiple participants.</small>
-    </div>
+            <label>Staff (Coaches/Physios):</label>
+            <div class="form-group">
+                <input type="text" id="staffSearch" class="form-control" placeholder="🔍 Search staff by name..." autocomplete="off">
+            </div>
+            <div id="staffList" class="staff-section">
+                <div style="text-align: center; color: #8890a8; padding: 20px;">
+                    Sample staff will appear here
+                </div>
+            </div>
+            <div id="staffCount" class="selected-count">
+                <span id="staffCountNum">0</span> staff selected
+            </div>
+            <input type="hidden" name="selected_staff" id="selectedStaff" value="">
+        </div>
 
-        <button type="submit" class="btn btn-success mt-3" style="margin-bottom:60px;">Create</button>
+        <!-- ✅ PLAYERS SECTION (existing functionality) -->
+        <div class="form-group">
+            <label>Players:</label>
+            <div class="form-group">
+                <input type="text" id="playerSearch" class="form-control" placeholder="🔍 Search players by name..." autocomplete="off">
+            </div>
+            <div id="playerList" class="player-section">
+                <div style="text-align: center; color: #8890a8; padding: 20px;">
+                    Select Gender → Age Category to load players
+                </div>
+            </div>
+            <div id="playerCount" class="selected-count">
+                <span id="playerCountNum">0</span> players selected
+            </div>
+            <input type="hidden" name="participants" id="selectedPlayers" value="">
+            <small class="form-text">Click checkboxes to select players</small>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3" style="margin-bottom: 60px;" onclick="return confirmSubmit()">
+            Create Camp/Tournament
+        </button>
     </form>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const organizationSelect = document.getElementById("organization");
-    const participantsSelect = document.getElementById("participants");
-
-    if (organizationSelect) {
-        organizationSelect.addEventListener("change", function () {
-            let selectedOrg = this.value;
-            let allPlayers = document.querySelectorAll("#participants option");
-
-            allPlayers.forEach(option => {
-                if (option.getAttribute("data-org-id") === selectedOrg || selectedOrg === "") {
-                    option.style.display = "block";
-                } else {
-                    option.style.display = "none";
-                    option.selected = false;
-                }
-            });
-        });
-
-        // Auto-filter participants if not superuser on page load
-        if (!{{ request.user.is_superuser|lower }}) {
-            let selectedOrg = organizationSelect.value;
-            let allPlayers = document.querySelectorAll("#participants option");
-
-            allPlayers.forEach(option => {
-                if (option.getAttribute("data-org-id") !== selectedOrg) {
-                    option.style.display = "none";
-                    option.selected = false;
-                }
-            });
-        }
+    // Load players data
+    let playersGrouped;
+    try {
+        playersGrouped = {{ players_grouped_json|safe|default:"{}" }};
+        console.log("✅ Players loaded:", playersGrouped);
+    } catch (e) {
+        playersGrouped = {M: {}, F: {}};
     }
-});
-</script>
-<script>
-    // Parse JSON data passed from Django view into JS object
-    const playersGrouped = {{ players_grouped_json|safe }};
 
-    // Define age categories for each gender code (must match your Player model choices)
+    // Sample staff data (replace with staff_json from view when available)
+    const sampleStaff = {{ staff_json|safe|default:"[]" }};
+
     const ageCategoriesByGender = {
-        'M': [
-            'men_senior',
-            'men_under-23',
-            'boys_under-19',
-            'boys_under-16',
-            'boys_under-14'
-        ],
-        'F': [
-            'women_senior',
-            'women_under-23',
-            'girls_under-19',
-            'girls_under-15'
-        ]
+        'M': ['men_senior', 'men_under_23', 'boys_under_19', 'boys_under_16'],
+        'F': ['women_senior', 'women_under_23', 'girls_under_19', 'girls_under_15']
     };
 
-    // Get DOM elements for selects
-    const genderSelect = document.getElementById('gender_type');
-    const ageCategorySelect = document.getElementById('age_category');
-    const participantsSelect = document.getElementById('participants');
+    // DOM elements
+    const genderSelect = document.getElementById("gender_type");
+    const ageCategorySelect = document.getElementById("age_category");
+    const playerSearch = document.getElementById("playerSearch");
+    const playerList = document.getElementById("playerList");
+    const selectedPlayersInput = document.getElementById("selectedPlayers");
+    const playerCount = document.getElementById("playerCount");
+    const playerCountNum = document.getElementById("playerCountNum");
 
-    // Utility: prettify age category string (replace underscores and capitalize words)
+    const staffSearch = document.getElementById("staffSearch");
+    const staffList = document.getElementById("staffList");
+    const selectedStaffInput = document.getElementById("selectedStaff");
+    const staffCount = document.getElementById("staffCount");
+    const staffCountNum = document.getElementById("staffCountNum");
+
+    let currentPlayers = [];
+    let currentStaff = sampleStaff;
+    let selectedPlayerIds = new Set();
+    let selectedStaffIds = new Set();
+
     function prettifyAgeCategory(str) {
-        return str.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        return str.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
     }
 
-    // Fill age category dropdown options based on gender
+    // STAFF FUNCTIONS
+    function renderStaffList(staff) {
+        staffList.innerHTML = "";
+        staff.forEach(staffMember => {
+            const isSelected = selectedStaffIds.has(staffMember.id.toString());
+            const div = document.createElement("div");
+            div.className = "list-item";
+            div.dataset.staffId = staffMember.id;
+            div.innerHTML = `
+                <input type="checkbox" class="list-checkbox" ${isSelected ? 'checked' : ''} 
+                       onchange="toggleStaff(${staffMember.id}, this.checked)">
+                <span class="list-name">${staffMember.name} (${staffMember.role})</span>
+            `;
+            staffList.appendChild(div);
+        });
+    }
+
+    window.toggleStaff = function(staffId, isChecked) {
+        if (isChecked) {
+            selectedStaffIds.add(staffId.toString());
+        } else {
+            selectedStaffIds.delete(staffId.toString());
+        }
+        updateStaffInput();
+    };
+
+    function updateStaffInput() {
+        const selectedIds = Array.from(selectedStaffIds);
+        selectedStaffInput.value = selectedIds.join(',');
+        staffCountNum.textContent = selectedIds.length;
+        staffCount.style.display = selectedIds.length > 0 ? 'block' : 'none';
+    }
+
+    // PLAYER FUNCTIONS (existing)
     function fillAgeCategories(gender) {
-        ageCategorySelect.innerHTML = '';
+        ageCategorySelect.innerHTML = "";
         const categories = ageCategoriesByGender[gender] || [];
         categories.forEach(cat => {
-            const option = document.createElement('option');
+            const option = document.createElement("option");
             option.value = cat;
             option.textContent = prettifyAgeCategory(cat);
             ageCategorySelect.appendChild(option);
         });
-        // Select first category by default and update participants list
         if (categories.length > 0) {
             ageCategorySelect.value = categories[0];
-            fillParticipants(gender, categories[0]);
+            fillPlayers(gender, categories[0]);
         }
     }
 
-    // Fill participants multi-select based on gender and age category
-    function fillParticipants(gender, ageCategory) {
-        participantsSelect.innerHTML = '';
-        const players = (playersGrouped[gender] && playersGrouped[gender][ageCategory]) || [];
+    function fillPlayers(gender, ageCategory) {
+        if (!playersGrouped[gender] || !playersGrouped[gender][ageCategory]) {
+            playerList.innerHTML = '<div style="text-align: center; color: #8890a8; padding: 20px;">No players found</div>';
+            return;
+        }
+
+        currentPlayers = playersGrouped[gender][ageCategory];
+        renderPlayerList(currentPlayers);
+    }
+
+    function renderPlayerList(players) {
+        playerList.innerHTML = "";
         players.forEach(player => {
-            const option = document.createElement('option');
-            option.value = player.id;
-            option.textContent = player.name;
-            participantsSelect.appendChild(option);
+            const isSelected = selectedPlayerIds.has(player.id.toString());
+            const div = document.createElement("div");
+            div.className = "list-item";
+            div.dataset.playerId = player.id;
+            div.innerHTML = `
+                <input type="checkbox" class="list-checkbox" ${isSelected ? 'checked' : ''} 
+                       onchange="togglePlayer(${player.id}, this.checked)">
+                <span class="list-name">${player.name}</span>
+            `;
+            playerList.appendChild(div);
         });
     }
 
-    // Initialize selects on page load
-    fillAgeCategories(genderSelect.value);
+    window.togglePlayer = function(playerId, isChecked) {
+        if (isChecked) {
+            selectedPlayerIds.add(playerId.toString());
+        } else {
+            selectedPlayerIds.delete(playerId.toString());
+        }
+        updatePlayerInput();
+    };
 
-    // Event listener: when gender changes, update age categories & participants
-    genderSelect.addEventListener('change', (event) => {
-        const selectedGender = event.target.value;
-        fillAgeCategories(selectedGender);
+    function updatePlayerInput() {
+        const selectedIds = Array.from(selectedPlayerIds);
+        selectedPlayersInput.value = selectedIds.join(',');
+        playerCountNum.textContent = selectedIds.length;
+        playerCount.style.display = selectedIds.length > 0 ? 'block' : 'none';
+    }
+
+    // SEARCH FUNCTIONALITY
+    playerSearch.addEventListener("input", function() {
+        const searchTerm = this.value.toLowerCase();
+        const filteredPlayers = currentPlayers.filter(player => 
+            player.name.toLowerCase().includes(searchTerm)
+        );
+        renderPlayerList(filteredPlayers);
     });
 
-    // Event listener: when age category changes, update participants
-    ageCategorySelect.addEventListener('change', (event) => {
-        fillParticipants(genderSelect.value, event.target.value);
+    staffSearch.addEventListener("input", function() {
+        const searchTerm = this.value.toLowerCase();
+        const filteredStaff = currentStaff.filter(staff => 
+            staff.name.toLowerCase().includes(searchTerm)
+        );
+        renderStaffList(filteredStaff);
     });
+
+    // CONFIRMATION POPUP
+    window.confirmSubmit = function() {
+        const playerCount = selectedPlayerIds.size;
+        const staffCount = selectedStaffIds.size;
+        
+        if (playerCount === 0 && staffCount === 0) {
+            alert('Please select at least one player OR staff member.');
+            return false;
+        }
+        
+        return confirm(
+            `Create camp with:\n• ${playerCount} player(s)\n• ${staffCount} staff member(s)\n\nConfirm submission?`
+        );
+    };
+
+    // Initialize
+    renderStaffList(sampleStaff);
+    fillAgeCategories('M');
+    
+    genderSelect.addEventListener('change', e => fillAgeCategories(e.target.value));
+    ageCategorySelect.addEventListener('change', e => fillPlayers(genderSelect.value, e.target.value));
+});
 </script>
-
 {% endblock %}

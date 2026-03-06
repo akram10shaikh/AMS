@@ -1129,45 +1129,92 @@ def organization_camps_tournaments(request):
 
 def organization_edit_camp(request, camp_id):
     """
-    Handles editing a specific camp/tournament, including participants.
+    Handles editing a specific camp/tournament with Staff + Participants (checkboxes).
     """
     camp = get_object_or_404(CampTournament, id=camp_id)
+    
+    # Permission check
+    if not request.user.is_superuser and not (hasattr(request.user, "organization") and camp.organization == request.user.organization):
+        return HttpResponseForbidden("You don't have permission to edit this camp.")
+
+    staff = Staff.objects.filter(organization=camp.organization)
+    participants = Player.objects.filter(organization=camp.organization)
 
     if request.method == 'POST':
+        # Update basic fields
         camp.name = request.POST.get('name')
         camp.camp_type = request.POST.get('camp_type')
-
-        # Keep existing start date (only allow editing end date)
+        
+       
         end_date = request.POST.get('end_date')
         if end_date:
             camp.end_date = end_date
-
+            
         camp.venue = request.POST.get('venue')
 
-        # Update participants (only from the same organization)
-        participant_ids = request.POST.getlist('participants')
-        camp.participants.set(participant_ids)
+       
+        participant_ids_str = request.POST.get('participants', '')
+        participant_ids = [id for id in participant_ids_str.split(',') if id.isdigit()]
+        
+       
+        staff_ids_str = request.POST.get('selected_staff', '')
+        staff_ids = [id for id in staff_ids_str.split(',') if id.isdigit()]
 
+
+        # Save basic fields first
         camp.save()
 
+        # Update PARTICIPANTS
+        if participant_ids:
+            valid_participants = participants.filter(id__in=participant_ids)
+            camp.participants.set(valid_participants)
+          
+        else:
+            camp.participants.clear()
+          
+
+        #  Update STAFF 
+        staff_updated = False
+        if staff_ids:
+            valid_staff = staff.filter(id__in=staff_ids)
+            
+            for field_name in ['staff_members', 'coaches', 'staff']:
+                if hasattr(camp, field_name):
+                    getattr(camp, field_name).set(valid_staff)
+              
+                    staff_updated = True
+                    break
+            
+            if not staff_updated:
+                print(f"⚠️ No staff M2M field found on camp. Available: {[f.name for f in camp._meta.many_to_many]}")
+        else:
+            # Clear staff if none selected
+            for field_name in ['staff_members', 'coaches', 'staff']:
+                if hasattr(camp, field_name):
+                    getattr(camp, field_name).clear()
+                  
+
         # Log the update activity
+        player_count = len(participant_ids)
+        staff_count = len(staff_ids)
         CampActivity.objects.create(
             camp=camp,
             action='updated',
             performed_by=request.user,
-            details=f"Camp/Tournament '{camp.name}' was updated."
+            details=f"Updated '{camp.name}' - {player_count} participants, {staff_count} staff"
         )
 
-        messages.success(request, "Camp/Tournament updated successfully!")
+        # Success message with counts
+
         return redirect('organization_camp_detail', camp_id=camp.id)
 
-    # Get only players from the same organization
-    participants = Player.objects.filter(organization=camp.organization)
-
+    # GET request - render form
     return render(request, 'player_app/organization/organization_edit_camp.html', {
         'camp': camp,
-        'participants': participants
+        'participants': participants,
+        'staff': staff,
     })
+
 
 @login_required
 def organization_create_camp(request):
@@ -1180,56 +1227,65 @@ def organization_create_camp(request):
     # Super Admin: Get all organizations
     if request.user.is_superuser:
         organizations = Organization.objects.all()
-        players = Player.objects.all()  # Super Admins can see all players
+        players = Player.objects.all()
 
-    # Organization Admins: Check if user has an organization directly
+    # Organization Admins
     elif hasattr(request.user, "organization") and request.user.organization:
         organization = request.user.organization
         players = Player.objects.filter(organization=organization)
 
-    # Staff Members: Ensure they have a staff profile before accessing
+    # Staff Members
     elif hasattr(request.user, "staff") and request.user.staff:
         organization = request.user.staff.organization
         players = Player.objects.filter(organization=organization)
 
     else:
         return HttpResponseForbidden(
-            "You must be a Super Admin, Organization Admin, or a Staff member to create a camp.")
+            "You must be a Super Admin, Organization Admin, or a Staff member to create a camp."
+        )
 
-    players_grouped = {'M': {}, 'F': {}}
+    # Group players by gender (M/F) and age_category
+    players_grouped = {"M": {}, "F": {}}
     for player in players:
-        gender = player.gender
-        age_cat = player.age_category
-        if gender in ['M', 'F']:
-            if age_cat not in players_grouped[gender]:
-                players_grouped[gender][age_cat] = []
-            players_grouped[gender][age_cat].append({'id': player.id, 'name': player.name})
+        # Convert "Male"/"Female" to "M"/"F"
+        if player.gender == "Male":
+            gender = "M"
+        elif player.gender == "Female":
+            gender = "F"
+        else:
+            continue  # skip "Other" or invalid
 
-    players_grouped_json = json.dumps(players_grouped)
+        age_cat = player.age_category  # e.g., 'boys_under_16'
+
+        if age_cat not in players_grouped[gender]:
+            players_grouped[gender][age_cat] = []
+
+        players_grouped[gender][age_cat].append({"id": player.id, "name": player.name})
+
+    import json
+
+    players_grouped_json = json.dumps(players_grouped, ensure_ascii=False)
 
     if request.method == "POST":
         name = request.POST.get("name")
         camp_type = request.POST.get("camp_type")
         start_date = request.POST.get("start_date")
-        gender = request.POST.get("gender")
+        gender = request.POST.get("gender_type")
         age_category = request.POST.get("age_category")
         venue = request.POST.get("venue")
 
-
-        # Super Admin: Allow selecting an organization
+        # Resolve organization
         if request.user.is_superuser:
             organization_id = request.POST.get("organization")
             organization = get_object_or_404(Organization, id=organization_id)
         elif hasattr(request.user, "organization") and request.user.organization:
-            # Organization Admins: Auto-set organization
             organization = request.user.organization
         elif hasattr(request.user, "staff") and request.user.staff:
-            # Staff: Auto-set organization from staff profile
             organization = request.user.staff.organization
         else:
             return HttpResponseForbidden("You do not have permission to create a camp.")
 
-        # Create the camp/tournament
+        # Create camp
         camp = CampTournament.objects.create(
             name=name,
             camp_type=camp_type,
@@ -1238,22 +1294,94 @@ def organization_create_camp(request):
             age_category=age_category,
             venue=venue,
             organization=organization,
-            created_by=request.user
+            created_by=request.user,
         )
 
-        # Add participants (Only players from the same organization)
-        selected_participants = request.POST.getlist("participants")
-        valid_participants = players.filter(id__in=selected_participants)  # Ensure only valid participants
-        camp.participants.set(valid_participants)
+        #  Handle STAFF (comma-separated IDs from template)
+        selected_staff_ids = request.POST.get("selected_staff", "").split(",")
+       
+        valid_staff_ids = [id for id in selected_staff_ids if id.isdigit()]
 
-        messages.success(request, "Camp/Tournament created successfully!")
-        return redirect("organization_camps_tournaments")  # Redirect after creation
-    
-    return render(request, "player_app/organization/organization_create_camp.html", {
-        "organizations": organizations,  # Super Admin can select
-        "players": players,    # Filtered players for the user
-        "players_grouped_json": players_grouped_json,
-    })
+        #  Handle PLAYERS (comma-separated IDs from template)
+        selected_player_ids = request.POST.get("participants", "").split(",")
+        valid_player_ids = [id for id in selected_player_ids if id.isdigit()]
+       
+        #  PLAYERS - assign to camp.participants
+        if valid_player_ids:
+            valid_participants = players.filter(id__in=valid_player_ids)
+            camp.participants.set(valid_participants)
+            print(f" Assigned {valid_participants.count()} players to camp")
+        else:
+            print("ℹ No players selected")
+
+       
+        staff_assigned = False
+        if valid_staff_ids:
+            try:
+                # Filter staff by organization only
+                valid_staff = Staff.objects.filter(
+                    id__in=valid_staff_ids,
+                    organization=organization
+                )
+                
+                # Role breakdown for logging
+                role_counts = {}
+                ROLE_CHOICES = [
+                    ('selector', 'Selector'),
+                    ('sc_coach', 'S&C Coach'),
+                    ('physio', 'Physio'),
+                    ('support_staff', 'Support Staff'),
+                    ('other_coach', 'Other Coach'),
+                ]
+                
+                for staff in valid_staff:
+                    role_key = getattr(staff, 'role', 'unknown')
+                    role_counts[role_key] = role_counts.get(role_key, 0) + 1
+                
+                print(f" Staff roles selected: {role_counts}")
+
+                # Try different possible M2M field names on CampTournament
+                possible_staff_fields = ['staff_members', 'coaches', 'staff', 'support_staff']
+                for field_name in possible_staff_fields:
+                    if hasattr(camp, field_name):
+                        getattr(camp, field_name).set(valid_staff)
+                        print(f" Assigned {valid_staff.count()} staff to camp.{field_name}")
+                        staff_assigned = True
+                        break
+                
+                if not staff_assigned:
+                    print(f"  No staff M2M field found. Available fields: {[f.name for f in camp._meta.many_to_many]}")
+                    
+            except Exception as e:
+                print(f" Staff assignment error: {e}")
+
+        # Success message with role breakdown
+        player_count = len(valid_player_ids)
+        staff_count = len(valid_staff_ids)
+        
+        success_msg = f" Camp '{name}' created successfully!"
+        if player_count > 0:
+            success_msg += f"<br>• {player_count} player(s)"
+        if staff_count > 0:
+            success_msg += f"<br>• {staff_count} staff member(s)"
+        
+        messages.success(request, success_msg)
+        return redirect("organization_camps_tournaments")   
+
+    staff_members = Staff.objects.filter(organization=organization)  # or all()
+    staff_list = [{"id": s.id, "name": f"{s.name}".strip(),"role":s.staff_role} for s in staff_members]
+    staff_json = json.dumps(staff_list, ensure_ascii=False)
+      # Debug print to verify staff data is correct
+
+    return render(
+        request,
+        "player_app/organization/organization_create_camp.html",
+        {
+            "organizations": organizations,
+            "players_grouped_json": players_grouped_json,
+            "staff_json": staff_json,
+        },
+    )
 
 def organization_delete_camp(request, camp_id):
     """

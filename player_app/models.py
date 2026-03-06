@@ -215,6 +215,7 @@ class CampTournament(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='camps_created')
     participants = models.ManyToManyField(Player, related_name="camps")
     is_deleted = models.BooleanField(default=False)
+    staff_members = models.ManyToManyField(Staff, related_name='camps', blank=True)  # New field for staff members
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
