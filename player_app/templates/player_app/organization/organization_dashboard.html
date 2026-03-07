@@ -776,7 +776,7 @@
 
 
 <h3>Recent Activity Logs</h3>
-<table class="table table-striped">
+<table class="table table-striped">>
   <thead>
     <tr>
       <th>Timestamp</th>
@@ -789,77 +789,95 @@
   </thead>
   <tbody>
     {% for log in activity_logs %}
-    <tr>
-      <td>
-        {% if log.timestamp %}
-          {{ log.timestamp|date:"Y-m-d H:i:s" }}
-        {% elif log.created_at %}
-          {{ log.created_at|date:"Y-m-d H:i:s" }}
-        {% endif %}
-      </td>
+  <tr>
+    <td>
+      {% if log.timestamp %}
+        {{ log.timestamp|date:"Y-m-d H:i:s" }}
+      {% elif log.created_at %}
+        {{ log.created_at|date:"Y-m-d H:i:s" }}
+      {% endif %}
+    </td>
 
-      <td>
-        {% if log.log_type == 'medical' %}
-          Medical Document Log
-        {% elif log.log_type == 'injury' %}
-          Injury Log
-        {% elif log.log_type == 'player' %}
-          Player Log
-        {% else %}
-          Unknown
-        {% endif %}
-      </td>
+    <td>
+      {% if log.log_type == 'medical' %}
+        Medical Document Log
+      {% elif log.log_type == 'injury' %}
+        Injury Log
+      {% elif log.log_type == 'player' %}
+        Player Log
+      {% elif log.log_type == 'test' %}
+        Test Log
+      {% elif log.log_type == 'camp' %}
+        Camp Log
+      {% else %}
+        Unknown
+      {% endif %}
+    </td>
 
-      <td>
-        {% if log.log_type == 'medical' %}
-    {{ log.user.username|default:"Unknown User" }}
-  {% elif log.log_type == 'injury' or log.log_type == 'player' %}
-    {{ log.actor.username|default:"Unknown User" }}
-  {% else %}
-    Unknown User
-  {% endif %}
-      </td>
+    <td>
+      {% if log.log_type == 'medical' %}
+        {{ log.user.username|default:"Unknown User" }}
+      {% elif log.log_type == 'injury' or log.log_type == 'player' or log.log_type == 'test' %}
+        {{ log.actor.username|default:"Unknown User" }}
+      {% elif log.log_type == 'camp' %}
+        {{ log.performed_by.username|default:"Unknown User" }}
+      {% else %}
+        Unknown User
+      {% endif %}
+    </td>
 
-      <td>
-        {% if log.log_type == 'medical' %}
-          {{ log.player.name }} - Document: {{ log.document }}
-        {% elif log.log_type == 'injury' %}
-          {{ log.injury.player.name }} - Injury: {{ log.injury.name }}
-        {% elif log.log_type == 'player' %}
-          {{ log.player.name }}
-        {% else %}
-          N/A
-        {% endif %}
-      </td>
+    <td>
+      {% if log.log_type == 'medical' %}
+        {{ log.player.name }} - Document: {{ log.document }}
+      {% elif log.log_type == 'injury' %}
+        {{ log.injury.player.name }} - Injury: {{ log.injury.name }}
+      {% elif log.log_type == 'player' %}
+        {{ log.player.name }}
+      {% elif log.log_type == 'test' %}
+        {{ log.subject.name|default:"N/A" }}{% if log.phase %} - Phase: {{ log.phase }}{% endif %}
+      {% elif log.log_type == 'camp' %}
+        {{ log.camp.name }}
+      {% else %}
+        N/A
+      {% endif %}
+    </td>
 
-      <td>
-        {% if log.log_type == 'medical' %}
-          {{ log.activity_type }}
-        {% elif log.log_type == 'injury' %}
-          {{ log.action }}
-        {% elif log.log_type == 'player' %}
-          {{ log.action }}
-        {% else %}
-          N/A
-        {% endif %}
-      </td>
+    <td>
+      {% if log.log_type == 'medical' %}
+        {{ log.activity_type|default:"-" }}
+      {% elif log.log_type == 'injury' %}
+        {{ log.action|default:"-" }}
+      {% elif log.log_type == 'player' %}
+        {{ log.action|default:"-" }}
+      {% elif log.log_type == 'test' %}
+        {{ log.activity_type|default:"-" }}
+      {% elif log.log_type == 'camp' %}
+        {{ log.action|default:"-" }}
+      {% else %}
+        N/A
+      {% endif %}
+    </td>
 
-      <td>
-        {% if log.log_type == 'medical' %}
-          {{ log.description|default:"-" }}
-        {% elif log.log_type == 'injury' %}
-          {{ log.details|default:"-" }}
-        {% elif log.log_type == 'player' %}
-          {{ log.details|default:"-" }}
-        {% else %}
-          -
-        {% endif %}
-      </td>
-    </tr>
-    {% empty %}
-      <tr><td colspan="6" style="text-align:center;">No activity logs found.</td></tr>
-    {% endfor %}
-  </tbody>
+    <td>
+      {% if log.log_type == 'medical' %}
+        {{ log.description|default:"-" }}
+      {% elif log.log_type == 'injury' %}
+        {{ log.details|default:"-" }}
+      {% elif log.log_type == 'player' %}
+        {{ log.details|default:"-" }}
+      {% elif log.log_type == 'test' %}
+        {{ log.details|default:"-" }}
+      {% elif log.log_type == 'camp' %}
+        {{ log.details|default:"-" }}
+      {% else %}
+        -
+      {% endif %}
+    </td>
+  </tr>
+  {% empty %}
+    <tr><td colspan="6" style="text-align:center;">No activity logs found.</td></tr>
+  {% endfor %}
+</tbody>
   {% if activity_logs.has_other_pages %}
 <nav aria-label="Activity logs pagination">
   <ul class="pagination justify-content-center">
@@ -901,6 +919,7 @@
 {% endif %}
 
 </table>
+
 
 <!-- JavaScript for filtering -->
 <script>

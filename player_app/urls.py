@@ -118,6 +118,8 @@ urlpatterns = [
                   path('organization/test-dashboard/', views.test_dashboard_new, name='test_dashboard_new'),
                   path('test-results/<str:test_name>/', views.test_results_view, name='test_results_by_name'),
                   path('add-test-results/<str:test_name>/', views.add_test_results, name='add_test_results'),
+                  path('activity-logs/', views.test_activity_logs, name='activity_logs'),
+
 
                   path('organization/dashboard/', views.organization_dashboard_org, name='organization_dashboard_org'),
                   path('org/players-by-category/', views.players_by_category, name='players_by_category'),           

@@ -841,6 +841,17 @@ class DailyActivityCamps(models.Model):
     def __str__(self):
         return f"{self.log} - {self.activity_name}"
         
+class TestActivityLog(models.Model):
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='test_activity_logs')
+    subject = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='test_activity_logs',null=True, blank=True)
+    activity_type = models.CharField(max_length=100, default='UPDATE',null=True, blank=True)  
+    timestamp = models.DateTimeField(auto_now_add=True)
+    details = models.TextField(blank=True, null=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):
+        return f"Log: {self.activity_type} for {self.subject} by {self.actor} at {self.timestamp}"
+
     
 class SLGluteBridges(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='sl_glute_bridges')

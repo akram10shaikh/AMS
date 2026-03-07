@@ -1,0 +1,83 @@
+<!-- templates/test_activity_logs.html -->
+{% extends "player_app/tests/base.html" %}
+{% load static %}
+
+{% block title %}Activity Logs{% endblock %}
+
+{% block extra_head %}
+
+<style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background-color: #f2f2f2; font-weight: bold; }
+    .search-form { margin-bottom: 20px; }
+    .search-input { padding: 8px; width: 300px; margin-right: 10px; }
+    .search-btn { padding: 8px 16px; background: #007bff; color: white; border: none; cursor: pointer; }
+    .pagination { margin-top: 20px; text-align: center; }
+    .pagination a { padding: 8px 12px; margin: 0 4px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+    .pagination span { padding: 8px 12px; margin: 0 4px; background: #e9ecef; }
+    .no-logs { text-align: center; color: #666; font-style: italic; }
+</style>
+{% endblock %}
+{% block content %}
+
+    <h1>Activity Logs</h1>
+    
+    <!-- Search Form -->
+    <form method="get" class="search-form">
+        <input type="text" name="q" value="{{ request.GET.q|default:'' }}" 
+               placeholder="Search by actor username or player name" class="search-input">
+        <button type="submit" class="search-btn">Search</button>
+        {% if request.GET.q %}
+            <a href="{% url 'activity_logs' %}" class="search-btn" style="background: #6c757d;">Clear</a>
+        {% endif %}
+    </form>
+
+    <!-- Logs Table -->
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Player</th>
+                <th>Activity Type</th>
+                <th>Phase</th>
+                <th>Timestamp</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.actor.username|default:"N/A" }}</td>
+                <td>{{ log.subject.name|default:"N/A" }}</td>  <!-- Adjust 'name' to Player field -->
+                <td>{{ log.activity_type|default:"-" }}</td>
+                <td>{{ log.phase|default:"N/A" }}</td>
+                <td>{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+                <td>{{ log.details|default:"-"|truncatewords:15 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="no-logs">No activity logs found{% if request.GET.q %} for "{{ request.GET.q }}"{% endif %}.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1&q={{ request.GET.q|default:'' }}">First</a>
+            <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q|default:'' }}">Previous</a>
+        {% endif %}
+        
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} total)</span>
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q|default:'' }}">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&q={{ request.GET.q|default:'' }}">Last</a>
+        {% endif %}
+    </div>
+    {% endif %}
+{% endblock %}

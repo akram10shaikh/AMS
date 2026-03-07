@@ -1365,6 +1365,12 @@ def organization_create_camp(request):
         if staff_count > 0:
             success_msg += f"<br>• {staff_count} staff member(s)"
         
+        CampActivity.objects.create(
+            camp=camp,
+            action='Added',
+            performed_by=request.user,
+            details=f"Created '{camp.name}' - {player_count} participants, {staff_count} staff"
+        )
         messages.success(request, success_msg)
         return redirect("organization_camps_tournaments")   
 
@@ -2117,21 +2123,29 @@ def organization_dashboard_org(request):
     medical_logs = MedicalActivityLog.objects.filter(player__in=players).select_related('player', 'user', 'document').order_by('-timestamp')
     injury_logs = InjuryActivityLog.objects.filter(injury__in=injuries).select_related('injury', 'actor').order_by('-created_at')
     player_logs = PlayerActivityLog.objects.filter(player__in=players).select_related('player', 'actor').order_by('-created_at')
+    test_logs = TestActivityLog.objects.filter(subject__in=players).select_related('actor', 'subject', 'phase').order_by('-timestamp')
+    camp_logs = CampActivity.objects.filter(camp__participants__in=players).select_related('camp', 'performed_by').order_by('-timestamp')    
+  
 
     # Assign log_type first (iterate querysets only)
-    for log in chain(medical_logs, injury_logs, player_logs):
+    for log in chain(medical_logs, injury_logs, player_logs, test_logs, camp_logs):
         if hasattr(log, 'log_type'):
             continue
         if 'MedicalActivityLog' in str(type(log)):
             log.log_type = 'medical'
         elif 'InjuryActivityLog' in str(type(log)):
             log.log_type = 'injury'
+        elif 'TestActivityLog' in str(type(log)):  # This now works
+            log.log_type = 'test'
+        elif 'CampActivity' in str(type(log)):   # This now works
+            log.log_type = 'camp'
+
         else:
             log.log_type = 'player'
 
     # Now chain, sort, convert to list, and paginate
     all_logs = sorted(
-        chain(medical_logs, injury_logs, player_logs),
+        chain(medical_logs, injury_logs, player_logs, test_logs, camp_logs),
         key=lambda log: getattr(log, 'timestamp', getattr(log, 'created_at', datetime.min)),
         reverse=True
     )
@@ -3724,6 +3738,29 @@ def test_dashboard_new(request):
         del request.session['phase_id_test']
     return render(request, 'player_app/organization/organization_main_test_dash.html')
 
+from django.db.models import Q
+def test_activity_logs(request):
+    queryset = TestActivityLog.objects.select_related('actor', 'subject', 'phase').order_by('-timestamp')
+    
+    # Search handling
+    query = request.GET.get('q')
+    if query:
+        queryset = queryset.filter(
+            Q(actor__username__icontains=query) | 
+            Q(subject__name__icontains=query)  # Adjust 'name' to your Player model's field [web:11][web:14]
+        )
+    
+    # Pagination
+    paginator = Paginator(queryset, 10)  # 10 items per page [web:1]
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'logs': page_obj,
+        'request': request  # For preserving search in template
+    }
+    return render(request, 'player_app/tests/test_activity_logs.html', context) 
+
 from django.core.paginator import Paginator
 from django.db.models import Q
 
@@ -3905,6 +3942,14 @@ def add_run_3x6_test(request):
                 reported_by=reported_by,
             
             )
+
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_data,
+                actor=reported_by,
+                activity_type='Test Added',
+                details=f'Added Run A 3x6 test with average {run_a_3x6_average}'
+            )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
 
@@ -4002,9 +4047,19 @@ def add_glute_bridges_test(request):
                 notes=notes,
                 reported_by=reported_by
             )
+            
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_data,
+                actor=reported_by,
+                activity_type='Test Added',
+                details=f'Added S/L Glute Bridges test with Right: {sl_right}, Left: {sl_left}'
+            )
+
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
  
+           
             return redirect('test_dashboard_new')
         # Pass errors back to template if any
         else:
@@ -4150,6 +4205,13 @@ def add_lunge_calf_raises_test(request):
                 notes=notes,
                 reported_by=reported_by_user,
             )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added S/L Lunge Calf Raises test with Right: {right_val}, Left: {left_val}'
+            )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
 
@@ -4268,6 +4330,13 @@ def add_mb_rotational_throw_test(request):
                 notes=notes,
                 reported_by=reported_by_user,
             )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added MB Rotational Throws test with Right: {right_val}, Left: {left_val}'
+            )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
 
@@ -4384,6 +4453,13 @@ def add_copen_hagen_test(request):
                 notes=notes,
                 reported_by=reported_by_user,
             )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added Copenhagen test with Right: {right_val}, Left: {left_val}'
+            )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
 
@@ -4495,6 +4571,13 @@ def add_sl_hop_test(request):
                 left=left_val,
                 notes=notes,
                 reported_by=reported_by_user,
+            )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added S/L Hop test with Right: {right_val}, Left: {left_val}'
             )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
@@ -4676,6 +4759,13 @@ def add_cmj_scores_test(request):
                 reported_by=reported_by_user,
                 gender=player.gender,
                 category=player.age_category,
+            )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added CMJ Scores test with Jump Height: {jh_val}, Reactive Strength Index: {rsi_val}'
             )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
@@ -4905,6 +4995,13 @@ def add_anthropometry_test(request):
                 notes=notes,
                 reported_by=reported_by_user,
             )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added Anthropometry test with Height: {height_val}, Weight: {weight_val}, Fat%: {fat_percent_val}'
+            )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
 
@@ -5067,7 +5164,13 @@ def add_dexa_scan_test(request):
                 notes=notes,
                 reported_by=reported_by_user,
             )
-            
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added DEXA Scan test with BMI: {bmi_val}, Total Fat: {total_fat_val}'
+            )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('test_dashboard_new')
@@ -5282,6 +5385,13 @@ def add_blood_test(request):
                 notes=notes,
                 reported_by=reported_by_user,
             )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added Blood Work test with Hemoglobin: {hb_val}, Cholesterol: {chol_val}, Vitamin D3: {vit_d3_val}'
+            )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('test_dashboard_new')
@@ -5393,6 +5503,13 @@ def add_runa3_test(request):
                 reported_by=reported_by_user,
                 gender=player.gender,
                 category=player.age_category,
+            )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added Run A 3 test with Best: {best_val}, Predicted VO2max: {approximately_vo2max}'
             )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
@@ -5532,6 +5649,13 @@ def add_forty_meter_test(request):
                 gender=player.gender,
                 category=player.age_category,
             )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added 40m test with Best: {best_val}, Predicted VO2max: {approximately_vo2max}'
+            )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))           
             return redirect('forty_meter_test_view')
@@ -5668,6 +5792,13 @@ def add_twenty_meter_test(request):
                 reported_by=reported_by_user,
                 gender=player.gender,
                 category=player.age_category,
+            )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added 20m test with Best: {best_val}, Predicted VO2max: {approximately_vo2max}'   
             )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
@@ -5810,6 +5941,13 @@ def add_ten_meter_test(request):
                 gender=player.gender,
                 category=player.age_category,
             )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added 10m test with Best: {best_val}, Predicted VO2max: {approximately_vo2max}'   
+            )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('ten_meter_test_view')
@@ -5944,6 +6082,13 @@ def add_sbj_test(request):
                 reported_by=reported_by_user,
                 gender=player.gender,
                 category=player.age_category,
+            )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added SBJ test with Best: {best_val}'
             )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
@@ -6088,6 +6233,13 @@ def add_yoyo_test(request):
                 gender=player.gender,
                 category=player.age_category,
             )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details =f'Added YoYo Test with Best: {best_val}, Predicted VO2max: {approximately_vo2max}'
+            )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('yoyo_test_view')
@@ -6230,6 +6382,13 @@ def add_one_mile_test(request):
                 reported_by=reported_by_user,
                 gender=player.gender,
                 category=player.age_category,
+            )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added 1 Mile test with Best: {best_val}, Predicted VO2max: {approximately_vo2max}'   
             )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
@@ -6374,7 +6533,13 @@ def add_two_km_test(request):
                 gender=player.gender,
                 category=player.age_category,
             )
-
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added 2 KM test with Best: {best_val}, Predicted VO2max: {approximately_vo2max}'
+            )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
             return redirect('two_km_test_view')
@@ -6505,6 +6670,13 @@ def add_pushups_test(request):
                 reported_by=reported_by_user,
                 gender=player.gender,
                 category=player.age_category,
+            )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=reported_by_user,
+                activity_type='Test Added',
+                details=f'Added Push-ups test with Best: {best_val}'   
             )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
@@ -6740,6 +6912,13 @@ def add_msk_injury_assessment(request):
                 phase=phase_obj,
                 comments=comments,
                 
+            )
+            TestActivityLog.objects.create(
+                subject=player,
+                phase=phase_obj,
+                actor=request.user,
+                activity_type='Test Added',
+                details=f'Added MSK Injury Assessment by {physiotherapist_name}'   
             )
             if 'phase_id_test' in request.session:
                 return redirect('phase_tests_view',id=request.session.get('phase_id_test'))
