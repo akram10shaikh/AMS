@@ -925,7 +925,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   // ========================================
-  // 1. TABLE FILTERING (players + injuries) ✅ FIXED CARD COUNTS
+  // 1. TABLE FILTERING (players + injuries) 
   // ========================================
   const filterCategory = document.getElementById('filterCategory');
   const filterGender = document.getElementById('filterGender');
@@ -1001,7 +1001,7 @@ function filterTables() {
     }
   });
 
-  // ✅ UPDATE INJURY CARDS with correct counts
+  //  UPDATE INJURY CARDS with correct counts
   if (totalInjuriesCountEl) {
     totalInjuriesCountEl.textContent = totalVisibleInjuries;
   }
@@ -1046,7 +1046,7 @@ function filterTables() {
   }
 
   // ========================================
-  // 2. CATEGORY CARDS (top blue cards) ✅ FIXED TOOLTIPS
+  // 2. CATEGORY CARDS (top blue cards) 
   // ========================================
   const catTooltip = document.createElement('div');
   catTooltip.className = 'custom-tooltip';
@@ -1120,7 +1120,7 @@ function filterTables() {
   // 4. INITIAL RUN
   // ========================================
   filterTables();
-  console.log('✅ Dashboard JS initialized');
+  console.log(' Dashboard JS initialized');
 });
 </script>
 
@@ -1200,7 +1200,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return true;
   }
 
-  // ✅ PERFECT: Exact status counting
+  // PERFECT: Exact status counting
   function countVisibleInjuriesByStatus() {
     const q = normalize(searchInput?.value || '');
     const bounds = getDateBounds();
@@ -1238,7 +1238,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (searchMatch && dateMatch) {
         totalVisible++;
         
-        // ✅ EXACT STATUS CHECKING
+        // ✅EXACT STATUS CHECKING
         if (statusAttr === 'open' || statusAttr === 'active' || 
             rowStatus.includes('open') || rowStatus.includes('active')) {
           openCount++;      // Active injuries

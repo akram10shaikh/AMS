@@ -232,6 +232,8 @@ class CampActivity(models.Model):
         ('updated', 'Updated'),
         ('player_added', 'Player Added'),
         ('player_removed', 'Player Removed'),
+        ('staff_added', 'Staff Added'),      # NEW
+        ('staff_removed', 'Staff Removed'),  # NEW
         ('deleted', 'Deleted'),
         ('recovered', 'Recovered'),
     ]
@@ -241,6 +243,8 @@ class CampActivity(models.Model):
     performed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
     details = models.TextField(blank=True)
+    player = models.ManyToManyField(Player, blank=True,null=True)
+    staff = models.ManyToManyField(Staff, blank=True,null=True)
 
     def __str__(self):
         return f"{self.camp.name} - {self.action} by {self.performed_by.username}"
@@ -395,7 +399,7 @@ class PlayerActivityLog(models.Model):
 
 class TreatmentRecommendation(models.Model):
     injury = models.ForeignKey(Injury, on_delete=models.CASCADE)
-    physio = models.ForeignKey(Staff, on_delete=models.CASCADE, limit_choices_to={'role': 'physio'})  # ✅ Link to Staff instead of separate model
+    physio = models.ForeignKey(Staff, on_delete=models.CASCADE, limit_choices_to={'role': 'physio'})  
     treatment = models.CharField(max_length=255, null=True, blank=True)
     recommendation_notes = models.TextField()
     recovery_time_weeks = models.IntegerField()

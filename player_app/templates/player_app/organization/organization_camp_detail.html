@@ -744,49 +744,89 @@
     {% endif %}
 
     <!-- Activity history -->
-    <div class="card-dark">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h2 class="card-title mb-0">Activity History</h2>
-            {% if camp.activities.exists %}
-                <a href="{% url 'download_activity_history' camp.id %}"
-                   class="btn btn-success btn-pill btn-sm">
-                    Download Log
-                </a>
-            {% endif %}
-        </div>
-
+   <div class="card-dark">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="card-title mb-0">Activity History</h2>
         {% if camp.activities.exists %}
-            <div class="timeline" aria-live="polite" aria-atomic="true">
-                {% for activity in camp.activities.all %}
-                    <div class="timeline-item">
-                        <span class="timeline-dot"></span>
-                        <div class="timeline-header">
-                            {{ activity.action }}
-                        </div>
-                        <div class="timeline-body">
-                            {{ activity.details }}
-                        </div>
-                        <div class="timeline-meta">
-                            {% if activity.performed_by %}
-                                <span class="chip-user">
-                                    <i>👤</i>{{ activity.performed_by.username }}
-                                </span>
-                            {% else %}
-                                <span class="chip-system">
-                                    <i>⚙</i>System
-                                </span>
-                            {% endif %}
-                            &nbsp;•&nbsp;
-                            {{ activity.timestamp|date:"d M Y, H:i" }}
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="empty-text mb-0">
-                No activity recorded for this camp / tournament yet.
-            </p>
+            <a href="{% url 'download_activity_history' camp.id %}" class="btn btn-success btn-pill btn-sm">
+                Download Log
+            </a>
         {% endif %}
     </div>
+
+    {% if camp.activities.exists %}
+        <div class="timeline" aria-live="polite" aria-atomic="true">
+            {% for activity in camp.activities.all|dictsortreversed:"timestamp" %}
+                <div class="timeline-item">
+                    <span class="timeline-dot"></span>
+                    
+                    <!-- Action Badge with Color Coding -->
+                    <div class="timeline-header">
+                        <span class="badge badge-{% if activity.action == 'player_added' %}success{% elif activity.action == 'player_removed' %}danger{% elif activity.action == 'staff_added' %}info{% elif activity.action == 'staff_removed' %}warning{% else %}primary{% endif %}">
+                            {{ activity.get_action_display }}
+                        </span>
+                    </div>
+                    
+                    <!-- Summary Details -->
+                    <div class="timeline-body">
+                        {{ activity.details|linebreaks }}
+                    </div>
+                    
+                    <!-- Players Section (Collapsible if many) -->
+                    {% if activity.player.exists %}
+                        <div class="timeline-section mt-2">
+                            <strong>👥 Players Affected:</strong>
+                            <div class="mt-1">
+                                {% for player in activity.player.all %}
+                                    <span class="badge badge-light me-1 mb-1">
+                                        {{ player.name }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted">({{ activity.player.count }} player{{ activity.player.count|pluralize }})</small>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Staff Section -->
+                    {% if activity.staff.exists %}
+                        <div class="timeline-section mt-2">
+                            <strong>👨‍🏫 Staff Affected:</strong>
+                            <div class="mt-1">
+                                {% for staff_member in activity.staff.all %}
+                                    <span class="badge badge-secondary me-1 mb-1">
+                                        {{ staff_member.name }} 
+                                        <small class="text-muted">({{ staff_member.get_staff_role_display|default:staff_member.staff_role }})</small>
+                                    </span>
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted">({{ activity.staff.count }} staff member{{ activity.staff.count|pluralize }})</small>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Meta Info -->
+                    <div class="timeline-meta mt-2">
+                        {% if activity.performed_by %}
+                            <span class="chip-user">
+                                <i>👤</i> {{ activity.performed_by.username }}
+                            </span>
+                        {% else %}
+                            <span class="chip-system">
+                                <i>⚙️</i> System
+                            </span>
+                        {% endif %}
+                        &nbsp;•&nbsp;
+                        <span class="text-muted">{{ activity.timestamp|date:"d M Y, H:i" }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-history empty-icon"></i>
+            <p class="empty-text mb-0">No activity recorded for this camp / tournament yet.</p>
+        </div>
+    {% endif %}
+</div>
+
 </div>
 {% endblock %}

@@ -1126,14 +1126,9 @@ def organization_camps_tournaments(request):
     })
 
 
-
 def organization_edit_camp(request, camp_id):
-    """
-    Handles editing a specific camp/tournament with Staff + Participants (checkboxes).
-    """
     camp = get_object_or_404(CampTournament, id=camp_id)
     
-    # Permission check
     if not request.user.is_superuser and not (hasattr(request.user, "organization") and camp.organization == request.user.organization):
         return HttpResponseForbidden("You don't have permission to edit this camp.")
 
@@ -1141,79 +1136,118 @@ def organization_edit_camp(request, camp_id):
     participants = Player.objects.filter(organization=camp.organization)
 
     if request.method == 'POST':
-        # Update basic fields
-        camp.name = request.POST.get('name')
-        camp.camp_type = request.POST.get('camp_type')
+        # === CLEAN OLD STATE ===
+        old_participant_ids = set(camp.participants.values_list('id', flat=True))
+        old_staff_ids = set()
+        staff_field_name = None
         
-       
-        end_date = request.POST.get('end_date')
+        for field_name in ['staff_members', 'coaches', 'staff']:
+            if hasattr(camp, field_name):
+                old_staff_ids = set(getattr(camp, field_name).values_list('id', flat=True))
+                staff_field_name = field_name
+                break
+
+        # === CLEAN NEW IDS (remove duplicates) ===
+        participant_ids_str = request.POST.get('participants', '')
+        raw_participant_ids = [id.strip() for id in participant_ids_str.split(',') if id.strip()]
+        new_participant_ids = list(set(int(id) for id in raw_participant_ids if id.isdigit()))  # UNIQUE IDs
+        
+        staff_ids_str = request.POST.get('selected_staff', '')
+        raw_staff_ids = [id.strip() for id in staff_ids_str.split(',') if id.strip()]
+        new_staff_ids = list(set(int(id) for id in raw_staff_ids if id.isdigit()))  # UNIQUE IDs
+
+        print(f"Clean new players: {new_participant_ids}")
+        print(f"Clean new staff: {new_staff_ids}")
+
+        # === UPDATE BASIC FIELDS ===
+        camp.name = request.POST.get('name', '')
+        camp.camp_type = request.POST.get('camp_type', '')
+        end_date = request.POST.get('end_date', '')
         if end_date:
             camp.end_date = end_date
-            
-        camp.venue = request.POST.get('venue')
-
-       
-        participant_ids_str = request.POST.get('participants', '')
-        participant_ids = [id for id in participant_ids_str.split(',') if id.isdigit()]
-        
-       
-        staff_ids_str = request.POST.get('selected_staff', '')
-        staff_ids = [id for id in staff_ids_str.split(',') if id.isdigit()]
-
-
-        # Save basic fields first
+        camp.venue = request.POST.get('venue', '')
         camp.save()
 
-        # Update PARTICIPANTS
-        if participant_ids:
-            valid_participants = participants.filter(id__in=participant_ids)
-            camp.participants.set(valid_participants)
-          
-        else:
-            camp.participants.clear()
-          
+        # === PERFECT CHANGE DETECTION ===
+        added_players = set(new_participant_ids) - old_participant_ids
+        removed_players = old_participant_ids - set(new_participant_ids)
+        added_staff = set(new_staff_ids) - old_staff_ids
+        removed_staff = old_staff_ids - set(new_staff_ids)
 
-        #  Update STAFF 
-        staff_updated = False
-        if staff_ids:
-            valid_staff = staff.filter(id__in=staff_ids)
+        print(f"✅ Added players: {added_players}")
+        print(f"❌ Removed players: {removed_players}")
+        print(f"✅ Added staff: {added_staff}")
+        print(f"❌ Removed staff: {removed_staff}")
+
+        # === APPLY CHANGES ===
+        camp.participants.set(participants.filter(id__in=new_participant_ids))
+        if staff_field_name:
+            getattr(camp, staff_field_name).set(staff.filter(id__in=new_staff_ids))
+
+        # === SINGLE LOG WITH ONLY ACTUAL CHANGES ===
+        changes = []
+        changed_players = []
+        changed_staff = []
+
+        # Added players ONLY
+        if added_players:
+            added_objs = participants.filter(id__in=added_players)
+            names = ', '.join(obj.name for obj in added_objs)
+            changes.append(f"Added players: {names}")
+            changed_players.extend(added_objs)
+
+        # Removed players ONLY
+        if removed_players:
+            removed_objs = participants.filter(id__in=removed_players)
+            names = ', '.join(obj.name for obj in removed_objs)
+            changes.append(f"Removed players: {names}")
+            changed_players.extend(removed_objs)
+
+        # Added staff ONLY
+        if added_staff:
+            added_objs = staff.filter(id__in=added_staff)
+            names = ', '.join(f"{obj.name} ({obj.staff_role})" for obj in added_objs)
+            changes.append(f"Added staff: {names}")
+            changed_staff.extend(added_objs)
+
+        # Removed staff ONLY
+        if removed_staff:
+            removed_objs = staff.filter(id__in=removed_staff)
+            names = ', '.join(f"{obj.name} ({obj.staff_role})" for obj in removed_objs)
+            changes.append(f"Removed staff: {names}")
+            changed_staff.extend(removed_objs)
+
+        # CREATE SINGLE LOG
+        if changes:
+            activity = CampActivity.objects.create(
+                camp=camp,
+                action='updated',
+                performed_by=request.user,
+                details='; '.join(changes)
+            )
             
-            for field_name in ['staff_members', 'coaches', 'staff']:
-                if hasattr(camp, field_name):
-                    getattr(camp, field_name).set(valid_staff)
-              
-                    staff_updated = True
-                    break
-            
-            if not staff_updated:
-                print(f"⚠️ No staff M2M field found on camp. Available: {[f.name for f in camp._meta.many_to_many]}")
-        else:
-            # Clear staff if none selected
-            for field_name in ['staff_members', 'coaches', 'staff']:
-                if hasattr(camp, field_name):
-                    getattr(camp, field_name).clear()
-                  
+            if changed_players:
+                activity.player.set(changed_players)
+            if changed_staff:
+                activity.staff.set(changed_staff)
 
-        # Log the update activity
-        player_count = len(participant_ids)
-        staff_count = len(staff_ids)
-        CampActivity.objects.create(
-            camp=camp,
-            action='updated',
-            performed_by=request.user,
-            details=f"Updated '{camp.name}' - {player_count} participants, {staff_count} staff"
-        )
-
-        # Success message with counts
+        # Success message
+        msg_parts = []
+        if added_players: msg_parts.append(f"✅ +{len(added_players)} players")
+        if removed_players: msg_parts.append(f"❌ -{len(removed_players)} players")
+        if added_staff: msg_parts.append(f"✅ +{len(added_staff)} staff")
+        if removed_staff: msg_parts.append(f"❌ -{len(removed_staff)} staff")
+        
+        messages.success(request, f"Updated! {' | '.join(msg_parts)}")
 
         return redirect('organization_camp_detail', camp_id=camp.id)
 
-    # GET request - render form
     return render(request, 'player_app/organization/organization_edit_camp.html', {
         'camp': camp,
         'participants': participants,
         'staff': staff,
     })
+
 
 
 @login_required
@@ -1365,12 +1399,22 @@ def organization_create_camp(request):
         if staff_count > 0:
             success_msg += f"<br>• {staff_count} staff member(s)"
         
-        CampActivity.objects.create(
+     
+        valid_palyers = Player.objects.filter(id__in=valid_player_ids)
+       
+        staff_qs = Staff.objects.filter(id__in=valid_staff_ids)
+        
+        act = CampActivity.objects.create(
             camp=camp,
             action='Added',
             performed_by=request.user,
+           
             details=f"Created '{camp.name}' - {player_count} participants, {staff_count} staff"
         )
+        act.player.set(valid_participants)
+        act.staff.set(staff_qs)
+        act.save()
+       
         messages.success(request, success_msg)
         return redirect("organization_camps_tournaments")   
 
