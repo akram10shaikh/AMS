@@ -1,0 +1,1665 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Player Record{% endblock %}
+
+{% block extra_head %}
+    <style>
+        :root {
+            --color-primary: #0f172a;
+            --color-secondary: #007CF0;
+            --color-accent: #00DFD8;
+            --color-background: #f4f6fa;
+            --color-card-bg: #fff;
+            --color-text-dark: #1a202c;
+            --color-text-light: #fff;
+            --color-border-light: #d1d5db;
+            --color-border-dark: #e5e7eb;
+            --color-highlight: #d9f7be;
+            --color-input-bg: #f9fafb;
+            --color-dark-green: #1b4d2e;
+            --color-orange: #f59e0b;
+            --color-gray: #363636;
+            --color-light-gray: #f8fafc;
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--color-background);
+            line-height: 1.6;
+        }
+        .welcome-section {
+            height: 260px;
+            background: linear-gradient(to right, var(--color-secondary), var(--color-accent));
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 var(--space-xl);
+        }
+        .welcome-section h1 {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--color-text-light);
+            margin: 0;
+        }
+        .main-card {
+            max-width: 1200px;
+            margin: -80px auto var(--space-xl) auto;
+            background-color: var(--color-card-bg);
+            border-radius: 12px;
+            padding: var(--space-xl);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            position: relative;
+            z-index: 10;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-lg);
+        }
+        .import-button {
+            display: inline-flex;
+            align-items: center;
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            text-decoration: none;
+        }
+        .import-button:hover { background-color: #1e293b; }
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xl);
+            margin-bottom: var(--space-xl);
+        }
+        .form-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            padding: var(--space-xl);
+            background-color: var(--color-card-bg);
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--color-border-dark);
+        }
+        .form-fields label {
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .input {
+            padding: 0.75rem 1rem;
+            font-size: 15px;
+            font-weight: 500;
+            border: 1px solid var(--color-border-light);
+            border-radius: 12px;
+            background-color: var(--color-input-bg);
+            transition: all 0.2s ease-in-out;
+            color: #111827;
+            width: 100%;
+        }
+        select.input { width: 100%; }
+        .input:focus,
+        select.input:focus {
+            outline: none;
+            border-color: #2563eb;
+            background-color: var(--color-card-bg);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        button {
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+            font-weight: 700;
+            font-size: 15px;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%;
+        }
+        button:hover { background-color: #1e293b; transform: translateY(-1px); }
+        .player-info-section {
+            margin-top: var(--space-xl);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+            background-color: var(--color-dark-green);
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            padding: var(--space-md);
+        }
+        .player-info-title {
+            color: var(--color-text-light);
+            text-align: center;
+            font-style: italic;
+            font-weight: 700;
+            margin: 0;
+            padding-bottom: var(--space-sm);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .player-info-card {
+            border-top: 15px solid var(--color-orange);
+            border-bottom: 15px solid var(--color-orange);
+            color: var(--color-text-light);
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: var(--space-md);
+            flex-wrap: wrap;
+        }
+        .player-photo {
+            background-color: var(--color-dark-green);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: 176px;
+            width: 170px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .player-info-table {
+            flex-grow: 1;
+            border-collapse: collapse;
+            font-size: 14px;
+            color: var(--color-text-light);
+            margin-left: 1rem;
+        }
+        .player-info-table th,
+        .player-info-table td {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem;
+            text-align: left;
+        }
+        .player-info-table th {
+            font-weight: normal;
+            background-color: #114224;
+            text-align: center;
+            width: 40%;
+        }
+        .coach-name {
+            align-self: flex-start;
+            padding: var(--space-md);
+            background-color: #114224;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-width: 150px;
+            height: 145px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .chart-container {
+            width: 85%;
+            margin: 2rem auto;
+        }
+        .chart-legend {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 2rem;
+        }
+        table.stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin-top: 1rem;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        table.stats-table thead {
+            background-color: #0f172a;
+            color: #fff;
+        }
+        table.stats-table th, table.stats-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+            vertical-align: middle;
+            font-size: 14px;
+        }
+        table.stats-table tbody tr:hover { background-color: #f9fafb; }
+        .right-align {
+            text-align: right;
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+        }
+        .date-filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .date-filter-group input[type="radio"] { margin-right: 0.5rem; }
+        .select-wrapper { display: flex; flex-direction: column; }
+        .button-wrapper { display: flex; flex-direction: column; }
+        @media (max-width: 900px) {
+            .form-container,
+            .chart-container,
+            .player-info-card { flex-direction: column; }
+            .player-info-table {
+                margin-left: 0;
+                margin-top: 1rem;
+            }
+        }
+
+
+        .card-header {
+            background: linear-gradient(135deg, #ffffffff, #ffffffff);
+            border-radius: 16px 16px 0 0;
+            padding: 16px 24px;
+        }
+
+        .report-settings-card {
+            background: #ffffff;
+            color: #333;
+            border-radius: 12px;
+            padding: 8px 12px;
+            min-width: 260px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+
+        .status-pill {
+            background: #e3f2fd;
+            color: #0d47a1;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .clear-link {
+            font-size: 11px;
+            color: #d32f2f;
+            text-decoration: none;
+        }
+
+        .settings-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .pill {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(0,0,0,0.06);
+            white-space: nowrap;
+        }
+
+        .pill-blue   { background: #e3f2fd; color: #0d47a1; }
+        .pill-green  { background: #e8f5e9; color: #1b5e20; }
+        .pill-purple { background: #f3e5f5; color: #4a148c; }
+
+        .settings-edit-link {
+            display: inline-block;
+            font-size: 11px;
+            color: #1976d2;
+            text-decoration: underline;
+        }
+        
+        .blood-report {
+    background: #fff;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.blood-header {
+    text-align: center;
+    border-bottom: 2px solid #000;
+    margin-bottom: 15px;
+}
+
+.blood-player-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.blood-section {
+    margin-bottom: 20px;
+}
+
+.blood-section h4 {
+    background: #f2f2f2;
+    padding: 6px 10px;
+    border-left: 4px solid #007CF0;
+}
+
+.blood-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.blood-table th,
+.blood-table td {
+    border: 1px solid #000;
+    padding: 6px;
+    text-align: left;
+}
+
+.normal { color: #000; }
+.high { color: red; font-weight: bold; }
+.low { color: orange; font-weight: bold; }
+.blood-report-wrapper {
+    background:  #114224;
+    padding: 20px;
+}
+
+.player-summary-table {
+    width: 50%;
+    margin: auto;
+    border-collapse: collapse;
+    background: #2f5d0f;
+    color: white;
+    font-weight: bold;
+}
+
+.player-summary-table th,
+.player-summary-table td {
+    border: 1px solid #fff;
+    padding: 6px 10px;
+}
+
+.blood-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.blood-left {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.blood-right {
+    display: flex;
+}
+
+.blood-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    font-size: 14px;
+}
+
+.blood-table th {
+    background: #2f5d0f;
+    color: white;
+    border: 1px solid #000;
+    padding: 6px;
+}
+
+.blood-table td {
+    border: 1px solid #000;
+    padding: 6px;
+    color: #000;
+}
+
+.test-cbc {
+    background: #e6bfb6;
+    font-style: italic;
+    font-weight: bold;
+    text-align: center;
+}
+
+.test-lft {
+    background: #fff2cc;
+    font-style: italic;
+    font-weight: bold;
+    text-align: center;
+}
+
+.test-tft {
+    background: #ead1dc;
+    font-style: italic;
+    font-weight: bold;
+    text-align: center;
+}
+
+.test-lipid {
+    background: #d9eaf7;
+    font-style: italic;
+    font-weight: bold;
+    text-align: center;
+}
+
+.high {
+    background: red;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+
+
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="welcome-section">
+        <h1>Welcome</h1>
+    </div>
+
+ <main class="main-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+    <h2 class="mb-0 fw-bold black-white">Player Records</h2>
+
+    <div class="settings-section ms-auto">
+        {% if has_session_settings %}
+            <div class="report-settings-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="status-pill">⚙️ Active</span>
+                    <a href="{% url 'delete_session' %}" class="clear-link">Clear</a>
+                </div>
+
+                <div class="settings-pills">
+                    <span class="pill pill-blue">
+                        Min/Max: {{ min_max_formula|title }}
+                    </span>
+                    <span class="pill pill-green">
+                        {{ min_is_better|yesno:"Min Better,Max Better" }}
+                    </span>
+                    <span class="pill pill-purple">
+                        Group: {{ grp_avg_option|default:"Standard"|title }}
+                    </span>
+                </div>
+
+                <a href="{% url 'report_settings' %}" class="settings-edit-link">
+                    Change in Report Settings
+                </a>
+            </div>
+        {% else %}
+            <a href="{% url 'report_settings' %}" class="btn btn-outline-light btn-sm">
+                ⚙️ Configure Report Settings
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+        <!-- Form -->
+        <form id="reportForm"
+              class="form-container"
+              method="post"
+              action="{% url 'player_report' %}">
+            {% csrf_token %}
+            <div class="form-fields">
+                <div class="date-filter-group">
+                <label>Date Option:</label><br>
+                <label><input type="radio" id="range" name="date_option" value="range" onclick="toggleDateInputs('range')"> Start Date – End Date</label><br>
+                <label><input type="radio" id="1month" name="date_option" value="1month" onclick="toggleDateInputs('preset')"> Last 1 Month</label><br>
+                <label><input type="radio" id="3months" name="date_option" value="3months" onclick="toggleDateInputs('preset')"> Last 3 Months</label><br>
+                <label><input type="radio" id="6months" name="date_option" value="6months" onclick="toggleDateInputs('preset')"> Last 6 Months</label><br>
+                <label><input type="radio" id="fy" name="date_option" value="fy" onclick="toggleDateInputs('preset')"> Financial Year (Apr 1 – Mar 31)</label><br>
+                <div id="date-range-fields" style="display:none; margin-top:12px;">
+                    <label for="startDateInput">Start Date:</label>
+                    <input type="date" id="startDateInput" name="start_date" class="input" disabled />
+                    <label for="endDateInput">End Date:</label>
+                    <input type="date" id="endDateInput" name="end_date" class="input" disabled />
+                </div>
+            </div>
+                <div class="select-wrapper">
+                    <label for="testSelect">Tests:</label>
+                    <select id="testSelect" name="test_name" class="input" required>
+                        <option value="" disabled {% if not selected_test %}selected{% endif %}>-- Select Test --</option>
+                        {% comment %} <option value="10m" {% if selected_test == '10m' %}selected{% endif %}>10m</option>
+                        <option value="20m" {% if selected_test == '20m' %}selected{% endif %}>20m</option>
+                        <option value="40m" {% if selected_test == '40m' %}selected{% endif %}>40m</option>
+                        <option value="1 Mile" {% if selected_test == '1 Mile' %}selected{% endif %}>1 Mile</option>
+                        <option value="2 KM" {% if selected_test == '2 KM' %}selected{% endif %}>2 KM</option>
+                        <option value="Push-ups" {% if selected_test == 'Push-ups' %}selected{% endif %}>Push-ups</option>
+                        <option value="YoYo" {% if selected_test == 'YoYo' %}selected{% endif %}>YoYo</option>
+                        <option value="Run A 3" {% if selected_test == 'Run A 3' %}selected{% endif %}>Run A 3</option>
+                        <option value="SBJ" {% if selected_test == 'SBJ' %}selected{% endif %}>SBJ</option>
+                        <option value="CMJ Scores" {% if selected_test == 'CMJ Scores' %}selected{% endif %}>CMJ Scores</option>
+                        <option value="MSK Injury Assessment" {% if selected_test == 'MSK Injury Assessment' %}selected{% endif %}>MSK Injury Assessment</option>
+                        <option value="Blood Test" {% if selected_test == 'Blood Test' %}selected{% endif %}>Blood Test</option>
+                        <option value="Anthropometry Test" {% if selected_test == 'Anthropometry Test' %}selected{% endif %}>Anthropometry Test</option>
+                        <option value="DEXA Scan Test" {% if selected_test == 'DEXA Scan Test' %}selected{% endif %}>DEXA Scan Test</option>
+                        <option value="S/L Glute Bridges" {% if selected_test == 'S/L Glute Bridges' %}selected{% endif %}>S/L Glute Bridges</option>
+                        <option value="S/L Hop" {% if selected_test == 'S/L Hop Tests' %}selected{% endif %}>S/L Hop Tests</option>
+                        <option value="MB Rotational Throws" {% if selected_test == 'MB Rotational Throws' %}selected{% endif %}>MB Rotational Throws</option>
+                        <option value="Copenhagen" {% if selected_test == 'Copenhagen' %}selected{% endif %}>Copenhagen</option>
+                        <option value="SL Lunge Calf Raises" {% if selected_test == 'SL Lunge Calf Raises' %}selected{% endif %}>SL Lunge Calf Raises</option>
+                        <option value="run_a_3x6" {% if selected_test == 'run_a_3x6' %}selected{% endif %}>Run A 3x6</option>
+                        <option value="Daily Wellness Test" {% if selected_test == 'Daily Wellness Test' %}selected{% endif %}>Daily Wellness Test</option>   {% endcomment %}
+                       {% if test_name %}
+                        <option value="{{ test_name}}" {% if selected_test == '{{ test_name }}' %}selected{% endif %}>{{ test_name }}</option> 
+                       {% endif %}
+                    </select>
+                </div>
+
+                <div class="select-wrapper">
+                    <label for="playerSelect">Select Player:</label>
+                    <select id="playerSelect" name="player_id" class="input" required>
+                        <option value="" disabled {% if not selected_player_id %}selected{% endif %}>-- Select Player --</option>
+                        {% for p in players %}
+                            <option value="{{ p.id }}" {% if selected_player_id == p.id %}selected{% endif %}>
+                                {{ p.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="select-wrapper">
+                    <label for="numTestsToShow">Show Last N Tests:</label>
+                    <select id="numTestsToShow" name="num_tests" class="input" required>
+                        <option value="" disabled {% if not num_tests %}selected{% endif %}>-- Select Number --</option>
+                        <option value="1"  {% if num_tests == 1 %}selected{% endif %}>1</option>
+                        <option value="3"  {% if num_tests == 3 %}selected{% endif %}>3</option>
+                        <option value="5"  {% if num_tests == 5 %}selected{% endif %}>5</option>
+                        <option value="10" {% if num_tests == 10 %}selected{% endif %}>10</option>
+                    </select>
+                </div>
+
+                <div class="button-wrapper">
+                    <button type="submit">Fetch Report</button>
+                </div>
+            </div>
+        </form>
+         <!-- Normal Test -->
+        {% if error %}
+            <p style="color:red;">{{ error }}</p>
+        {% endif %}
+<div id="pdfContentNormal" style="padding: 20px; background: #fff;">
+        {% if player_info %}
+        <div id="playerInfoSection" class="player-info-section">
+            <h3 class="player-info-title">
+                Individual Report - {{ player_info.name }}
+            </h3>
+            <div class="player-info-card" id="playerInfoCard">
+                <div class="player-photo">
+                    {% if player_info.image %}
+                        <img src="{{ player_info.image.url }}" alt="{{ player_info.name }}"
+                             style="max-width:100%;max-height:100%;object-fit:cover;">
+                    {% else %}
+                        No Image
+                    {% endif %}
+                </div>
+                <table class="player-info-table">
+                    <tr><th>Name</th><td>{{ player_info.name }}</td></tr>
+                    <tr><th>Age</th><td>{{ player_info.age }}</td></tr>
+                    <tr><th>Gender</th><td>{{ player_info.gender }}</td></tr>
+                    <tr><th>Role</th><td>{{ player_info.role }}</td></tr>
+                    <tr><th>Handness</th><td>{{ player_info.handedness }}</td></tr>
+                    <tr><th>Category</th><td>{{ player_info.age_category }}</td></tr>
+                    <tr><th>Batting Style</th><td>{{ player_info.batting_style }}</td></tr>
+                    <tr><th>Bowling Style</th><td>{{ player_info.bowling_style }}</td></tr>
+                    <tr><th>Player Status</th><td>{{ player_info.player_status }}</td></tr>
+                    <tr><th>Test</th><td>{{ selected_test }}</td></tr>
+                    <tr><th>Individual Average Score</th><td>{{ individual_averages }}</td></tr>
+                    <tr><th>Group Average Score</th><td>{{ group_average }}</td></tr>
+                    <tr><th>Min Score</th><td>{{ min_value }}</td></tr>
+                    <tr><th>Max Score</th><td>{{ max_value }}</td></tr>
+                    <tr><th>Normalized Scores</th><td>{{ normalized_scores|join:", " }}</td></tr>
+
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if stats_data %}
+       <div class="chart-container">
+        <canvas id="bestVsDateChart"></canvas>
+       </div> 
+        <div class="table-container" id="statsTableContainer">
+            <table class="stats-table" id="statsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Gender</th>
+                        <th>Category</th>
+                        <th>Distance Covered</th>
+                        <th>Predicted VO2max</th>
+                        <th>Best</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in stats_data %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.phase }}</td>
+                        <td>{{ row.gender }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.distance_covered }}</td>
+                        <td>{{ row.predicted_vo2max }}</td>
+                        <td>{{ row.best }}</td>
+                        <td>{{ row.notes }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        </div>
+
+        {% if player_info or stats_data or table_json %}
+        <div class="download-section">
+          <button id="downloadPlayerPdfBtn" data-target="pdfContentNormal">⬇️ Download PDF</button>
+        </div>
+        {% endif %}
+        {% endif %}
+        
+        <!-- Sepcial Test -->
+          <div id="pdfContentSpecial" style="padding: 20px; background: #fff;">
+         {% if player_info_new %}
+        
+        <div id="playerInfoSection" class="player-info-section">
+            <h3 class="player-info-title">
+                Individual Report - {{ player_info_new.name }}
+            </h3>
+            <div class="player-info-card" id="playerInfoCard">
+                <div class="player-photo">
+                    {% if player_info_new.image %}
+                        <img src="{{ player_info_new.image.url }}" alt="{{ player_info_new.name }}"
+                             style="max-width:100%;max-height:100%;object-fit:cover;">
+                    {% else %}
+                        No Image
+                    {% endif %}
+                </div>
+                <table class="player-info-table">
+                    <tr><th>Name</th><td>{{ player_info_new.name }}</td></tr>
+                    <tr><th>Age</th><td>{{ player_info_new.age }}</td></tr>
+                    <tr><th>Gender</th><td>{{ player_info_new.gender }}</td></tr>
+                    <tr><th>Role</th><td>{{ player_info_new.role }}</td></tr>
+                    <tr><th>Handness</th><td>{{ player_info_new.handedness }}</td></tr>
+                    <tr><th>Category</th><td>{{ player_info_new.age_category }}</td></tr>
+                    <tr><th>Batting Style</th><td>{{ player_info_new.batting_style }}</td></tr>
+                    <tr><th>Bowling Style</th><td>{{ player_info_new.bowling_style }}</td></tr>
+                    <tr><th>Player Status</th><td>{{ player_info_new.player_status }}</td></tr>
+                    <tr><th>Test</th><td>{{ selected_test }}</td></tr>
+                    <tr><th>Individual Average Score Left</th><td>{{ individual_averages_left }}</td><th>Individual Average Score Right</th><td>{{ individual_averages_right }}</td></tr>
+                    <tr><th>Group Average Score Left</th><td>{{ group_average_left }}</td><th>Group Average Score Right</th><td>{{ group_average_right }}</td></tr>
+                    <tr><th>Min Score Left</th><td>{{ min_value_left }}</td><th>Min Score Right</th><td>{{ min_value_right }}</td></tr>
+                    <tr><th>Max Score Left</th><td>{{ max_value_left }}</td><th>Max Score Right</th><td>{{ max_value_right }}</td></tr>
+                    <tr><th>Normalized Scores Left</th><td>{{ normalized_scores_left|join:", " }}</td><th>Normalized Scores Right</th><td>{{ normalized_scores_right|join:", " }}</td></tr>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if stats_data_special %}
+
+        <div class="chart-container">
+            <canvas id="leftRightChart"></canvas>
+        </div>
+        <div class="table-container" id="statsTableContainer">
+            <table class="stats-table" id="statsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Right</th>
+                        <th>Left</th>
+                        <th>Difference</th>
+                        <th>Ratio</th>
+                        <th>Gender</th>
+                        <th>Category</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in stats_data_special %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.phase }}</td>
+                        <td>{{ row.right }}</td>
+                        <td>{{ row.left }}</td>
+                        <td>{{ row.difference }}</td>
+                        <td>{{ row.ratio }}</td>
+                        <td>{{ row.gender }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.notes }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        </div>
+        {% if player_info_new or stats_data_special or table_json %}
+         <div class="download-section">
+          <button id="downloadPlayerPdfBtn" data-target="pdfContentSpecial">⬇️ Download PDF</button>
+         </div>
+        {% endif %}
+        {% endif %}
+
+        
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% else %}
+    {% if table_json %}
+        {% if selected_test == "Blood Test" %}
+        <div id="bloodTestContainer">
+            <div class="blood-report-wrapper">
+              <h3 class="player-info-title">
+                Kerala Cricket Association
+              </h3>
+              <h3 class="player-info-title">
+                Individual Blood Report
+             </h3>
+            <div class="player-info-card" id="playerInfoCard">
+                <div class="player-photo">
+                    {% if player_info_new.image %}
+                        <img src="{{ player_info_new.image.url }}" alt="{{ player_info_new.name }}"
+                             style="max-width:100%;max-height:100%;object-fit:cover;">
+                    {% else %}
+                        No Image
+                    {% endif %}
+                </div>
+                <table class="player-info-table">
+                    <tr><th>Name</th><td id="player"></td></tr>
+                    <tr><th>Age</th><td id="age"></td></tr>
+                    <tr><th>Gender</th><td id="gender"></td></tr>
+                    <tr><th>Role</th><td id="role"></td></tr>
+                    <tr><th>Handness</th><td id="Handness"></td></tr>
+                </table>
+            <div class="blood-grid">
+           <div class="blood-left">
+            <!-- CBC -->
+           <table class="blood-table">
+            <thead>
+             <tr>
+                <th>Test</th>
+                <th>Parameter</th>
+                <th>Value</th>
+            </tr>
+                </thead>
+            <tbody>
+        <tr>
+            <td rowspan="3" class="test-cbc">Complete<br>Blood Count<br>(CBC)</td>
+            <td>Haemoglobin (13–17) g/dL</td>
+            <td id="blood_hemoglobin"></td>
+        </tr>
+        <tr>
+            <td>RBC Count (4.5–5.5) millions/Cumm</td>
+            <td id="blood_rbc"></td>
+        </tr>
+        <tr>
+            <td>Platelet Count (1.50–4.00) Lakhs/cumm</td>
+            <td id="blood_platelets"></td>
+        </tr>
+    </tbody>
+</table>
+
+            <!-- LFT -->
+            <table class="blood-table">
+                <tbody>
+                    <tr>
+                        <td rowspan="3" class="test-lft">Liver<br>Function Test<br>(LFT)</td>
+                        <td>Albumin (3.5–5.2) gm/dL</td>
+                        <td id="blood_albumin"></td>
+                    </tr>
+                    <tr>
+                        <td>Globulin (2.5–3.5) gm/dL</td>
+                        <td id="blood_globulin"></td>
+                    </tr>
+                    <tr>
+                        <td>Uric Acid (3.4–7.0) mg/dL</td>
+                        <td id="blood_uric_acid"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- TFT -->
+            <table class="blood-table">
+                <tbody>
+                    <tr>
+                        <td rowspan="3" class="test-tft">Thyroid<br>Function Test<br>(TFT)</td>
+                        <td>T3 (80–200) ng/dL</td>
+                        <td id="blood_t3"></td>
+                    </tr>
+                    <tr>
+                        <td>T4 (5.1–14.1) ug/dL</td>
+                        <td id="blood_t4"></td>
+                    </tr>
+                    <tr>
+                        <td>TSH Serum (0.27–4.2)</td>
+                        <td id="blood_tsh"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+        <div class="blood-right">
+            <table class="blood-table">
+                <thead>
+                    <tr>
+                        <th>Test</th>
+                        <th>Parameter</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td rowspan="12" class="test-lipid">Lipid<br>Profile</td>
+                        <td>Creatinine (0.7–1.2) mg/dL</td>
+                        <td id="blood_creatinine"></td>
+                    </tr>
+                    <tr>
+                        <td>Testosterone (2.8–8.0) ng/ml</td>
+                        <td id="blood_testosterone"></td>
+                    </tr>
+                    <tr>
+                        <td>Iron (60–160) ug/dl</td>
+                        <td id="blood_iron"></td>
+                    </tr>
+                    <tr>
+                        <td>Vitamin D3 (30–100) ng/ml</td>
+                        <td id="blood_vitamin_d3"></td>
+                    </tr>
+                    <tr>
+                        <td>Cholesterol (&lt;200) mg/dL</td>
+                        <td id="blood_cholesterol"></td>
+                    </tr>
+                    <tr>
+                        <td>HDL (&gt;60) mg/dL</td>
+                        <td id="blood_hdl"></td>
+                    </tr>
+                    <tr>
+                        <td>LDL (&lt;100) mg/dL</td>
+                        <td id="blood_ldl"></td>
+                    </tr>
+                    <tr>
+                        <td>LDL/HDL Ratio (&lt;3.5)</td>
+                        <td id="blood_ldl_hdl_ratio"></td>
+                    </tr>
+                    <tr>
+                        <td>Vitamin B12 (197–771) pg/mL</td>
+                        <td id="blood_vitamin_b12"></td>
+                    </tr>
+                    <tr>
+                        <td>Lipo Protein (&lt;30.0 mg/dl)</td>
+                        <td id="blood_lipoprotein"></td>
+                    </tr>
+                    <tr>
+                        <td>Homocystein (5.2–11.4) umol/L</td>
+                        <td id="blood_homocysteine"></td>
+                    </tr>
+                    <tr>
+                        <td>Protein (6.4–8.3) g/dL</td>
+                        <td id="blood_protein"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+      <div id="bloodTestResults">
+        
+      </div>
+</div>
+            </div>
+        {% else %}
+            <h2>{{ selected_test }} Report</h2>
+            <div class="table-container">
+                <table class="stats-table" id="testTable">
+                    <thead id="tableHead">
+                        <tr><th>Loading...</th></tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td>Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endif %}
+
+
+        <!-- Single Test-->
+        {% if stats_data_single %}
+        <div class="table-container" id="statsTableContainer">
+            <table class="stats-table" id="statsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Gender</th>
+                        <th>Category</th>
+                        <th>Trial1</th>
+                        <th>Trial2</th>
+                        <th>Trial3</th>
+                        <th>Trial4</th>
+                        <th>Trial5</th>
+                        <th>Trial6</th>
+                        <th>Average</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in stats_data_single %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.phase }}</td>
+                        <td>{{ row.gender }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.trial1 }}</td>
+                        <td>{{ row.trial2 }}</td>
+                        <td>{{ row.trial3 }}</td>
+                        <td>{{ row.trial4 }}</td>
+                        <td>{{ row.trial5 }}</td>
+                        <td>{{ row.trial6 }}</td>
+                        <td>{{ row.average }}</td>
+                        <td>{{ row.notes }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if stats_data_wellness %}
+        <div class="table-container" id="statsTableContainer">
+            <table class="stats-table" id="statsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Sleep Hours</th>
+                        <th>Urine Color</th>
+                        <th>Fatigue Level</th>
+                        <th>Soreness Level</th>
+                        <th>Has Pain</th>
+                        <th>Motivation Level</th>
+                        <th>Balls Bowled</th>
+                        <th>Training Type</th>
+                        <th>Total RPE</th>
+
+                        <th>Pain Comment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in stats_data_wellness %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.phase }}</td>
+                        <td>{{ row.sleep_hours }}</td>
+                        <td>{{ row.urine_color }}</td>
+                        <td>{{ row.fatigue_level }}</td>
+                        <td>{{ row.soreness_level }}</td>
+                        <td>{{ row.has_pain }}</td>
+                        <td>{{ row.motivation_level }}</td>
+                        <td>{{ row.balls_bowled }}</td>
+                        <td>{{ row.training_session_types }}</td>
+                        <td>{{ row.total_rpe }}</td>
+                        <td>{{ row.pain_comment }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+    </main>
+<script id="table-data" type="application/json">
+    {{ table_json|safe }}
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const selectedTest = "{{ selected_test }}";
+
+    if (selectedTest === "Blood Test") {
+        const rawData = JSON.parse(document.getElementById("table-data").textContent);
+        const data = rawData.data[0];
+        const fields = [
+            "blood_hemoglobin", "blood_rbc", "blood_platelets",
+            "blood_albumin", "blood_globulin", "blood_uric_acid",
+            "blood_creatinine", "blood_testosterone", "blood_iron",
+            "blood_vitamin_d3", "blood_cholesterol", "blood_hdl",
+            "blood_ldl", "blood_ldl_hdl_ratio", "blood_vitamin_b12",
+            "blood_lipoprotein", "blood_homocysteine", "blood_t3","blood_protein",
+            "blood_t4", "blood_tsh","player","gender","age", "date","role","handness"
+        ];
+
+        fields.forEach(field => {
+            const td = document.getElementById(field);
+            if (td && data[field] !== null && data[field] !== undefined) {
+                td.textContent = data[field];
+                if (field === "blood_hemoglobin" &&(data[field] < 13 || data[field] > 17)) td.classList.add("high");
+                if (field === "blood_rbc" &&(data[field] < 4.5 || data[field] > 5.5)) td.classList.add("high");
+                if (field === "blood_platelets" &&(data[field] < 1.50 || data[field] > 4.00)) td.classList.add("high");
+                if (field === "blood_albumin" &&(data[field] < 3.5 || data[field] > 5.2)) td.classList.add("high");
+                if (field === "blood_globulin" &&(data[field] < 2.5|| data[field] > 3.5)) td.classList.add("high");
+                if (field === "blood_uric_acid" &&(data[field] < 3.4 || data[field] > 7)) td.classList.add("high");
+                if (field === "blood_t3" &&(data[field] < 80 || data[field] > 200)) td.classList.add("high");
+                if (field === "blood_t4" &&(data[field] < 5.1|| data[field] > 14.1)) td.classList.add("high");
+                if (field === "blood_tsh" &&(data[field] < 0.27|| data[field] > 4.2)) td.classList.add("high");
+                if (field === "blood_creatinine" && (data[field] < 0.7|| data[field] > 1.2)) td.classList.add("high");
+                if (field === "blood_testosterone" && (data[field] < 2.8|| data[field] > 8.0)) td.classList.add("high");
+                if (field === "blood_iron" && (data[field] < 60|| data[field] > 160)) td.classList.add("high");
+                if (field === "blood_vitamin_d3" && (data[field] < 30|| data[field] > 100)) td.classList.add("high");
+                if (field === "blood_cholesterol" && data[field] < 200)td.classList.add("high");
+                if (field === "blood_hdl" && data[field] < 60) td.classList.add("high");
+                if (field === "blood_ldl" && data[field] > 100) td.classList.add("high");
+                if (field === "blood_ldl_hdl_ratio" && data[field] > 3.5) td.classList.add("high");
+                if (field === "blood_vitamin_b12" && (data[field] < 197|| data[field] > 771)) td.classList.add("high");
+                if (field === "blood_lipoprotein" &&  data[field] > 30) td.classList.add("high");
+                if (field === "blood_homocysteine" && (data[field] < 5.2|| data[field] > 11.4)) td.classList.add("high");
+                if (field === "blood_protein" && (data[field] < 6.4|| data[field] > 8.3)) td.classList.add("high");
+            }
+        });
+    }
+});
+</script>
+
+    
+<!-- ------------------graph normal test--------------------->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+
+{% if stats_data %}
+    {{ stats_data|json_script:"stats-data" }}
+{% endif %}
+<script>
+const playerInfoCard = document.querySelector('.player-info-card');
+
+let testName = '';
+let individualAvg = '';
+let groupAvg = '';
+
+if (playerInfoCard) {
+    const rows = Array.from(playerInfoCard.querySelectorAll('tr'));
+    const testRow = rows.find(tr => tr.querySelector('th')?.textContent.trim() === 'Test');
+    testName = testRow?.querySelector('td')?.textContent.trim() || '';
+    const getAverage = (headerText) => {
+        const row = rows.find(tr => tr.querySelector('th')?.textContent.trim() === headerText);
+        const val = row?.querySelector('td')?.textContent.trim() || '';
+        return val ? parseFloat(val).toFixed(2) : '';
+    };
+    individualAvg = getAverage('Individual Average Score');
+    groupAvg = getAverage('Group Average Score');
+}
+
+    const statsData = JSON.parse(
+        document.getElementById("stats-data").textContent
+    );
+     // console.log("data",statsData);
+
+    const labels = statsData.map(item => {
+        return [
+            item.date,
+            item.phase ? item.phase : ''
+        ];
+    });
+
+    const bestValues = statsData.map(item => Number(item.best));
+    const minBest = Math.min(...bestValues);
+    const maxBest = Math.max(...bestValues);
+    const ctx = document.getElementById('bestVsDateChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+        datasets: [
+    {
+        label: 'Best Score',
+        data: bestValues,
+        backgroundColor: '#007CF0',
+        borderColor: '#0f172a',
+        borderWidth: 1,
+        borderRadius: 6,
+        barPercentage: 0.7
+    },
+    {
+        label: 'Individual Average',
+        data: new Array(bestValues.length).fill(individualAvg),
+        type: 'line',
+        borderColor: 'red',
+        borderWidth: 2,
+        borderDash: [6, 6],
+        pointRadius: 0,
+        fill: false
+    },
+    {
+        label: 'Group Average',
+        data: new Array(bestValues.length).fill(groupAvg),
+        type: 'line',
+        borderColor: 'green',
+        borderWidth: 2,
+        borderDash: [6, 6],
+        pointRadius: 0,
+        fill: false
+    }
+]
+
+        },
+        options: {
+    responsive: true,
+    plugins: {
+        legend: {
+            display: true
+        },
+        tooltip: {
+            callbacks: {
+                label: function(context) {
+                    return `Best: ${context.raw}`;
+                }
+            }
+        },
+       annotation: {
+    annotations: {
+        individualAvgLine: individualAvg ? {
+            type: 'line',
+            yMin: individualAvg,
+            yMax: individualAvg,
+            borderColor: 'red',
+            borderWidth: 2,
+            borderDash: [6, 6],
+            label: {
+                display: true,
+                content: `(${individualAvg})`,
+                position: 'start',
+                backgroundColor: 'rgba(255,0,0,0.8)',
+              
+            }
+        } : null,
+
+        groupAvgLine: groupAvg ? {
+            type: 'line',
+            yMin: groupAvg,
+            yMax: groupAvg,
+            borderColor: 'green',
+            borderWidth: 2,
+            borderDash: [6, 6],
+            label: {
+                display: true,
+                content: `(${groupAvg})`,
+                position: 'end',
+                backgroundColor: 'rgba(0,128,0,0.8)',
+            }
+        } : null
+    }
+}
+
+    },
+    scales: {
+        x: {
+            ticks: {
+                autoSkip: false
+            },
+            title: {
+                display: true,
+                text: 'Date / Phase'
+            }
+        },
+        y: {
+            title: {
+                display: true,
+                text: 'Best'
+            },
+            beginAtZero: false,
+            min: minBest - 1,
+            max: maxBest + 1
+        }
+    }
+}
+
+    });
+</script>
+
+    
+{% if stats_data_special %}
+    {{ stats_data_special|json_script:"stats-data-special" }}
+{% endif %}
+<script>
+(function () {
+
+    const dataEl = document.getElementById("stats-data-special");
+    const canvas = document.getElementById("leftRightChart");
+
+    if (!dataEl || !canvas) return;
+
+    const data = JSON.parse(dataEl.textContent);
+
+    data.sort((a, b) =>
+        new Date(a.date.replace(/-/g, '/')) -
+        new Date(b.date.replace(/-/g, '/'))
+    );
+
+    const labels = data.map(d => [
+        d.date,
+        d.phase || ''
+    ]);
+
+    const leftValues  = data.map(d => Number(d.left));
+    const rightValues = data.map(d => Number(d.right));
+
+    new Chart(canvas.getContext("2d"), {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Left",
+                    data: leftValues,
+                    backgroundColor: "#10b981",
+                    barThickness: 28
+                },
+                {
+                    label: "Right",
+                    data: rightValues,
+                    backgroundColor: "#3b82f6",
+                    barThickness: 28
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: "top"
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx =>
+                            `${ctx.dataset.label}: ${ctx.raw}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: "Date / Phase"
+                    },
+                    ticks: {
+                        padding: 8
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: "Score"
+                    }
+                }
+            }
+        }
+    });
+
+})();
+</script>
+
+<!-- pdf download -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const downloadBtn = document.getElementById('downloadPlayerPdfBtn');
+    if (!downloadBtn) return;
+
+    downloadBtn.addEventListener('click', async function () {
+
+        const targetId = downloadBtn.getAttribute('data-target');
+        const pdfContent = document.getElementById(targetId);
+        if (!pdfContent) {
+            alert('Nothing to download');
+            return;
+        }
+
+        const canvas = await html2canvas(pdfContent, { scale: 2, useCORS: true });
+        const imgData = canvas.toDataURL('image/png');
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+        }
+
+        const playerName = pdfContent.querySelector('.player-info-title')?.innerText || 'player_report';
+        pdf.save(playerName.replace(/\s+/g, '_') + '.pdf');
+    });
+
+});
+</script>
+
+<script>
+    const FETCH_PLAYERS_URL = "{% url 'fetch_players' %}";
+    const FETCH_REPORT_URL = "{% url 'fetch_report' %}";
+
+    let allPlayersData = {};
+
+    function toggleDateInputs(type) {
+        const dateRangeFields = document.getElementById('date-range-fields');
+        const startDateInput = document.getElementById('startDateInput');
+        const endDateInput = document.getElementById('endDateInput');
+
+        if (type === 'range') {
+            dateRangeFields.style.display = 'block';
+            startDateInput.disabled = false;
+            endDateInput.disabled = false;
+        } else {
+            dateRangeFields.style.display = 'none';
+            startDateInput.disabled = true;
+            endDateInput.disabled = true;
+        }
+    }
+
+    function populateNumTestsDropdown(playerTests) {
+        const numTestsSelect = document.getElementById('numTestsToShow');
+        numTestsSelect.innerHTML = '<option value="" disabled selected>-- Select Number --</option>';
+
+        if (playerTests && playerTests.length > 0) {
+            const maxTests = Math.min(playerTests.length, 10);
+            for (let i = 1; i <= maxTests; i++) {
+                numTestsSelect.innerHTML += `<option value="${i}">${i}</option>`;
+            }
+        }
+    }
+
+    document.getElementById('testSelect').addEventListener('change', function() {
+        const testName = this.value;
+        const playerSelect = document.getElementById('playerSelect');
+        const numTestsSelect = document.getElementById('numTestsToShow');
+
+        playerSelect.innerHTML = '<option value="" disabled selected>-- Select Player --</option>';
+        numTestsSelect.innerHTML = '<option value="" disabled selected>-- Select Number --</option>';
+
+        if (!testName) return;
+
+        const dateOption = document.querySelector('input[name="date_option"]:checked');
+        let startDate = '', endDate = '';
+
+        if (dateOption && dateOption.value === 'range') {
+            startDate = document.getElementById('startDateInput').value;
+            endDate = document.getElementById('endDateInput').value;
+        }
+
+        fetchPlayersForTest(testName, startDate, endDate);
+    });
+
+    function fetchPlayersForTest(testName, startDate, endDate) {
+        const formData = new FormData();
+        formData.append('test_name', testName);
+        formData.append('start_date', startDate);
+        formData.append('end_date', endDate);
+
+        fetch(FETCH_PLAYERS_URL, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                allPlayersData[testName] = data.players;
+                populatePlayerDropdown(data.players);
+            } else {
+                alert('Error fetching players: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to fetch players');
+        });
+    }
+
+    function populatePlayerDropdown(players) {
+        const playerSelect = document.getElementById('playerSelect');
+
+        players.forEach(player => {
+            const option = document.createElement('option');
+            option.value = player.id;
+            option.textContent = `${player.name} (${player.total_tests})`;
+            playerSelect.appendChild(option);
+        });
+
+        playerSelect.onchange = function() {
+            const testName = document.getElementById('testSelect').value;
+            const playerId = this.value;
+
+            if (testName && playerId && allPlayersData[testName]) {
+                const playerData = allPlayersData[testName].find(p => p.id == playerId);
+                if (playerData) {
+                    populateNumTestsDropdown(playerData.tests);
+                }
+            }
+        };
+    }
+
+    function fetchReport() {
+        const testName = document.getElementById('testSelect').value;
+        const playerId = document.getElementById('playerSelect').value;
+        const numTests = document.getElementById('numTestsToShow').value;
+
+        if (!testName || !playerId || !numTests) {
+            alert('Please select test, player, and number of tests');
+            return;
+        }
+
+        const dateOption = document.querySelector('input[name="date_option"]:checked');
+        let startDate = '', endDate = '';
+
+        if (dateOption && dateOption.value === 'range') {
+            startDate = document.getElementById('startDateInput').value;
+            endDate = document.getElementById('endDateInput').value;
+        }
+
+        const formData = new FormData();
+        formData.append('test_name', testName);
+        formData.append('player_id', playerId);
+        formData.append('num_tests', numTests);
+        formData.append('start_date', startDate);
+        formData.append('end_date', endDate);
+
+        fetch(FETCH_REPORT_URL, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayPlayerInfo(data.player_info);
+                displayChart(data.chart_data);
+                displayStatsTable(data.stats_data);
+            } else {
+                alert('Error fetching report: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to fetch report');
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function displayPlayerInfo(playerInfo) {
+        document.getElementById('playerNameTitle').textContent = playerInfo.name;
+        document.getElementById('playerInfoSection').style.display = 'block';
+        // add more info if needed
+    }
+
+    function displayChart(chartData) {
+        document.getElementById('chartContainer').style.display = 'block';
+        // plug Chart.js here
+    }
+
+    function displayStatsTable(statsData) {
+        document.getElementById('statsTableContainer').style.display = 'block';
+        const table = document.getElementById('statsTable');
+        table.innerHTML = '';
+
+        let thead = '<thead><tr><th>Date</th><th>Score</th><th>Rank</th></tr></thead>';
+        let tbody = '<tbody>';
+        statsData.forEach(row => {
+            tbody += `<tr><td>${row.date}</td><td>${row.score}</td><td>${row.rank || ''}</td></tr>`;
+        });
+        tbody += '</tbody>';
+
+        table.innerHTML = thead + tbody;
+    }
+
+    function openReportSettings() {
+        alert('Report settings modal would open here');
+    }
+    </script>
+    <script>
+        function displayStatsTable(statsData) {
+    const container = document.getElementById('statsTableContainer');
+    const table = document.getElementById('statsTable');
+
+    if (!statsData || statsData.length === 0) {
+        container.style.display = 'none';
+        table.innerHTML = '';
+        return;
+    }
+
+    container.style.display = 'block';
+
+    // Define columns for these tests
+    const headers = [
+        'Date', 'Phase', 'Gender', 'Category', 
+        'Distance Covered', 'Predicted VO2max','Best',
+        'Individual Avg','Min', 'Max','image',
+        'Notes',
+        'Reported By',
+        'Reporter Designation',
+        
+    ];
+
+    let thead = '<thead><tr>';
+    headers.forEach(h => {
+        thead += `<th>${h}</th>`;
+    });
+    thead += '</tr></thead>';
+
+    let tbody = '<tbody>';
+    statsData.forEach(r => {
+        tbody += `
+            <tr>
+                <td>${r.date}</td>
+                <td>${r.phase || ''}</td>
+                <td>${r.gender || ''}</td>
+                <td>${r.category || ''}</td>
+                <td>${r.distance_covered ?? ''}</td>
+                <td>${r.predicted_vo2max ?? ''}</td>
+                <td>${r.best ?? ''}</td>
+                <td>${r.individual_average ?? ''}</td>
+                <td>${r.min ?? ''}</td>
+                <td>${r.max ?? ''}</td>
+                <td>${r.notes || ''}</td>
+                <td>${r.reported_by || ''}</td>
+                <td>${r.reported_by_designation || ''}</td>
+                
+            </tr>
+        `;
+    });
+    tbody += '</tbody>';
+
+    table.innerHTML = thead + tbody;
+}
+
+</script>
+<!-- Other test script-->
+ <script>
+        const tableData = {{ table_json|safe }};
+        
+        // Build table immediately
+        const thead = document.getElementById('tableHead');
+        const tbody = document.getElementById('tableBody');
+        
+        // Clear loading
+        thead.innerHTML = '';
+        tbody.innerHTML = '';
+        
+        // Headers
+        const headerRow = document.createElement('tr');
+        tableData.fields.forEach(field => {
+            const th = document.createElement('th');
+            th.textContent = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        
+        // Rows
+        tableData.data.forEach(row => {
+            const tr = document.createElement('tr');
+            tableData.fields.forEach(field => {
+                const td = document.createElement('td');
+                let value = row[field] || '-';
+                
+                // Format numbers
+                if (!isNaN(value) && value !== '-' && value !== '') {
+                    td.textContent = parseFloat(value).toFixed(2);
+                } else {
+                    td.textContent = value;
+                }
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+    </script>
+
+{% endblock%}

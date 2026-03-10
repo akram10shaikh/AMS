@@ -754,58 +754,70 @@
         {% endif %}
     </div>
 
-    {% if camp.activities.exists %}
+       {% if all_activities %}
         <div class="timeline" aria-live="polite" aria-atomic="true">
-            {% for activity in camp.activities.all|dictsortreversed:"timestamp" %}
+            {% for activity in all_activities|dictsortreversed:"timestamp" %}
                 <div class="timeline-item">
                     <span class="timeline-dot"></span>
                     
-                    <!-- Action Badge with Color Coding -->
-                    <div class="timeline-header">
-                        <span class="badge badge-{% if activity.action == 'player_added' %}success{% elif activity.action == 'player_removed' %}danger{% elif activity.action == 'staff_added' %}info{% elif activity.action == 'staff_removed' %}warning{% else %}primary{% endif %}">
-                            {{ activity.get_action_display }}
-                        </span>
-                    </div>
-                    
-                    <!-- Summary Details -->
-                    <div class="timeline-body">
-                        {{ activity.details|linebreaks }}
-                    </div>
-                    
-                    <!-- Players Section (Collapsible if many) -->
-                    {% if activity.player.exists %}
-                        <div class="timeline-section mt-2">
-                            <strong>👥 Players Affected:</strong>
-                            <div class="mt-1">
-                                {% for player in activity.player.all %}
-                                    <span class="badge badge-light me-1 mb-1">
-                                        {{ player.name }}
-                                    </span>
-                                {% endfor %}
+                    {% if activity.app_label == 'your_app_name' and activity.model_name == 'campactivity' %}
+                        <!-- 🔥 CAMP ACTIVITY (Original template) -->
+                        <div class="timeline-header">
+                            <span class="badge badge-{% if activity.action == 'player_added' %}success{% elif activity.action == 'player_removed' %}danger{% elif activity.action == 'staff_added' %}info{% elif activity.action == 'staff_removed' %}warning{% else %}primary{% endif %}">
+                                {{ activity.get_action_display }}
+                            </span>
+                        </div>
+                        
+                        <!-- Camp Activity Content -->
+                        {% if activity.player.exists %}
+                            <div class="timeline-section mt-2">
+                                <strong>👥 Players:</strong>
+                                <div class="mt-1">
+                                    {% for player in activity.player.all %}
+                                        <span class="badge badge-light me-1 mb-1">{{ player.name }}</span>
+                                    {% endfor %}
+                                </div>
                             </div>
-                            <small class="text-muted">({{ activity.player.count }} player{{ activity.player.count|pluralize }})</small>
+                        {% endif %}
+                        
+                        {% if activity.staff.exists %}
+                            <div class="timeline-section mt-2">
+                                <strong>👨‍🏫 Staff:</strong>
+                                <div class="mt-1">
+                                    {% for staff in activity.staff.all %}
+                                        <span class="badge badge-secondary me-1 mb-1">{{ staff.name }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                    {% else %}
+                        <!-- 🔥 TEST ACTIVITY LOG -->
+                        <div class="timeline-header">
+                            <span class="badge badge-{% if activity.activity_type == 'CREATE' %}success{% elif activity.activity_type == 'UPDATE' %}info{% elif activity.activity_type == 'DELETE' %}danger{% else %}primary{% endif %}">
+                                {{ activity.activity_type|default:"TEST" }}
+                            </span>
+                            <small class="ms-2 badge badge-outline-light">Test Log</small>
+                        </div>
+                        
+                        {% if activity.subject %}
+                            <div class="timeline-section mt-2">
+                                <strong>👥 Player:</strong>
+                                <span class="badge badge-light">{{ activity.subject.name }}</span>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <!-- Shared Details & Meta -->
+                    {% if activity.details %}
+                        <div class="timeline-body">
+                            {{ activity.details|linebreaks }}
                         </div>
                     {% endif %}
                     
-                    <!-- Staff Section -->
-                    {% if activity.staff.exists %}
-                        <div class="timeline-section mt-2">
-                            <strong>👨‍🏫 Staff Affected:</strong>
-                            <div class="mt-1">
-                                {% for staff_member in activity.staff.all %}
-                                    <span class="badge badge-secondary me-1 mb-1">
-                                        {{ staff_member.name }} 
-                                        <small class="text-muted">({{ staff_member.get_staff_role_display|default:staff_member.staff_role }})</small>
-                                    </span>
-                                {% endfor %}
-                            </div>
-                            <small class="text-muted">({{ activity.staff.count }} staff member{{ activity.staff.count|pluralize }})</small>
-                        </div>
-                    {% endif %}
-                    
-                    <!-- Meta Info -->
+                    <!-- Unified Meta Info -->
                     <div class="timeline-meta mt-2">
-                        {% if activity.performed_by %}
+                        {% if activity.performed_by or activity.actor %}
                             <span class="chip-user">
                                 <i>👤</i> {{ activity.performed_by.username }}
                             </span>
@@ -823,7 +835,7 @@
     {% else %}
         <div class="empty-state">
             <i class="fas fa-history empty-icon"></i>
-            <p class="empty-text mb-0">No activity recorded for this camp / tournament yet.</p>
+            <p class="empty-text mb-0">No activities recorded yet.</p>
         </div>
     {% endif %}
 </div>

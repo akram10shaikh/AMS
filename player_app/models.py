@@ -375,13 +375,15 @@ class InjuryActivityLog(models.Model):
     actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     action = models.CharField(max_length=100,null=True)  # e.g., 'created', 'updated', 'added note'
     details = models.TextField(blank=True,null=True)     # More info about the action
-    created_at = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    phase = models.ForeignKey(CampTournament, on_delete=models.CASCADE, null=True, blank=True)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, null=True, blank=True) 
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['-timestamp']
 
     def __str__(self):
-        return f"{self.injury} - {self.action} at {self.created_at}"
+        return f"{self.injury} - {self.action} at {self.timestamp}"
     
 class PlayerActivityLog(models.Model):
     player = models.ForeignKey('Player', on_delete=models.CASCADE, related_name='activity_log')

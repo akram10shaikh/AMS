@@ -1,3 +1,4 @@
+from cmath import phase
 import csv
 from socket import TCP_NODELAY
 
@@ -769,7 +770,7 @@ def activity_log_combined_view(request):
     medical_logs = MedicalActivityLog.objects.select_related('player', 'user', 'document').order_by('-timestamp')
 
     # Fetch all injury logs
-    injury_logs = InjuryActivityLog.objects.select_related('injury', 'actor').order_by('-created_at')
+    injury_logs = InjuryActivityLog.objects.select_related('injury', 'actor').order_by('-timestamp')
 
     # Fetch all player logs
     player_logs = PlayerActivityLog.objects.select_related('player', 'actor').order_by('-created_at')
@@ -836,6 +837,8 @@ def organization_create_injury(request):
                 injury=injury,
                 actor=request.user,
                 action='created',
+                player=injury.player,
+                phase=injury.camp_tournament,
                 details=f'Injury reported by {injury.reported_by} for player {injury.player}'
             )
             return redirect('organization_injury_list')  # Update to your desired redirect
@@ -1452,11 +1455,21 @@ def organization_delete_camp(request, camp_id):
 
 def organization_camp_detail(request, camp_id):
     """
-    Displays details of a specific camp/tournament with S&C Logs, Injuries, and Tests.
+    Displays details of a specific camp/tournament with S&C Logs, Injuries, Tests, and TestActivityLog.
     """
     camp = get_object_or_404(CampTournament, id=camp_id)
     phase = get_object_or_404(CampTournament, id=camp_id, 
                               organization=request.user.organization)
+    
+    # 🔥 TestActivityLog - Fixed field names with optimization
+    test_activity_logs = TestActivityLog.objects.filter(
+        phase=phase
+    ).select_related(
+        'subject',      #  Player field (not 'player')
+        'actor'         #  User field
+    ).order_by('-timestamp')[:50]  # Most recent first
+    
+    test = test_activity_logs  # Keep existing reference if needed elsewhere
     
     # Dict of all test querysets by phase
     test_data = {
@@ -1498,7 +1511,7 @@ def organization_camp_detail(request, camp_id):
         for obj in qs:
             row_dict = obj_to_row(obj)
             
-            # ✅ Fix player name display (handles both player/player_id)
+            # Fix player name display (handles both player/player_id)
             if 'player_id' in row_dict:
                 row_dict['player_id'] = obj.player.name if obj.player else 'Unknown Player'
             elif 'player' in row_dict:
@@ -1513,19 +1526,27 @@ def organization_camp_detail(request, camp_id):
             "rows": rows,
         }
 
-    # 🔥 NEW: S&C Logs (TOP section) - Optimized with prefetch_related for activities
+    # 🔥 S&C Logs (TOP section) - Optimized with prefetch_related for activities
     snc_logs = DailySncLogCamps.objects.filter(team=phase).prefetch_related('activities')[:10]
+    camp_activities = CampActivity.objects.filter(camp=phase).order_by('-timestamp')
+    injury_activities = InjuryActivityLog.objects.filter(phase=phase).order_by('-timestamp')
 
-    # 🔥 NEW: Injuries (MIDDLE section) - Optimized
+    all_activities = list(camp_activities) + list(test_activity_logs) + list(injury_activities)
+    all_activities.sort(key=lambda x: x.timestamp, reverse=True)
+    
+    # Injuries (MIDDLE section) - Optimized
     camp_injuries = Injury.objects.filter(
         camp_tournament=phase,
         player__organization=request.user.organization
     ).select_related('player').order_by('-injury_date')[:10]
 
     context = {
+        'all_activities': all_activities,
         'snc_logs': snc_logs,
         'camp_injuries': camp_injuries,
         "phase": phase,
+        "test_activity_logs": test_activity_logs, 
+        "test": test,
         "test_data": test_data,
         "total_tests": sum(len(tests) for tests in test_data.values()),
         "all_empty": all_empty,
@@ -1534,6 +1555,7 @@ def organization_camp_detail(request, camp_id):
         'camp': camp,
     }
     return render(request, 'player_app/organization/organization_camp_detail.html', context)
+
 
 
 
@@ -2124,7 +2146,7 @@ def organization_dashboard_org(request):
 
         category_cards.append({
             'label': card_cat['label'],
-            'age_category': age_category,  # ✅ CRITICAL for data-age-category
+            'age_category': age_category,  # CRITICAL for data-age-category
             'total': players_qs.count(),
             'full': full.count(),
             'limited': limited.count(),
@@ -2165,7 +2187,7 @@ def organization_dashboard_org(request):
 
     # Activity logs
     medical_logs = MedicalActivityLog.objects.filter(player__in=players).select_related('player', 'user', 'document').order_by('-timestamp')
-    injury_logs = InjuryActivityLog.objects.filter(injury__in=injuries).select_related('injury', 'actor').order_by('-created_at')
+    injury_logs = InjuryActivityLog.objects.filter(injury__in=injuries).select_related('injury', 'actor').order_by('-timestamp')
     player_logs = PlayerActivityLog.objects.filter(player__in=players).select_related('player', 'actor').order_by('-created_at')
     test_logs = TestActivityLog.objects.filter(subject__in=players).select_related('actor', 'subject', 'phase').order_by('-timestamp')
     camp_logs = CampActivity.objects.filter(camp__participants__in=players).select_related('camp', 'performed_by').order_by('-timestamp')    
@@ -7320,7 +7342,22 @@ def player_test_select(request):
         'players': players,
     })
 
+def individual_player_report(request,test_name):
+    if test_name == 'SL Glute Bridges':
+        test_name = "S/L Glute Bridges"
+    if test_name == "SL Hop":
+        test_name = "S/L Hop"
+    user_organization = getattr(request.user, 'organization', None)
+    players = Player.objects.filter(organization=user_organization)
 
+    if request.method == 'POST':
+        player_id = request.POST.get('player')
+        return redirect('player_test', player_id=player_id)
+
+    return render(request, 'player_app/record/individual_test_report.html', {
+        'players': players,
+        'test_name':test_name,
+    })
 
 @csrf_exempt
 @require_http_methods(["POST"])

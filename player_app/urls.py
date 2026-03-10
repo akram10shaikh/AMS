@@ -202,6 +202,7 @@ urlpatterns = [
                   path('fetch-players/', views.fetch_players, name='fetch_players'),
                   path('fetch-report/', views.fetch_report, name='fetch_report'),
                   path("player-report/", views.player_report, name="player_report"),
+                  path('individual_player_report/<str:test_name>/', views.individual_player_report, name='individual_player_report'),
                   
                   # path('multi-test-report/', views.multi_test_report, name='multi_test_report'),
                   path('reports/multi-test/', views.multi_test_report_view, name='multi_test_report'),
