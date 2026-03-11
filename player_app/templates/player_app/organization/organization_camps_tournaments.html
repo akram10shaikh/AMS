@@ -3,8 +3,6 @@
 {% block extra_head %}
 
 <style>
-   
-
     /* Headings */
     h1, h2, h3 {
         color: Black;
@@ -118,12 +116,13 @@
         background-color: #222;
         color: #ddd;
         border-radius: 12px;
-        overflow: hidden;
+        overflow: visible; /* Changed for hover content */
         box-shadow: 0 4px 14px rgba(255, 255, 255, 0.1);
         cursor: pointer;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         vertical-align: top;
         box-sizing: border-box;
+        position: relative;
     }
 
     .camp-card:hover {
@@ -146,7 +145,7 @@
         padding: 15px 20px;
         font-size: 0.9rem;
         color: #ccc;
-        min-height: 140px;
+        min-height: 160px; /* Increased for hover space */
     }
 
     .camp-card-body p {
@@ -156,6 +155,28 @@
     .camp-card-body p strong {
         color: #ddd;
         font-weight: 600;
+    }
+
+    /* NEW: Hover info styles */
+    .camp-hover-info {
+        margin-top: 10px;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s ease;
+        font-size: 0.85rem;
+        background: rgba(0, 123, 255, 0.1);
+        padding: 8px 12px;
+        border-radius: 6px;
+        border-left: 3px solid #007bff;
+    }
+
+    .camp-hover-info p {
+        margin: 4px 0;
+    }
+
+    .camp-card:hover .camp-hover-info {
+        opacity: 1;
+        transform: translateY(0);
     }
 
     /* Camp Actions Bar */
@@ -251,7 +272,6 @@
     .camp-year-panel--hidden {
         display: none;
     }
-
 </style>
 {% endblock %}
 
@@ -260,9 +280,8 @@
 <div class="header-container" style="display: flex; justify-content: space-between; align-items: center;color:white;">
     <h1 style="color:white;">Camps & Tournaments</h1>
     {% if user.staff.create_camps_tournaments %}
-
     <a href="{% url 'player_wellness_report' %}" class="btn btn-primary">Player Daily Wellness</a>
-    <a href="{% url 'attendance_group_view' %}" class="btn btn-primary">Group Attendance</s>
+    <a href="{% url 'attendance_group_view' %}" class="btn btn-primary">Group Attendance</a>
     <a href="{% url 'wellness_dashboard' %}" class="btn btn-primary">Daily Wellness</a>
     <a href="{% url 'snc_camps_dashboard' %}" class="btn btn-primary">All Daily S&C Coach's Log</a>
     <a href="{% url 'organization_create_camp' %}" class="btn btn-primary">Create New Camp</a>
@@ -290,44 +309,48 @@
 
 <!-- Camps & Tournaments Year Range Tabs -->
 <div class="camp-year-tabs" id="campYearTabs">
-  {% for range_key in camps_by_range.keys %}
+ {% for range_key in camps_by_range.keys %}
     <button type="button"
             class="camp-year-tab {% if forloop.first %}camp-year-tab--active{% endif %}"
             data-year="{{ range_key }}">
       {{ range_key }}
     </button>
-  {% endfor %}
+ {% endfor %}
 </div>
-
 
 <!-- Camps & Tournaments List grouped by year range -->
 <div id="campsContainer" class="container" style="margin-bottom:100px;">
-  {% for range_key, items in camps_by_range.items %}
+ {% for range_key, items in camps_by_range.items %}
     <div class="camp-year-panel {% if not forloop.first %}camp-year-panel--hidden{% endif %}"
          data-year-panel="{{ range_key }}">
-      {% for camp in items %}
-        {% if request.user.is_superuser or camp.organization == request.user.organization %}
-          <div class="camp-card">
-            <div class="camp-card-header">{{ camp.name }}</div>
-            <div class="camp-card-body">
-              <p><strong>Type:</strong> {{ camp.get_camp_type_display }}</p>
-              <p><strong>Start Date:</strong> {{ camp.start_date }}</p>
-              <p><strong>End Date:</strong> {{ camp.end_date|default:"N/A" }}</p>
-              <p><strong>Venue:</strong> {{ camp.venue|default:"N/A" }}</p>
-            </div>
-            <div class="camp-actions">
-              <a href="{% url 'organization_camp_detail' camp.id %}" class="btn btn-primary">View</a>
-              <a href="{% url 'organization_edit_camp' camp.id %}" class="btn btn-secondary">Edit</a>
-              <a href="{% url 'organization_delete_camp' camp.id %}" class="btn btn-danger"
-                 onclick="return confirm('Are you sure you want to delete this camp?');">Delete</a>
-            </div>
-          </div>
-        {% endif %}
-      {% endfor %}
+     {% for camp in items %}
+      {% if request.user.is_superuser or camp.organization == request.user.organization %}
+         <div class="camp-card" data-camp-id="{{ camp.id }}">
+           <div class="camp-card-header">{{ camp.name }}</div>
+           <div class="camp-card-body">
+             <p><strong>Type:</strong> {{ camp.get_camp_type_display }}</p>
+             <p><strong>Start Date:</strong> {{ camp.start_date }}</p>
+             <p><strong>End Date:</strong> {{ camp.end_date|default:"N/A" }}</p>
+             <p><strong>Venue:</strong> {{ camp.venue|default:"N/A" }}</p>
+             
+             <!-- Hover info - hidden by default -->
+             <div class="camp-hover-info">
+               <p><strong>👥 Players:</strong> <span class="count-placeholder">0</span></p>
+               <p><strong>👨‍💼 Staff:</strong> <span class="count-placeholder">0</span></p>
+             </div>
+           </div>
+           <div class="camp-actions">
+             <a href="{% url 'organization_camp_detail' camp.id %}" class="btn btn-primary">View</a>
+             <a href="{% url 'organization_edit_camp' camp.id %}" class="btn btn-secondary">Edit</a>
+             <a href="{% url 'organization_delete_camp' camp.id %}" class="btn btn-danger"
+                onclick="return confirm('Are you sure you want to delete this camp?');">Delete</a>
+           </div>
+         </div>
+      {% endif %}
+     {% endfor %}
     </div>
-  {% endfor %}
+ {% endfor %}
 </div>
-
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -335,10 +358,62 @@ document.addEventListener('DOMContentLoaded', () => {
   const yearTabs    = document.querySelectorAll('.camp-year-tab');
   const yearPanels  = document.querySelectorAll('.camp-year-panel');
 
+  // Pre-loaded stats from Django context
+  const campStatsData = {{ camp_stats|safe }};
+
+  // FIXED: Safe selectors for your HTML structure
+  function loadCampStats(campId) {
+    const card = document.querySelector(`[data-camp-id="${campId}"]`);
+    if (!card) return;
+
+    // SAFE: Find spans within hover-info (your exact HTML structure)
+    const hoverInfo = card.querySelector('.camp-hover-info');
+    if (!hoverInfo) return;
+
+    const spans = hoverInfo.querySelectorAll('.count-placeholder');
+    if (spans.length < 2) return;
+
+    const playerCountEl = spans[0];  // First span = Players
+    const staffCountEl = spans[1];   // Second span = Staff
+
+    // 1. Try pre-loaded server-side stats first (INSTANT!)
+    if (campStatsData && campStatsData[campId]) {
+      playerCountEl.textContent = campStatsData[campId].player_count || 0;
+      staffCountEl.textContent = campStatsData[campId].staff_count || 0;
+      return;
+    }
+
+    // 2. AJAX fallback
+    fetch(`/organization/camp/${campId}/stats/`)
+      .then(response => response.json())
+      .then(data => {
+        playerCountEl.textContent = data.player_count || 0;
+        staffCountEl.textContent = data.staff_count || 0;
+      })
+      .catch(() => {
+        playerCountEl.textContent = '0';
+        staffCountEl.textContent = '0';
+      });
+  }
+
+  // Load stats on card hover
+  let hoverTimeout;
+  document.querySelectorAll('.camp-card').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      const campId = card.dataset.campId;
+      if (!campId) return;
+      
+      clearTimeout(hoverTimeout);
+      hoverTimeout = setTimeout(() => loadCampStats(campId), 100);
+    });
+
+    card.addEventListener('mouseleave', () => {
+      clearTimeout(hoverTimeout);
+    });
+  });
+
   function filterBySearch() {
     const q = (searchInput.value || '').toLowerCase().trim();
-
-    // Only filter visible year's cards
     yearPanels.forEach(panel => {
       if (panel.classList.contains('camp-year-panel--hidden')) return;
       const cards = panel.querySelectorAll('.camp-card');
@@ -349,38 +424,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Search typing
   if (searchInput) {
     searchInput.addEventListener('keyup', filterBySearch);
   }
 
-  // Year tab switching
   yearTabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const year = tab.dataset.year;
-
       yearTabs.forEach(t => t.classList.remove('camp-year-tab--active'));
       tab.classList.add('camp-year-tab--active');
-
       yearPanels.forEach(panel => {
         const matches = panel.dataset.yearPanel === year;
         panel.classList.toggle('camp-year-panel--hidden', !matches);
         if (matches) {
-          // reset visibility when switching year
           panel.querySelectorAll('.camp-card').forEach(card => {
             card.style.display = 'inline-block';
           });
         }
       });
-
-      // Re-apply current search term to the new visible year
       filterBySearch();
     });
   });
 
-  // Initial run
   filterBySearch();
 });
 </script>
+
 
 {% endblock %}

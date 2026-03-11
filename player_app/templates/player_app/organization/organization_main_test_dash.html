@@ -180,6 +180,13 @@
                 <td><a href="{% url 'daily_wellness_results_view' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
                 <td><a href="{% url 'individual_player_report' test_name='Daily Wellness Test' %}" class="btn view-btn" aria-label="View Test Report">Report</a></td>
             </tr>
+            <tr>
+                <td>22</td>
+                <td>Player Attendance</td>
+                <td><a href="{% url 'camp_attendance_work' %}" class="btn add-btn" aria-label="Add New Test Result">Add New Test Result</a></td>
+                <td><a href="{% url 'camp_attendace_data' %}" class="btn view-btn" aria-label="Add New Test Result">View</a></td>
+                <td><a href="{% url 'attendance_report' %}" class="btn view-btn" aria-label="View Test Report">Report</a></td>
+            </tr>
         </tbody>
     </table>
     <br>

@@ -81,12 +81,16 @@ urlpatterns = [
                   path('organization/camp/edit/<int:camp_id>/', views.organization_edit_camp, name='organization_edit_camp'),
                   path('organization/camp/create/', views.organization_create_camp, name='organization_create_camp'),
                   path('organization/camp/<int:camp_id>/delete/', views.organization_delete_camp, name='organization_delete_camp'),
+                  path('camp/<int:camp_id>/stats/', views.camp_stats, name='camp_stats'),
 
                   path('organization/camp/<int:camp_id>/attendance/', views.camp_attendance_view, name='camp_attendance'),
                   path('ajax/filter-players-attendance/', views.filter_players_attendance, name='filter_players_attendance'),
                   path('organization/attendance-report/', views.attendance_report_view, name='attendance_report'),
                   path('reports/attendance-view/',views.attendance_group_view,name='attendance_group_view'),
                   path('reports/attendance-group/', views.attendance_group_report, name='attendance_group_report'),
+                  path('camp/',views.camp_attendance_work,name='camp_attendance_work'),
+                  path('camp-attendance/load-participants/', views.load_camp_participants, name='load_camp_participants'),
+                  path('camp_attendace_data/',views.camp_attendace_data,name='camp_attendace_data'),
 
 
                   path('bowlerdrills/create/', views.bowlerdrills_create, name='bowlerdrills_create'),

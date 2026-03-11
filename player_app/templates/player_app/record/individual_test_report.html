@@ -536,27 +536,6 @@
                     <label for="testSelect">Tests:</label>
                     <select id="testSelect" name="test_name" class="input" required>
                         <option value="" disabled {% if not selected_test %}selected{% endif %}>-- Select Test --</option>
-                        {% comment %} <option value="10m" {% if selected_test == '10m' %}selected{% endif %}>10m</option>
-                        <option value="20m" {% if selected_test == '20m' %}selected{% endif %}>20m</option>
-                        <option value="40m" {% if selected_test == '40m' %}selected{% endif %}>40m</option>
-                        <option value="1 Mile" {% if selected_test == '1 Mile' %}selected{% endif %}>1 Mile</option>
-                        <option value="2 KM" {% if selected_test == '2 KM' %}selected{% endif %}>2 KM</option>
-                        <option value="Push-ups" {% if selected_test == 'Push-ups' %}selected{% endif %}>Push-ups</option>
-                        <option value="YoYo" {% if selected_test == 'YoYo' %}selected{% endif %}>YoYo</option>
-                        <option value="Run A 3" {% if selected_test == 'Run A 3' %}selected{% endif %}>Run A 3</option>
-                        <option value="SBJ" {% if selected_test == 'SBJ' %}selected{% endif %}>SBJ</option>
-                        <option value="CMJ Scores" {% if selected_test == 'CMJ Scores' %}selected{% endif %}>CMJ Scores</option>
-                        <option value="MSK Injury Assessment" {% if selected_test == 'MSK Injury Assessment' %}selected{% endif %}>MSK Injury Assessment</option>
-                        <option value="Blood Test" {% if selected_test == 'Blood Test' %}selected{% endif %}>Blood Test</option>
-                        <option value="Anthropometry Test" {% if selected_test == 'Anthropometry Test' %}selected{% endif %}>Anthropometry Test</option>
-                        <option value="DEXA Scan Test" {% if selected_test == 'DEXA Scan Test' %}selected{% endif %}>DEXA Scan Test</option>
-                        <option value="S/L Glute Bridges" {% if selected_test == 'S/L Glute Bridges' %}selected{% endif %}>S/L Glute Bridges</option>
-                        <option value="S/L Hop" {% if selected_test == 'S/L Hop Tests' %}selected{% endif %}>S/L Hop Tests</option>
-                        <option value="MB Rotational Throws" {% if selected_test == 'MB Rotational Throws' %}selected{% endif %}>MB Rotational Throws</option>
-                        <option value="Copenhagen" {% if selected_test == 'Copenhagen' %}selected{% endif %}>Copenhagen</option>
-                        <option value="SL Lunge Calf Raises" {% if selected_test == 'SL Lunge Calf Raises' %}selected{% endif %}>SL Lunge Calf Raises</option>
-                        <option value="run_a_3x6" {% if selected_test == 'run_a_3x6' %}selected{% endif %}>Run A 3x6</option>
-                        <option value="Daily Wellness Test" {% if selected_test == 'Daily Wellness Test' %}selected{% endif %}>Daily Wellness Test</option>   {% endcomment %}
                        {% if test_name %}
                         <option value="{{ test_name}}" {% if selected_test == '{{ test_name }}' %}selected{% endif %}>{{ test_name }}</option> 
                        {% endif %}

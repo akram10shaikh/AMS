@@ -1067,12 +1067,8 @@ def organization_injury_export(request):
 # Camps & Tournaments views
 def organization_camps_tournaments(request):
     """
-    Displays a list of camps/tournaments.
-    - Super Admins can view all camps.
-    - Staff can see camps based on their permissions.
-    - Users in an organization can see only camps from their organization.
+    Displays a list of camps/tournaments with player/staff counts on hover.
     """
-
     # Super Admin: Sees all camps
     if request.user.is_superuser:
         organizations = Organization.objects.all()
@@ -1096,7 +1092,7 @@ def organization_camps_tournaments(request):
 
     # Regular users: See only camps in their organization
     elif hasattr(request.user, 'organization') and request.user.organization:
-        org = request.user.organization  # Fixed: was request.user.staff.organization
+        org = request.user.organization
         camps = CampTournament.objects.filter(organization=org, is_deleted=False)
         male_players = Player.objects.filter(organization=org, gender='Male')
         female_players = Player.objects.filter(organization=org, gender='Female')
@@ -1110,6 +1106,18 @@ def organization_camps_tournaments(request):
         year=ExtractYear('start_date')
     ).order_by('-start_date')
 
+    # Pre-calculate participant and staff counts for each camp (for performance)
+    camp_stats = {}
+    for camp in camps_qs:
+        player_count = camp.participants.count()
+        staff_count = camp.staff_members.count()
+        
+        print(f"Camp {camp.name} (ID:{camp.id}): Players={player_count}, Staff={staff_count}")  # ✅ CORRECT
+        camp_stats[camp.id] = {
+            'player_count': camp.participants.count(),
+            'staff_count': camp.staff_members.count()
+        }
+        
     # Group camps by year range (year to year+1)
     camps_by_range = defaultdict(list)
     for camp in camps_qs:
@@ -1120,14 +1128,32 @@ def organization_camps_tournaments(request):
     # Sort year ranges descending
     sorted_ranges = sorted(camps_by_range.items(), key=lambda x: int(x[0].split('-')[0]), reverse=True)
     
-    return render(request, 'player_app/organization/organization_camps_tournaments.html', {
+    context = {
         'camps': camps,
-        'camps_by_range': dict(sorted_ranges),  # Changed from camps_by_year
+        'camps_by_range': dict(sorted_ranges),
         'male_players': male_players,
         'female_players': female_players,
-        'organizations': organizations if request.user.is_superuser else None
-    })
+        'organizations': organizations if request.user.is_superuser else None,
+        'camp_stats': camp_stats  # Pass pre-calculated stats
+    }
+    
+    return render(request, 'player_app/organization/organization_camps_tournaments.html', context)
 
+
+def camp_stats(request, camp_id):
+    """
+    Returns player and staff counts for a specific camp (AJAX endpoint).
+    """
+    camp = get_object_or_404(CampTournament, id=camp_id, is_deleted=False)
+    
+    # Use exact model fields you provided
+    player_count = camp.participants.count()
+    staff_count = camp.staff_members.count()
+    
+    return JsonResponse({
+        'player_count': player_count,
+        'staff_count': staff_count,
+    })
 
 def organization_edit_camp(request, camp_id):
     camp = get_object_or_404(CampTournament, id=camp_id)
@@ -8647,6 +8673,189 @@ def camp_attendance_view(request, camp_id):
         'players': players,
     }
     return render(request, 'player_app/camps/camp_attendance.html', context)
+
+def camp_attendance_work(request):
+    camps = CampTournament.objects.filter(
+        organization=getattr(request.user, "organization", None)
+    ).order_by('name')
+    
+    # ✅ AJAX: Load players
+    if request.method == 'POST' and request.POST.get('action') == 'load_players':
+        camp_id = request.POST.get('camp_id')
+        date_str = request.POST.get('date')
+        
+        if camp_id and date_str:
+            try:
+                camp = CampTournament.objects.get(id=camp_id)
+                participants = camp.participants.all()
+                
+                # Existing attendance
+                existing = PlayerAttendance.objects.filter(
+                    camp=camp, attendance_date=date_str
+                ).values_list('player_id', 'status')
+                attendance_dict = dict(existing)
+                
+                players_data = []
+                for player in participants:
+                    players_data.append({
+                        'id': player.id,
+                        'name': player.name,
+                        'existing_status': attendance_dict.get(player.id, '')
+                    })
+                
+                return JsonResponse({
+                    'success': True,
+                    'players': players_data,
+                    'total': len(players_data)
+                })
+            except CampTournament.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Camp not found'})
+        
+        return JsonResponse({'success': False, 'error': 'Missing data'})
+    
+    # ✅ AJAX: Save attendance
+    if request.method == 'POST' and request.POST.get('attendance_date'):
+        date_str = request.POST.get('attendance_date')
+        camp_id = request.POST.get('camp_id')
+        
+        if date_str and camp_id:
+            try:
+                camp = CampTournament.objects.get(id=camp_id)
+                saved = 0
+                
+                for key, status in request.POST.items():
+                    if key.startswith('status_') and status:
+                        player_id = int(key.split('_')[1])
+                        player = Player.objects.get(id=player_id)
+                        
+                        PlayerAttendance.objects.update_or_create(
+                            player=player,
+                            camp=camp,
+                            attendance_date=date_str,
+                            defaults={'status': status}
+                        )
+                        saved += 1
+                
+                return JsonResponse({
+                    'success': True,
+                    'saved_count': saved,
+                    'message': f'Saved {saved} records'
+                })
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+    
+    # Regular page load
+    context = {'camps': camps}
+    return render(request, 'player_app/camps/camp_attendance_work.html', context)
+
+@require_http_methods(["GET", "POST"])
+def load_camp_participants(request):
+    """
+    AJAX endpoint: Load participants for selected camp + existing attendance
+    """
+    camp_id = request.GET.get('camp_id')
+    date_str = request.GET.get('date')
+    
+    if not camp_id or not date_str:
+        return JsonResponse({'error': 'Camp ID and date required'}, status=400)
+    
+    try:
+        camp = CampTournament.objects.get(id=camp_id)
+        date = date_str  # Already validated as date string
+        
+        # Get all participants for this camp
+        participants = camp.participants.all().select_related('attendances')
+        
+        # Get existing attendance for this date
+        existing_attendance = {
+            att.player_id: att.status 
+            for att in PlayerAttendance.objects.filter(
+                camp_id=camp_id, 
+                attendance_date=date
+            ).select_related('player')
+        }
+        
+        player_data = []
+        for player in participants:
+            player_data.append({
+                'id': player.id,
+                'name': player.name,
+                'existing_status': existing_attendance.get(player.id, '')
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'players': player_data,
+            'total': len(player_data)
+        })
+    
+    except CampTournament.DoesNotExist:
+        return JsonResponse({'error': 'Camp not found'}, status=404)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid date'}, status=400)
+
+@require_http_methods(["POST"])
+def save_attendance(request):
+    """Save attendance for selected players"""
+    date_str = request.POST.get('attendance_date')
+    camp_id = request.POST.get('camp_id')
+    
+    if not date_str or not camp_id:
+        return JsonResponse({'success': False, 'message': 'Date and camp required'}, status=400)
+    
+    try:
+        camp = CampTournament.objects.get(id=camp_id)
+        date = date_str
+        
+        saved_count = 0
+        for key, status in request.POST.items():
+            if key.startswith('status_'):
+                player_id = int(key.split('_')[1])
+                player = Player.objects.get(id=player_id)
+                
+                # Update or create attendance
+                PlayerAttendance.objects.update_or_create(
+                    player=player,
+                    camp=camp,
+                    attendance_date=date,
+                    defaults={'status': status}
+                )
+                saved_count += 1
+        
+        return JsonResponse({
+            'success': True,
+            'saved_count': saved_count,
+            'message': f'Saved {saved_count} attendance records'
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+def camp_attendace_data(request):
+    
+    search_query = request.GET.get('search', '').strip()
+
+    # Use the dedicated model instead of TestAndResult
+    results = (
+        PlayerAttendance.objects
+        .select_related('player', 'camp')
+        .order_by('-attendance_date')
+    )
+
+    if search_query:
+        results = results.filter(player__name__icontains=search_query)
+
+    paginator = Paginator(results, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        
+        'page_obj': page_obj,
+        'total_results': paginator.count,
+        'search_query': search_query,
+    }
+    return render(request, 'player_app/camps/camp_attendance_data.html', context)
+
 
 @csrf_exempt
 @login_required
