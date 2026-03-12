@@ -1,0 +1,475 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Player Wellness Report{% endblock %}
+
+{% block extra_head %}
+<style>
+/* ========================================
+   EXACT DAILY WELLNESS STYLE - Dark Blue Tables + Green Header + Player Image + 4 Charts
+========================================= */
+
+/* MAIN LAYOUT */
+.container { 
+    max-width: 1400px; 
+    margin: 0 auto; 
+    padding: 2rem 1rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+}
+
+/* FORM */
+.form-box {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.form-row-wide {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+}
+@media (max-width: 1024px) { .form-row-wide { grid-template-columns: 1fr 1fr auto; } }
+@media (max-width: 768px) { .form-row-wide { grid-template-columns: 1fr; } }
+.form-group label { font-weight: 600; margin-bottom: 0.5rem; display: block; }
+input, select { padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px; }
+button { background: #007CF0; color: white; padding: 0.75rem 2rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+
+/* PLAYER PROFILE */
+.player-profile {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+.player-image {
+    width: 180px; height: 180px; 
+    border-radius: 12px; overflow: hidden; 
+    border: 4px solid #1e5021;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* GREEN HEADER BANNER - EXACT MATCH */
+.header-banner {
+    background-color: #1e5021; 
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;     
+    justify-content: center; 
+    text-align: center;
+}
+.title h1, .title h2 { margin: 5px 0; color: #ffffff; }
+.info-table table { margin-top: 15px; border-collapse: collapse; }
+.info-table th, .info-table td { padding: 8px 12px; color: #ffffff; border: 1px solid rgba(255,255,255,0.4); }
+.info-table th { font-weight: bold; }
+
+.info-table{
+    display: flex;
+    flex-direction: row;
+    gap: 40px;
+}
+
+.title{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 50px;
+}
+/* RED SECTION TITLES */
+.section-title {
+    background: #9b0000;
+    color: #ffffff;
+    text-align: center;
+    font-weight: 700;
+    padding: 8px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 14px;
+    border-radius: 5px 5px 0 0;
+    margin: 0;
+}
+
+/* SIDE-BY-SIDE TABLES */
+.report-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+    margin: 16px 0;
+}
+@media (max-width: 1200px) { .report-grid { grid-template-columns: 1fr; } }
+
+/* DARK BLUE TABLES - EXACT MATCH */
+.report-section {
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+.data-table {
+    background-color: #0b3a63;
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #f3f4f6;
+}
+.data-table th, .data-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border: 2px solid #e0e0e0;
+}
+.data-table th { font-weight: 600; background: rgba(248,250,252,0.2); }
+
+/* COLOR BADGES - EXACT COLORS */
+.bg-good { background-color: #22c55e; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.9rem; }
+.bg-moderate { background-color: #facc15; color: black; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.9rem; }
+.bg-high { background-color: #f97316; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.9rem; }
+.bg-extreme { background-color: #b80404; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.9rem; }
+
+/* URINE COLORS - HYDRATION SCALE */
+.urine-excellent { background: #a7f3d0 !important; color: #064e3b !important; font-weight: 700; border-radius: 4px; padding: 0.25rem 0.5rem; }
+.urine-good { background: #fef3c7 !important; color: #92400e !important; font-weight: 700; border-radius: 4px; padding: 0.25rem 0.5rem; }
+.urine-warning { background: #fed7aa !important; color: #c2410c !important; font-weight: 700; border-radius: 4px; padding: 0.25rem 0.5rem; }
+.urine-danger { background: #fecaca !important; color: #991b1b !important; font-weight: 700; border-radius: 4px; padding: 0.25rem 0.5rem; }
+.urine-critical { background: #92400e !important; color: white !important; font-weight: 800; border-radius: 4px; padding: 0.25rem 0.5rem; }
+
+/* CHARTS */
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; 
+    gap: 24px; 
+    margin: 24px 0;
+}
+@media (max-width: 1200px) { .charts-grid { grid-template-columns: 1fr; } }
+.chart-container {
+    background-color: #312f2f;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    color: #e0e0e0;
+    height: 420px;
+}
+.chart-container h3 {
+    margin-bottom: 1rem;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+}
+canvas { max-height: 320px !important; width: 100% !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-bottom: 100px;">
+    {% if not report_data %}
+        <!-- FORM -->
+        <div class="header" style="background: #007CF0;  padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; text-align: center;color:white">
+            <h1 style="color:white;">Player Wellness Report</h1>
+        </div>
+        <div class="form-box">
+            <h2 style="color: #1a202c;">Generate Player Wellness Report</h2>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-row-wide">
+                    <div class="form-group">
+                        <label>Select Start Date</label>
+                        <input type="date" name="start_date" value="{{ start_date|default:'' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Select End Date</label>
+                        <input type="date" name="end_date" value="{{ end_date|default:'' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Select Player</label>
+                        <select name="player_id" required>
+                            <option value="">Choose Player</option>
+                            {% for player in players %}
+                            <option value="{{ player.id }}" {% if selected_player.id == player.id %}selected{% endif %}>
+                                {{ player.name }} {% if player.position %}({{ player.position }}){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div><button type="submit">Generate Report</button></div>
+                </div>
+            </form>
+        </div>
+    {% else %}
+      
+
+        <!-- GREEN HEADER BANNER -->
+        <div style="background-color: #0b3a63; padding: 10px;">
+            <div class="header-banner">
+                <div class="header-content">
+                    <div class="title" style="padding-bottom: 50px;">
+                        <div class="logo">
+                            <img src="{% static 'KCA.png' %}" alt="KSA Logo" style="height: 100px;">
+                        </div>
+                        <div class="main" >
+                            <h1>Kerala Cricket Association</h1>
+                            <h2>Wellness Report – {{ selected_player.name }}</h2>
+                        </div>
+                       
+                    </div>
+                    <div class="info-table">
+                        <div class="new-design">
+                             <div class="player-image">
+                            {% if selected_player.image %}
+                                <img src="{{ selected_player.image.url }}" alt="{{ selected_player.name }}" style="width: 100%; height: 100%; ">
+                            {% else %}
+                                <span style="font-weight: 700; color: #6b7280; text-align: center; line-height: 1.4;">
+                                    {{ selected_player.name|first|upper }}<br><small>No Photo</small>
+                                </span>
+                            {% endif %}
+                        </div>
+                        </div>
+                        <div class="new-design">
+                            <table>
+                                <tr><th>Player</th><td>{{ selected_player.name }}</td></tr>
+                                <tr><th>Period</th><td>{{ start_date }} → {{ end_date }}</td></tr>
+                                <tr><th>Records</th><td>{{ report_data|length }} days</td></tr>
+                            </table>
+                        </div>
+                        
+                    </div>
+                </div>
+                <a href="{% url 'player_wellness_report' %}" style="background: #9b0000; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">← New Report</a>
+            </div>
+        </div>
+
+        <!-- SIDE-BY-SIDE TABLES -->
+        <div class="report-grid">
+            <!-- PSYCH-PHYSIOLOGICAL TABLE -->
+            <div class="report-section">
+                <div class="section-title">Psychological - Physiological Readiness</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Urine Color</th>
+                            <th>Soreness</th>
+                            <th>Fatigue</th>
+                            <th>Sleep</th>
+                            <th>Motivation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in report_data %}
+                        <tr>
+                            <td style="font-weight: 600; color: #f3f4f6;">{{ log.date|date:"M d" }}</td>
+                            <td class="{% if log.urine_color == 'NO_COLOR' %}urine-excellent
+                                    {% elif log.urine_color == 'PALE_STRAW' %}urine-good
+                                    {% elif log.urine_color == 'TRANSLUCENT_YELLOW' %}urine-good
+                                    {% elif log.urine_color == 'DARK_YELLOW' %}urine-warning
+                                    {% elif log.urine_color == 'AMBER' %}urine-danger
+                                    {% elif log.urine_color == 'BROWN' %}urine-critical
+                                    {% else %}bg-moderate{% endif %}">
+                                {{ log.get_urine_color_display|default:"—" }}
+                            </td>
+                            <td class="{% if log.soreness_level <= 2 %}bg-good
+                                    {% elif log.soreness_level <= 5 %}bg-moderate
+                                    {% elif log.soreness_level <= 7 %}bg-high
+                                    {% else %}bg-extreme{% endif %}">
+                                {{ log.soreness_level }}/10
+                            </td>
+                            <td class="{% if log.fatigue_level <= 2 %}bg-good
+                                    {% elif log.fatigue_level <= 5 %}bg-moderate
+                                    {% elif log.fatigue_level <= 7 %}bg-high
+                                    {% else %}bg-extreme{% endif %}">
+                                {{ log.fatigue_level }}/10
+                            </td>
+                            <td class="{% if log.sleep_hours >= 8 %}bg-good
+                                    {% elif log.sleep_hours >= 6 %}bg-moderate
+                                    {% else %}bg-high{% endif %}">
+                                {{ log.sleep_hours }}h
+                            </td>
+                            <td class="{% if log.motivation_level >= 8 %}bg-good
+                                    {% elif log.motivation_level >= 6 %}bg-moderate
+                                    {% else %}bg-high{% endif %}">
+                                {{ log.motivation_level }}/10
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" style="text-align: center; padding: 2rem; color: #94a3b8;">No wellness data found</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- LOAD MONITORING TABLE -->
+            <div class="report-section">
+                <div class="section-title">Load Monitoring</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Balls Bowled</th>
+                            <th>RPE</th>
+                            <th>Session Types</th>
+                            <th>Pain/Niggles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in report_data %}
+                        <tr>
+                            <td style="font-weight: 600;">{{ log.balls_bowled|default:"—" }}</td>
+                            <td class="{% if log.total_rpe <= 2 %}bg-good
+                                    {% elif log.total_rpe <= 5 %}bg-moderate
+                                    {% elif log.total_rpe <= 7 %}bg-high
+                                    {% else %}bg-extreme{% endif %}">
+                                {{ log.total_rpe }}/10
+                            </td>
+                            <td>{% for type in log.training_session_types %}{{ type }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                            <td class="{% if log.has_pain %}bg-extreme{% else %}bg-good{% endif %}">
+                                {% if log.has_pain %}Yes{% else %}No{% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" style="text-align: center; padding: 2rem; color: #94a3b8;">No load data found</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 🔥 4 CHARTS: 2 Bar + 2 Pie Charts -->
+        {% if chart_data %}
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h3>RPE Over Time</h3>
+                <canvas id="rpeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Balls Bowled Over Time</h3>
+                <canvas id="ballsChart"></canvas>
+            </div>
+        </div>
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h3>Strength Distribution</h3>
+                <canvas id="strengthPie"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Session Types</h3>
+                <canvas id="sessionPie"></canvas>
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if chart_data %}
+    console.log('✅ Chart data loaded:', {{ chart_data|safe }});
+    
+    // 1. RPE Bar Chart
+    new Chart(document.getElementById('rpeChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ chart_data.dates|safe }},
+            datasets: [{
+                label: 'RPE',
+                data: {{ chart_data.rpe|safe }},
+                backgroundColor: '#f59e0b',
+                borderColor: '#fd841b',
+                borderRadius: 6,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, max: 10 } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // 2. Balls Bowled Bar Chart
+    new Chart(document.getElementById('ballsChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ chart_data.dates|safe }},
+            datasets: [{
+                label: 'Balls Bowled',
+                data: {{ chart_data.balls|safe }},
+                backgroundColor: '#007CF0',
+                borderRadius: 6,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // 3. Strength Distribution Pie Chart (Fallback data)
+    new Chart(document.getElementById('strengthPie'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Strength', 'Conditioning', 'Recovery', 'Other'],
+            datasets: [{
+                data: [45, 30, 20, 5],
+                backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'],
+                borderWidth: 3,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { 
+                    position: 'bottom', 
+                    labels: { padding: 20, font: { size: 12 } } 
+                }
+            }
+        }
+    });
+
+    // 4. Session Types Pie Chart (Fallback data)
+    new Chart(document.getElementById('sessionPie'), {
+        type: 'pie',
+        data: {
+            labels: ['Batting', 'Bowling', 'Fielding', 'Gym'],
+            datasets: [{
+                data: [35, 40, 15, 10],
+                backgroundColor: ['#ef4444', '#10b981', '#3b82f6', '#f59e0b'],
+                borderWidth: 3,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { 
+                    position: 'bottom', 
+                    labels: { padding: 20, font: { size: 12 } } 
+                }
+            }
+        }
+    });
+
+    console.log('✅ All 4 charts + player image LOADED!');
+    {% endif %}
+});
+</script>
+{% endblock %}

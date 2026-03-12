@@ -2083,7 +2083,54 @@ def player_wellness_report(request):
     
     return render(request, 'player_app/camps/player-wellness-report.html', context)
 
-
+def player_wellness_report_data(request):
+    user_org = getattr(request.user, "organization", None)
+    players = Player.objects.filter(organization=user_org).order_by('name')
+    
+    report_data = None
+    selected_player = None
+    start_date = None
+    end_date = None
+    chart_data = None
+    
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        player_id = request.POST.get('player_id')
+        
+        start_parsed = parser.parse(start_date).date()
+        end_parsed = parser.parse(end_date).date()
+        selected_player = get_object_or_404(Player, id=player_id)
+        
+        # Query your DailyWellnessTest model
+        report_data = DailyWellnessTest.objects.filter(
+            player=selected_player,
+            date__range=[start_parsed, end_parsed]
+        ).order_by('date')
+        
+        # ✅ CHART DATA - EXACTLY what JavaScript needs
+        chart_data = {
+            'dates': [log.date.strftime('%b %d') for log in report_data],
+            'soreness': [int(log.soreness_level or 0) for log in report_data],
+            'fatigue': [int(log.fatigue_level or 0) for log in report_data],
+            'sleep': [float(log.sleep_hours or 0) for log in report_data],
+            'motivation': [int(log.motivation_level or 0) for log in report_data],
+            'rpe': [int(log.total_rpe or 0) for log in report_data],
+            'balls': [int(log.balls_bowled or 0) for log in report_data],
+            'pain_count': sum(1 for log in report_data if log.has_pain),
+            'total_days': len(report_data),
+            'training_types': [item for log in report_data for item in (log.training_session_types or [])],
+        }
+    
+    context = {
+        'players': players,
+        'report_data': report_data,
+        'selected_player': selected_player,
+        'start_date': start_date,
+        'end_date': end_date,
+        'chart_data': chart_data,
+    }
+    return render(request, 'player_app/camps/player-wellness-report-data.html', context)
 
 # -----------------------------------------------------------------------------------------------------------
 
@@ -9066,34 +9113,144 @@ def bowlerdrills_create(request, camp_id=None):
     return render(request, 'player_app/camps/bowlerdrills_create.html', context)
 
 
+# 1. MAIN FORM VIEW
+@login_required
+def bowlerdrills_create_common(request):
+    user_org = getattr(request.user, "organization", None)
+    if not user_org:
+        return redirect('dashboard')
+    
+    camps = CampTournament.objects.all().order_by('name')
+    context = {'camps': camps}
+    return render(request, 'player_app/camps/bowlerdrills_create_common.html', context)
+
+
+@login_required
+def api_load_players(request):
+    if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+        return JsonResponse({'error': 'AJAX only'}, status=400)
+    
+    camp_id = request.GET.get('camp_id')
+    
+    if not camp_id:
+        return JsonResponse({'players': [], 'error': 'Camp ID required'})
+    
+    try:
+        print(f"Loading players for camp_id: {camp_id}")  # Debug log
+        camp = get_object_or_404(CampTournament, id=camp_id)
+        # ✅ CORRECT for ManyToManyField 'participants'
+        players = camp.participants.all()
+        players_data = [{'id': p.id, 'name': str(p)} for p in players]
+        return JsonResponse({'players': players_data})
+    except Exception as e:
+        return JsonResponse({'players': [], 'error': str(e)})
+
+# 3. SAVE DRILLS API - CORRECTED  
+@login_required
+def api_save_drills(request):
+    if request.headers.get('X-Requested-With') != 'XMLHttpRequest' or request.method != 'POST':
+        return JsonResponse({'error': 'POST AJAX only'}, status=400)
+    
+    try:
+        with transaction.atomic():
+            camp_id = request.POST.get('camp')
+            date = request.POST.get('date')
+            
+            if not camp_id or not date:
+                return JsonResponse({'success': False, 'error': 'Camp and date required'}, status=400)
+            
+            camp = get_object_or_404(CampTournament, id=camp_id)
+            # ✅ SAME CORRECT FILTER
+            players = camp.participants.all()
+            
+            created_drills = []
+            for player in players:
+                balls_key = f'balls_{player.id}'
+                balls_bowled = request.POST.get(balls_key)
+                
+                if balls_bowled:
+                    try:
+                        no_balls = int(balls_bowled)
+                        if no_balls >= 0:
+                            BowlerDrill.objects.create(
+                                player_id=player.id,
+                                camp_id=camp_id,
+                                date=date,
+                                no_balls=no_balls
+                            )
+                            created_drills.append(str(player))
+                    except ValueError:
+                        continue
+            
+            return JsonResponse({
+                'success': True,
+                'count': len(created_drills),
+                'players': created_drills
+            })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+
+
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 @login_required
 def bowlerdrills_list(request):
     user_org = getattr(request.user, "organization", None)
-    date_str = request.GET.get('date')
-    camp_id = request.GET.get('camp')
     
-    drills = BowlerDrill.objects.filter(
+    # Base queryset
+    drills_base = BowlerDrill.objects.filter(
         camp__organization__in=Player.objects.filter(
             organization=user_org,
         ).values_list('organization', flat=True) if user_org else []
     ).select_related('player', 'camp')
     
-    if date_str:
-        drills = drills.filter(date=date_str)
-    if camp_id:
-        drills = drills.filter(camp_id=camp_id)
+    # Search and filters
+    search_query = request.GET.get('search', '').strip()
+    camp_id = request.GET.get('camp')
+    date_str = request.GET.get('date')
     
-    # Get unique camps via players belonging to user's organization
+    if search_query:
+        drills_base = drills_base.filter(
+            Q(player__name__icontains=search_query) |
+            Q(camp__name__icontains=search_query)
+        )
+    
+    if camp_id:
+        drills_base = drills_base.filter(camp_id=camp_id)
+    
+    if date_str:
+        drills_base = drills_base.filter(date=date_str)
+    
+    drills = drills_base.order_by('-created_at')
+    
+    # Pagination
+    paginator = Paginator(drills, 20)
+    page_number = request.GET.get('page')
+    
+    try:
+        drills_page = paginator.page(page_number)
+    except PageNotAnInteger:
+        drills_page = paginator.page(1)
+    except EmptyPage:
+        drills_page = paginator.page(paginator.num_pages)
+    
     camps = CampTournament.objects.filter(
         participants__organization=user_org
-    ).distinct() if user_org else []
+    ).distinct().order_by('name')
     
     context = {
-        'drills': drills,
+        'drills': drills_page,
         'camps': camps,
+        'page_obj': drills_page,
+        'paginator': paginator,
+        'search_query': search_query,
+        'selected_camp': camp_id,
+        'selected_date': date_str,
     }
     return render(request, 'player_app/camps/bowlerdrills_list.html', context)
+
 
 
 @login_required

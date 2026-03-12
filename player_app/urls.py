@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.urls import path
 from django.conf.urls.static import static
 from django.conf import settings
@@ -100,6 +101,12 @@ urlpatterns = [
                   path('bowler_report_generated/',views.bowler_report_generated,name='bowler_report_generated'),
                   path('bowling-settings/<int:camp_select>/', views.bowling_settings_view, name='bowling_settings'),
                   path('bowling-settings/update/', views.bowling_settings_update, name='bowling_settings_update'),
+                  path('bowlerdrills-create-common/',views.bowlerdrills_create_common, name='bowlerdrills_create_common'),
+                  path('api/load-players/', views.api_load_players, name='api_load_players'),
+                  path('api/save-drills/', views.api_save_drills, name='api_save_drills'),
+
+                  path('test/', lambda request: JsonResponse({'status': 'URLs WORKING!'})),
+
 
                   path('reports/camp-drills/', views.camp_drill_report, name='camp_drill_report'),
                   path('reports/player-drills/', views.player_drill_report, name='player_drill_report'),
@@ -113,6 +120,7 @@ urlpatterns = [
                   path('wellness/report/', views.wellness_dashboard, name='wellness_dashboard'),
                   # urls.py
                   path('player-wellness-report/', views.player_wellness_report, name='player_wellness_report'),
+                  path('player_wellness_report_data/',views.player_wellness_report_data,name='player_wellness_report_data'),
 
 
                # Organization Test Results URLs
