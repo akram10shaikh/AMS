@@ -1,0 +1,234 @@
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Individual Test Data - Bowler Drills{% endblock %}
+
+{% block extra_head %}
+<style>
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        .data-section { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .alert { padding: 12px; margin: 10px 0; border-radius: 4px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        #data-fields { display: none; }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="container">
+        <h2>Individual Test Data</h2>
+        <p>Select a player and date to fetch or enter bowler drill data.</p>
+        
+        <form id="fetchForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="player">Select Player:</label>
+                <select id="player" name="player" required>
+                    <option value="">-- Select Player --</option>
+                    {% for player in players %}
+                        <option value="{{ player.id }}">{{ player.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="date">Enter Date:</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+            
+            <button type="submit" id="fetchBtn">Fetch Data</button>
+        </form>
+
+        <div id="data-fields">
+            <div id="message"></div>
+            
+            <div class="data-section">
+                <h3>Data Entry</h3>
+                <form id="dataForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="hidden_player_id" name="player_id">
+                    <input type="hidden" id="hidden_date" name="date">
+                    
+                    <div class="form-group">
+                        <label for="camp">Camp (Optional):</label>
+                        <select id="camp" name="camp_id">
+                            <option value="">-- No Camp Selected --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="no_balls">Number of Bowls:</label>
+                        <input type="number" id="no_balls" name="no_balls" min="0" step="1">
+                    </div>
+                    
+                    <button type="submit" id="saveBtn">Save Data</button>
+                    <button type="button" id="clearBtn" style="background: #dc3545; margin-left: 10px;">Clear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]').value;
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="alert alert-${type}">${text}</div>`;
+            setTimeout(() => messageDiv.innerHTML = '', 5000);
+        }
+
+        // **CRITICAL FIX: Fetch handler with BULLETPROOF camp selection**
+        document.getElementById('fetchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const playerId = document.getElementById('player').value;
+            const date = document.getElementById('date').value;
+            
+            if (!playerId || !date) {
+                alert('Please select player and date');
+                return;
+            }
+            
+            document.getElementById('fetchBtn').disabled = true;
+            document.getElementById('fetchBtn').textContent = 'Fetching...';
+            
+            try {
+                const response = await fetch('/player_app/fetch-bowler-data/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({player_id: playerId, date: date})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('🔍 Backend sent camp_id:', data.existing_data?.camp_id);
+                    
+                    // 1. CLEAR and REBUILD dropdown COMPLETELY
+                    const campSelect = document.getElementById('camp');
+                    campSelect.innerHTML = '<option value="">-- No Camp Selected --</option>';
+                    
+                    // 2. POPULATE all camps
+                    if (data.camps && data.camps.length > 0) {
+                        data.camps.forEach(camp => {
+                            const option = document.createElement('option');
+                            option.value = String(camp.id);  // ✅ Force string conversion
+                            option.textContent = camp.name;
+                            campSelect.appendChild(option);
+                        });
+                    }
+                    
+                    // 3. Set other fields
+                    document.getElementById('hidden_player_id').value = playerId;
+                    document.getElementById('hidden_date').value = date;
+                    document.getElementById('no_balls').value = data.existing_data?.no_balls || '';
+                    
+                    // 4. **BULLETPROOF CAMP SELECTION** - 3 methods
+                    const existingCampId = data.existing_data?.camp_id;
+                    if (existingCampId !== null && existingCampId !== undefined) {
+                        console.log('🎯 Attempting to select camp:', existingCampId);
+                        
+                        // Method 1: Direct value (most common)
+                        campSelect.value = String(existingCampId);
+                        
+                        // Method 2: If Method 1 fails, loop through options
+                        if (campSelect.value != String(existingCampId)) {
+                            for (let i = 0; i < campSelect.options.length; i++) {
+                                if (campSelect.options[i].value == String(existingCampId)) {
+                                    campSelect.options[i].selected = true;
+                                    console.log('✅ Method 2: Selected via loop');
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Method 3: Force dispatch change event
+                        if (campSelect.value == String(existingCampId)) {
+                            const event = new Event('change', { bubbles: true });
+                            campSelect.dispatchEvent(event);
+                            console.log('✅ Method 3: Event dispatched');
+                        }
+                    }
+                    
+                    // 5. Show fields
+                    document.getElementById('data-fields').style.display = 'block';
+                    
+                    // 6. Final verification message
+                    const finalSelected = campSelect.value;
+                    const finalCampName = campSelect.selectedOptions[0]?.text || 'No Camp';
+                    const bowls = data.existing_data?.no_balls || 0;
+                    
+                    if (data.existing_data?.exists !== false) {
+                        if (finalSelected && finalSelected !== '') {
+                            showMessage(`✅ Loaded: "${finalCampName}" | ${bowls} bowls`, 'success');
+                        } else {
+                            showMessage(`⚠️ Loaded: ${bowls} bowls (No camp selected)`, 'success');
+                        }
+                    } else {
+                        showMessage(`${data.camps.length || 0} camps available`, 'success');
+                    }
+                    
+                    console.log('🏁 FINAL: Selected camp ID:', finalSelected, 'Name:', finalCampName);
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, 'error');
+            } finally {
+                document.getElementById('fetchBtn').disabled = false;
+                document.getElementById('fetchBtn').textContent = 'Fetch Data';
+            }
+        });
+
+        // Save handler (unchanged)
+        document.getElementById('dataForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            
+            try {
+                const formData = {
+                    player_id: document.getElementById('hidden_player_id').value,
+                    date: document.getElementById('hidden_date').value,
+                    camp_id: document.getElementById('camp').value || null,
+                    no_balls: parseInt(document.getElementById('no_balls').value) || 0
+                };
+                
+                const response = await fetch('/player_app/save-bowler-data/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                } else {
+                    showMessage('Error: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                showMessage('Error saving data: ' + error.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Data';
+            }
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            document.getElementById('camp').value = '';
+            document.getElementById('no_balls').value = '';
+        });
+    </script>
+{% endblock %}

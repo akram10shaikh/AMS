@@ -9615,7 +9615,274 @@ def bowling_settings_update(request):
     # Handle GET (optional: show current session values in template)
     return redirect('bowling_settings')
 
+def bowlerdrills_combin(request):
+    return render(request,'player_app/tests/bowlerdrills_combin.html')
 
+def individual_test_data(request):
+    player = None
+    bowler_drill = None
+    camps = []
+    selected_date = None
+    
+    if request.method == 'POST':
+        player_id = request.POST.get('player')
+        date_str = request.POST.get('date')
+        
+        if player_id:
+            player = get_object_or_404(Player, id=player_id)
+            selected_date = parse_date(date_str) if date_str else None
+            
+            if selected_date:
+                # Get available camps/tournaments for the date (considering player gender/age if available)
+                camps_query = CampTournament.objects.filter(
+                    is_deleted=False,
+                    start_date__lte=selected_date
+                )
+                
+                if player.gender:  # Assuming Player has gender field
+                    camps_query = camps_query.filter(
+                        Q(gender=player.gender) | Q(gender__isnull=True)
+                    )
+                
+                # Filter by end_date if set
+                camps_query = camps_query.filter(
+                    Q(end_date__gte=selected_date) | Q(end_date__isnull=True)
+                )
+                
+                camps = camps_query.order_by('name').distinct()
+                
+                # Check if existing data exists (camp can be null)
+                bowler_drill = BowlerDrill.objects.filter(
+                    player=player, 
+                    date=selected_date
+                ).first()
+    
+    context = {
+        'player': player,
+        'selected_date': selected_date,
+        'camps': camps,
+        'bowler_drill': bowler_drill,
+        'players': Player.objects.filter().order_by('name')  # Assuming is_active field
+    }
+    return render(request, 'player_app/tests/individual_test_data.html', context)
+
+@require_http_methods(["POST"])
+def fetch_bowler_data(request):
+    try:
+        data = json.loads(request.body)
+        player_id = data.get('player_id')
+        date_str = data.get('date')
+        
+        player = get_object_or_404(Player, id=player_id)
+        selected_date = parse_date(date_str)
+        
+
+        
+        # **SIMPLIFIED CAMP FILTERING** - Remove complex filters first
+        camps_query = CampTournament.objects.filter(
+            is_deleted=False,
+            start_date__lte=selected_date
+        ).filter(
+            Q(end_date__gte=selected_date) | Q(end_date__isnull=True)
+        )
+        
+
+        
+       
+        
+        camps = list(camps_query.values(
+            'id', 'name', 'camp_type', 'start_date', 'end_date'
+        ).order_by('name'))
+        
+        print(f"DEBUG: Camps returned: {len(camps)}")  # Debug log
+       
+        bowler_drill = None
+        try:
+            bowler_drill = BowlerDrill.objects.select_related('camp').get(
+                player=player, date=selected_date
+            )
+        except BowlerDrill.DoesNotExist:
+            pass
+        
+        existing_data = None
+        if bowler_drill:
+            existing_data = {
+                'camp_id': bowler_drill.camp.id if bowler_drill.camp else None,
+                'camp_name': bowler_drill.camp.name if bowler_drill.camp else None,  # ADD THIS
+                'no_balls': bowler_drill.no_balls,
+                'exists': True
+            }
+            print(f"DEBUG: Existing drill found - Camp: {existing_data['camp_name']}, No Balls: {existing_data['no_balls']}")  # Debug log
+        else:
+            existing_data = {'exists': False}
+        
+        response_data = {
+            'success': True,
+            'camps': camps,
+            'player_name': player.name,
+            'debug_info': {
+                'selected_date': str(selected_date),
+                'total_camps_matched': camps_query.count(),
+                'camps_count_returned': len(camps)
+            },
+            'existing_data': existing_data
+        }
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        print(f"DEBUG ERROR: {str(e)}")  # Debug log
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@require_http_methods(["POST"])
+def save_bowler_data(request):
+    try:
+        data = json.loads(request.body)
+        player_id = data.get('player_id')
+        date_str = data.get('date')
+        camp_id = data.get('camp_id')
+        no_balls = int(data.get('no_balls') or 0)
+        
+        player = get_object_or_404(Player, id=player_id)
+        selected_date = parse_date(date_str)
+        
+        camp = None
+        if camp_id:
+            try:
+                camp = CampTournament.objects.get(id=camp_id, is_deleted=False)
+            except CampTournament.DoesNotExist:
+                camp = None
+        
+        # Get or create bowler drill (respects unique_together constraint)
+        bowler_drill, created = BowlerDrill.objects.update_or_create(
+            player=player,
+            date=selected_date,
+            defaults={
+                'camp': camp,
+                'no_balls': no_balls
+            }
+        )
+        
+        action = "created" if created else "updated"
+        return JsonResponse({
+            'success': True, 
+            'message': f'Bowler drill data {action} successfully!',
+            'data': {
+                'id': bowler_drill.id,
+                'camp': camp.name if camp else None,
+                'no_balls': bowler_drill.no_balls,
+                'created': created
+            }
+        })
+        
+    except Player.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Player not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+def camp_test_data(request):
+    camps = CampTournament.objects.filter(is_deleted=False).order_by('name')
+    context = {
+        'camps': camps,
+    }
+    return render(request, 'player_app/tests/camp_test_data.html', context)
+
+@require_http_methods(["POST"])
+def fetch_camp_data(request):
+    try:
+        # **FIX 1: Use request.POST for form data first, fallback to JSON**
+        camp_id = request.POST.get('camp_id') or json.loads(request.body.decode('utf-8')).get('camp_id')
+        date_str = request.POST.get('date') or json.loads(request.body.decode('utf-8')).get('date')
+        
+        if not camp_id or not date_str:
+            return JsonResponse({'success': False, 'error': 'Missing camp_id or date'}, status=400)
+        
+        camp = get_object_or_404(CampTournament, id=camp_id, is_deleted=False)
+        selected_date = parse_date(date_str)
+        
+        if not selected_date:
+            return JsonResponse({'success': False, 'error': 'Invalid date format'}, status=400)
+        
+        # Get all players in this camp
+        camp_players = camp.participants.filter()
+        
+        # Get existing bowler drills for this camp/date
+        existing_drills = BowlerDrill.objects.filter(
+            player__in=camp_players,
+            camp=camp,
+            date=selected_date
+        ).values('player_id', 'no_balls')
+        
+        # Convert to dict for quick lookup
+        drills_dict = {drill['player_id']: drill['no_balls'] for drill in existing_drills}
+        
+        # Prepare player data with existing bowls
+        players_data = []
+        for player in camp_players:
+            existing_bowls = drills_dict.get(player.id, None)
+            players_data.append({
+                'id': player.id,
+                'name': player.name,
+                'existing_bowls': existing_bowls
+            })
+        
+      
+        
+        response_data = {
+            'success': True,
+            'camp_name': camp.name,
+            'selected_date': date_str,
+            'players': players_data,
+            'total_players': len(players_data)
+        }
+        return JsonResponse(response_data)
+        
+    except json.JSONDecodeError as e:
+        print(f"JSON ERROR: {e}")
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
+    except CampTournament.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Camp not found'}, status=404)
+    except Exception as e:
+        print(f"ERROR: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@require_http_methods(["POST"])
+def save_camp_data(request):
+    try:
+        data = json.loads(request.body)
+        camp_id = data.get('camp_id')
+        date_str = data.get('date')
+        player_data = data.get('player_data', [])  # List of {player_id, no_balls}
+        
+        camp = get_object_or_404(CampTournament, id=camp_id, is_deleted=False)
+        selected_date = parse_date(date_str)
+        
+        saved_count = 0
+        for player_item in player_data:
+            player_id = player_item.get('player_id')
+            no_balls = int(player_item.get('no_balls') or 0)
+            
+            player = get_object_or_404(Player, id=player_id)
+            
+            # Update or create
+            bowler_drill, created = BowlerDrill.objects.update_or_create(
+                player=player,
+                camp=camp,
+                date=selected_date,
+                defaults={'no_balls': no_balls}
+            )
+            saved_count += 1
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Saved data for {saved_count} players!',
+            'saved_count': saved_count
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 from django.shortcuts import render
 from datetime import date  # Add this import

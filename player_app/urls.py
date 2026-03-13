@@ -104,6 +104,15 @@ urlpatterns = [
                   path('bowlerdrills-create-common/',views.bowlerdrills_create_common, name='bowlerdrills_create_common'),
                   path('api/load-players/', views.api_load_players, name='api_load_players'),
                   path('api/save-drills/', views.api_save_drills, name='api_save_drills'),
+                  path('bowlerdrills_combin/', views.bowlerdrills_combin, name='bowlerdrills_combin'),
+
+                  path('individual-test-data/', views.individual_test_data, name='individual_test_data'),
+                  path('fetch-bowler-data/', views.fetch_bowler_data, name='fetch_bowler_data'),
+                  path('save-bowler-data/', views.save_bowler_data, name='save_bowler_data'),
+
+                  path('camp-test-data/', views.camp_test_data, name='camp_test_data'),
+                  path('fetch-camp-data/', views.fetch_camp_data, name='fetch_camp_data'),
+                  path('save-camp-data/', views.save_camp_data, name='save_camp_data'),
 
                   path('test/', lambda request: JsonResponse({'status': 'URLs WORKING!'})),
 
