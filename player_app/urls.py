@@ -114,7 +114,8 @@ urlpatterns = [
                   path('fetch-camp-data/', views.fetch_camp_data, name='fetch_camp_data'),
                   path('save-camp-data/', views.save_camp_data, name='save_camp_data'),
 
-                  path('test/', lambda request: JsonResponse({'status': 'URLs WORKING!'})),
+                  path('player_drill_report_new/',views.player_drill_report_new,name='player_drill_report_new'),
+                  path('load-camp-players/', views.load_camp_players, name='load_camp_players'),
 
 
                   path('reports/camp-drills/', views.camp_drill_report, name='camp_drill_report'),

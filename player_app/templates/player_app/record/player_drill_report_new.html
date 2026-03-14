@@ -1,0 +1,160 @@
+<!-- templates/player_app/camps/player_drill_report.html -->
+{% extends "player_app/organization/base.html" %}
+{% load static %}
+
+{% block title %}Player Drill Report{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    .report-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .filter-card { background: #262d2c; color: white; padding: 2rem; border-radius: 16px; margin-bottom: 2rem; }
+    .filter-form { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 1.5rem; align-items: end; }
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .loading { display: none; color: #00d4aa; }
+    .btn-primary { background: #00d4aa; border: none; padding: 1rem 2rem; border-radius: 10px; color: white; font-weight: 600; transition: all 0.3s; cursor: pointer; }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,212,170,0.4); }
+    .table-container { background: white; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #262d2c; color: white; padding: 1.25rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { padding: 1.25rem; border-bottom: 1px solid #f0f0f0; }
+    .badge { padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; }
+    .bg-success { background: #00d4aa; color: white; }
+    .no-data { text-align: center; padding: 4rem 2rem; color: #888; }
+    @media (max-width: 992px) { .filter-form { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <div class="page-header mb-4">
+        <h1><i class="fas fa-bowling-ball"></i> Player Drill Report</h1>
+        <p>Select camp first, then player and dates to view bowler drill data.</p>
+    </div>
+    
+    <div class="filter-card">
+        <form id="filterForm" method="GET">
+            <div class="form-group">
+                <label><i class="fas fa-campground"></i> Select Camp</label>
+                <select name="camp" id="campSelect" class="form-control" required>
+                    <option value="">-- Choose Camp --</option>
+                    {% for camp in camps %}
+                    <option value="{{ camp.id }}" {% if selected_camp == camp.id|stringformat:"s" %}selected{% endif %}>
+                        {{ camp.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Select Player</label>
+                <select name="player" id="playerSelect" class="form-control" disabled>
+                    <option value="">-- Select Camp First --</option>
+                    {% for player in players %}
+                    <option value="{{ player.id }}" {% if selected_player == player.id|stringformat:"s" %}selected{% endif %}>
+                        {{ player.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <div id="playerLoading" class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading players...
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-calendar-alt"></i> Start Date</label>
+                <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-calendar-alt"></i> End Date</label>
+                <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+            </div>
+            
+            <button type="submit" class="btn-primary" id="filterBtn">
+                <i class="fas fa-search"></i> Show Report
+            </button>
+        </form>
+    </div>
+    
+    {% if drills %}
+    <div class="table-container">
+        <div class="p-4 bg-light border-bottom d-flex justify-content-between">
+            <h5><i class="fas fa-table"></i> Drill Data ({{ drills|length }} records)</h5>
+            <span class="text-muted">Camp: {{ camp_name }}</span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Player</th>
+                    <th>Camp</th>
+                    <th>No. Balls Bowled</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for drill in drills %}
+                <tr>
+                    <td><strong>{{ drill.date|date:"d M Y" }}</strong></td>
+                    <td>{{ drill.player.name }}</td>
+                    <td>{{ drill.camp.name }}</td>
+                    <td><span class="badge bg-success">{{ drill.no_balls }}</span></td>
+                    <td>{{ drill.created_at|date:"d M Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% elif selected_camp %}
+    <div class="no-data">
+        <i class="fas fa-inbox fa-4x mb-4 opacity-50"></i>
+        <h4>No drills found</h4>
+        <p>No bowler drill data matches your filters for this camp.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const campSelect = document.getElementById('campSelect');
+    const playerSelect = document.getElementById('playerSelect');
+    const playerLoading = document.getElementById('playerLoading');
+    const filterBtn = document.getElementById('filterBtn');
+    
+    campSelect.addEventListener('change', function() {
+        const campId = this.value;
+        if (!campId) {
+            playerSelect.innerHTML = '<option value="">-- Select Camp First --</option>';
+            playerSelect.disabled = true;
+            return;
+        }
+        
+        playerLoading.style.display = 'block';
+        playerSelect.disabled = true;
+        playerSelect.innerHTML = '<option value="">Loading...</option>';
+        
+        fetch(`{% url 'load_camp_players' %}?camp_id=${campId}`)
+            .then(response => response.json())
+            .then(data => {
+                playerSelect.innerHTML = '<option value="">-- All Players in Camp --</option>';
+                data.players.forEach(player => {
+                    const option = new Option(player.name, player.id);
+                    playerSelect.appendChild(option);
+                });
+                playerSelect.disabled = false;
+                playerLoading.style.display = 'none';
+            })
+            .catch(() => {
+                playerSelect.innerHTML = '<option value="">Error loading players</option>';
+                playerLoading.style.display = 'none';
+            });
+    });
+    
+    // Auto-submit on player change after camp loaded
+    playerSelect.addEventListener('change', function() {
+        if (this.value) filterBtn.click();
+    });
+});
+</script>
+{% endblock %}

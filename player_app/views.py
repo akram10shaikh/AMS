@@ -1112,7 +1112,7 @@ def organization_camps_tournaments(request):
         player_count = camp.participants.count()
         staff_count = camp.staff_members.count()
         
-        print(f"Camp {camp.name} (ID:{camp.id}): Players={player_count}, Staff={staff_count}")  # ✅ CORRECT
+        
         camp_stats[camp.id] = {
             'player_count': camp.participants.count(),
             'staff_count': camp.staff_members.count()
@@ -9779,6 +9779,72 @@ def save_bowler_data(request):
         return JsonResponse({'success': False, 'error': 'Player not found'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+def player_drill_report_new(request):
+    user_org = getattr(request.user, "organization", None)
+    camps = CampTournament.objects.filter(organization=user_org, is_deleted=False).order_by('name')
+    
+    context = {
+        'camps': camps,
+        'players': Player.objects.none(),  # Empty initially
+    }
+    
+    # If camp selected via GET
+    camp_id = request.GET.get('camp')
+    if camp_id:
+        camp = CampTournament.objects.filter(id=camp_id, organization=user_org).first()
+        if camp:
+            # Load camp players - adjust relation as needed
+            camp_players = Player.objects.filter(camps=camp).order_by('name')  # or camp.players.all()
+            context['players'] = camp_players
+            context['selected_camp'] = camp_id
+            context['camp_name'] = camp.name
+    
+    # Apply filters for drills
+    player_id = request.GET.get('player')
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    
+    drills_qs = BowlerDrill.objects.filter(camp__organization=user_org).select_related('player', 'camp').order_by('-date')
+    
+    if camp_id:
+        drills_qs = drills_qs.filter(camp_id=camp_id)
+    if player_id:
+        drills_qs = drills_qs.filter(player_id=player_id)
+    if start_date_str and end_date_str:
+        drills_qs = drills_qs.filter(date__range=[start_date_str, end_date_str])
+    elif start_date_str:
+        drills_qs = drills_qs.filter(date__gte=start_date_str)
+    elif end_date_str:
+        drills_qs = drills_qs.filter(date__lte=end_date_str)
+    
+    context['drills'] = drills_qs
+    context['selected_player'] = player_id
+    context['start_date'] = start_date_str
+    context['end_date'] = end_date_str
+    
+    return render(request, 'player_app/record/player_drill_report_new.html', context)
+
+@require_http_methods(["GET"])
+@login_required
+def load_camp_players(request):
+    camp_id = request.GET.get('camp_id')
+    user_org = getattr(request.user, "organization", None)
+    
+    if not camp_id:
+        return JsonResponse({'players': []})
+    
+    camp = CampTournament.objects.filter(id=camp_id, organization=user_org).first()
+    if not camp:
+        return JsonResponse({'players': []})
+    
+    # Load only players in this camp
+    players = Player.objects.filter(camps=camp).values('id', 'name').order_by('name')
+    # Adjust filter: .filter(camp_tournament=camp) or camp.players.all()
+    
+    return JsonResponse({'players': list(players)})
 
 
 def camp_test_data(request):
